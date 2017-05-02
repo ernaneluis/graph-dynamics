@@ -3,15 +3,54 @@ Created on Jun 1, 2015
 
 @author: cesar
 '''
-
+import matplotlib
 import numpy as np
-import matplotlib as plt
-import numpy as np
+from scipy.stats import poisson
 from collections import namedtuple
+from matplotlib import pyplot as plt
+from scipy.integrate import quadrature
 from abc import ABCMeta, abstractmethod
 
+matplotlib.rcParams['ps.useafm'] = True
+matplotlib.rcParams['pdf.use14corefonts'] = True
+matplotlib.rcParams['text.usetex'] = True
 
-class ExchangableRandomMeasures(object):
+class FiniteDimensionalProcess(object):
+    """
+    Here we follow the paper 
+    
+    Finite Dimensional BFRY Priors and Variational Bayesian Inference 
+    for Power Law Models
+    
+    We use the notation from Caron, since we expect to use these methods for
+    graphs and matrices
+    
+    """
+    def __init__(self,name_string,identifier_string,K):
+        self.K = K
+        self.name_string = name_string
+        self.identifier_string = identifier_string
+        self.processDefined = False
+        
+    def GenerateProcess(self):
+        raise NotImplemented()
+    
+    def GenerateNormalizedProcess(self):
+        raise NotImplemented
+    
+    def PlotProcess(self,plotName="{0}.pdf",saveTo=None,showPlot=False):
+        ymin = np.zeros(len(self.W))
+        plt.title(self.identifier_string)
+        plt.vlines(self.Theta, ymin, self.W)
+        plt.plot(self.Theta,self.W,"ro",markersize=12)
+        plt.grid(True)
+        if showPlot:
+            plt.show()
+        if saveTo != None:
+            plt.savefig(saveTo+plotName.format(self.identifier_string))
+
+
+class CompletlyRandomMeasures(object):
     """
     This class is a superclass for all types of kernels (positive definite functions).
     """
@@ -21,10 +60,135 @@ class ExchangableRandomMeasures(object):
         self.num_dim = num_dim
 
     @abstractmethod
-    def drift(self,t):
+    def jump_measure(self,t):
         raise NotImplemented()
     
     @abstractmethod
-    def diffusion(self,t):
+    def lambda_measure(self,t):
         raise NotImplemented()
+
+def uniform_one(t,*parameters):
+    """
+    """
+    try: 
+        if type(t.shape) == tuple: 
+            return np.ones(len(t))
+    except:
+        return 1.
     
+class PoissonMeasure:
+    """
+    This class defines a measure in the interval $A \in \mathds{R}^{+}$. 
+    
+    $$
+    \Pi = \sum^{\Pi(A)}_{k=1}\delta_{\theta_{k}}
+    $$
+    
+    Which was defined with an intensity function $\lambda(\cdot)$.
+    """
+    def __init__(self,interval_size,identifier_string="PoissonMeasure",K=None,
+                 isLebesque=True,name_string=None,intensity=None,intensity_parameters=None,upper_bound=None):
+        """
+        """
+        self.identifier_string = identifier_string
+        self.isLebesque = isLebesque
+        self.isDefined = False
+        if not isLebesque:
+            self.name_string = name_string
+            self.intensity = intensity
+            self.intensity_parameters = intensity_parameters
+            self.interval_size = interval_size
+            self.upper_bound = upper_bound
+            self.measure_complete = quadrature(self.intensity, 0., self.interval_size, self.intensity_parameters)[0]
+        else:
+            self.intensity = uniform_one
+            self.intensity_parameters = (None,)
+            self.interval_size = interval_size
+            self.upper_bound = 1.
+            self.measure_complete = interval_size
+        
+        if K != None:
+            self.K = K 
+            self.generate_points(K)
+        else:
+            if self.isLebesque:
+                self.K = poisson.rvs(self.measure_complete)
+                self.generate_points(self.K)
+            else:
+                #HERE WE SIMPLY USE THE THINNING PROCEDURE
+                J = poisson.rvs(self.interval_size * self.upper_bound)
+                datesInSeconds = np.random.uniform(0., self.interval_size, J)
+                intensities = self.intensity(datesInSeconds, *self.intensity_parameters) / self.upper_bound
+                r = np.random.uniform(0., 1., J)
+                self.Theta = np.take(datesInSeconds, np.where(r < intensities)[0])
+                self.K = len(self.Theta)
+                self.W = np.ones(len(self.Theta))
+    def normalized_intensity(self,x):
+        """
+        normalized version of B0 for the inhomogeneous Poisson Process
+        """ 
+        return (1./self.measure_complete)*self.intensity(x,*self.intensity_parameters)
+    
+    def integrate_intensity(self,x0,xf):
+        if not self.isLebesque: 
+            if (x0 >= 0 and xf < self.interval_size) and (x0 <= xf): 
+                return quadrature(self.intensity, x0, xf, self.intensity_parameters)[0]
+            else:
+                print "Measure evaluated outside definition"
+                raise Exception
+        else:
+            if (x0 >= 0 and xf < self.interval_size) and (x0 <= xf): 
+                return xf - x0
+            else:
+                print "Measure evaluated outside definition"
+                raise Exception
+            
+    def measure(self,x0,xf):
+        """
+        Simply returns the number of points generated by the poisson process
+        """
+        if (x0 >= 0 and xf <= self.interval_size) and (x0 <= xf):
+            whereBottom = self.Theta >= x0
+            whereTop = self.Theta <= xf
+            whereIndex = np.where(whereTop*whereBottom)[0]
+            return np.take(self.W,whereIndex)
+        else:
+            print "Measure evaluated outside definition"
+            raise Exception
+        
+        
+    def generate_points(self,K):
+        """
+        this poisson measure is not properly define if you provide the K by hand
+        expects the number of arrivals as defined before hand
+        """
+        if self.isLebesque:
+            self.Theta = np.random.uniform(0,self.interval_size,K)
+            self.W = np.ones(len(self.Theta))
+        else:
+            Points = []
+            while len(Points) < K: 
+                rateBound = self.upper_bound/self.measure_complete
+                T = self.interval_size
+                J = poisson.rvs(T * rateBound)
+                datesInSeconds = np.random.uniform(0., T, J)
+                intensities = self.normalized_intensity(datesInSeconds) / rateBound
+                r = np.random.uniform(0., 1., J)
+                arrivals = np.take(datesInSeconds, np.where(r < intensities)[0])
+                Points.extend(arrivals)
+            self.Theta = np.asarray(Points)[:K]
+            self.W = np.ones(len(self.Theta))    
+        return self.Theta
+    
+    def PlotProcess(self,plotName=None,saveTo=None,showPlot=False):
+        plt.figure(figsize=(10,3))
+        ymin = np.zeros(len(self.W))
+        plt.title(self.identifier_string)
+        plt.vlines(self.Theta, ymin, self.W)
+        plt.plot(self.Theta,self.W,"ro",markersize=12)
+        plt.axis([-0.01*self.interval_size,self.interval_size+0.01*self.interval_size,0.,1.1])
+        plt.grid(True)
+        if showPlot:
+            plt.show()
+        if saveTo != None:
+            plt.savefig(saveTo+plotName)

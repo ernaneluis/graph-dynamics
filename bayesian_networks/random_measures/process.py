@@ -15,6 +15,11 @@ matplotlib.rcParams['ps.useafm'] = True
 matplotlib.rcParams['pdf.use14corefonts'] = True
 matplotlib.rcParams['text.usetex'] = True 
 
+
+#======================================
+#  PROCESS 
+#======================================
+
 class GammaProcess:
     
     def __init__(self,alpha,tau,lamb,lamb_parameters,lamb_maximum):
@@ -44,7 +49,6 @@ class GammaProcess:
         
         K: is the truncation parameter and indicates the number of atoms accepted for the algorithm
         """
-        
         W = []
         P = []
         while len(W) < K:
@@ -172,39 +176,4 @@ class BetaProcess:
         plt.plot(self.W,self.P,"ro",markersize=12)
         plt.grid(True)
         plt.show()
-
-        
-class GeneralizedGammaProcess:
-    """
-    Here we use the urn representation as defined in 
-    
-    Sparse Graph USING Exchangable Random Measures
-    Francois Caron 
-    Emily B. Fox
-    """
-    
-    def __init__(self,H0,sigma):
-        self.H0
-        self.sigma = sigma
-    
-    def EPPF(self,m,n,t):
-        """
-        Exchangable Partitiopn Probablity Function
-        
-        m -- vector of counts
-        """
-        k = len(m)
-        
-        def eppf_integrand(s):
-            return np.power(s,n-k*self.sigma-1)*levy_stable.pdf(t-s)
-        
-        g = levy_stable.pdf(t)
-        A = (self.sigma**k)*(t**(-n))
-        B = gamma(n-k*self.sigma)
-        C = quadrature(eppf_integrand, 0, t)[0]
-        
-        a = np.prod(gamma(m - self.sigma))
-        b = gamma(1 - self.gamma)**k
-        
-        X = a/b
-        
+     
