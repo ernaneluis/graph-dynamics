@@ -27,18 +27,17 @@ class Test(unittest.TestCase):
         BT.plotProcess()
 
     def generateGammaProcess(self):
-        def my_omega_measure(t,*parameters):
-            return np.sin(t*parameters[0])**2.
         
+        self.identifier_string = "GammaProcessTest"
         self.alpha = 20.
+        self.sigma = self.alpha
         self.tau = 1000000000.
-        
-        self.lamb = my_omega_measure
-        self.lamb_parameters = (2*np.pi,)
-        self.lamb_maximum = 1.
-        
-        G = process.GammaProcess(self.alpha,self.tau,self.lamb,self.lamb_parameters,self.lamb_maximum)
-        G_measure = G.stickBreakingConstruction(K=100)
+
+        G = process.GammaProcess(self.identifier_string,
+                                 self.sigma,
+                                 self.tau,
+                                 self.alpha,
+                                 K=100)
         G.plotProcess()    
     
 if __name__ == '__main__':

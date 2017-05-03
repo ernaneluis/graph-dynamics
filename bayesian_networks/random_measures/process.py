@@ -3,41 +3,53 @@ Created on Mar 13, 2017
 
 @author: cesar
 '''
+import copy
+import matplotlib
 import numpy as np
-from matplotlib import pyplot as plt
-from scipy.stats import poisson, beta, levy_stable, expon
 from scipy.special import gamma
-from scipy.stats import gamma as gamma_distribution
+from matplotlib import pyplot as plt
 from scipy.integrate import quadrature
-import matplotlib 
+from scipy.stats import poisson, beta, expon
+from bayesian_networks.utils import functions
+from scipy.stats import gamma as gamma_distribution
+from bayesian_networks.random_measures.normalized_process import ChineseRestaurantProcess
+from bayesian_networks.random_measures.datatypes import CompletlyRandomMeasures, PoissonMeasure
+
 
 matplotlib.rcParams['ps.useafm'] = True
-matplotlib.rcParams['pdf.use14corefonts'] = True
 matplotlib.rcParams['text.usetex'] = True 
+matplotlib.rcParams['pdf.use14corefonts'] = True
 
 
 #======================================
 #  PROCESS 
 #======================================
 
-class GammaProcess:
+class GammaProcess(CompletlyRandomMeasures):
     
-    def __init__(self,alpha,tau,lamb,lamb_parameters,lamb_maximum):
+    def __init__(self,identifier_string,sigma,tau,alpha,K=100):
         """
         """
+        name_string = "GammaProcess"
+        CompletlyRandomMeasures.__init__(self,name_string,identifier_string,K)
+        self.identifier_string = identifier_string
+        self.sigma = sigma
         self.alpha = alpha
         self.tau = tau
-        self.lamb = lamb
-        self.lamb_parameters = lamb_parameters
-        self.lamb_maximum = lamb_maximum
-        self.gamma = quadrature(self.lamb, 0., self.alpha, self.lamb_parameters)[0]
+        self.lambda_measure = PoissonMeasure(self.alpha,identifier_string="LambdaMeasure",K=K)
         self.processDefined = False
+        
+        self.stickBreakingConstruction(K)
+        
+    def jump_measure_intensity(self,w):
+        return (1./gamma(1-self.sigma))*(w**(-1.-self.sigma))*np.exp(-self.tau*w)
     
-    def normalizedLamb(self,x):
-        """
-        normalized version of B0 for the inhomogeneous Poisson Process
-        """ 
-        return (1./self.gamma)*self.lamb(x,*self.lamb_parameters)
+    def lambda_measure_intensity(self,theta):
+        return functions.uniform_one(theta)
+    
+    def normalized_random_measure(self,number_of_arrivals):
+        costumer_seats, Thetas, C = ChineseRestaurantProcess(numberOfCostumers=number_of_arrivals, lambda_measure = self.lambda_measure)
+        return (costumer_seats, Thetas, C)
     
     def stickBreakingConstruction(self,K):
         """
@@ -49,56 +61,33 @@ class GammaProcess:
         
         K: is the truncation parameter and indicates the number of atoms accepted for the algorithm
         """
+        Theta = self.lambda_measure.generate_points(K)
         W = []
-        P = []
-        while len(W) < K:
-            W.extend(self.inhomogeneousPoisson())   
-        W = W[:K]
         
         k = 0 
         roundNumber = 1
         while k < K:
-            K1 = poisson.rvs(self.gamma)
+            K1 = poisson.rvs(self.lambda_measure.interval_size)
             for i in range(K1):
                 Ek = expon.rvs(self.tau)
                 Tk = gamma_distribution.rvs(roundNumber,self.alpha)
-                P.append( Ek*np.exp(-Tk) ) 
+                W.append( Ek*np.exp(-Tk) ) 
                 k+=1
                 if k == K:
                     break
             roundNumber += 1
         self.processDefined = True
         
-        self.P = P
-        self.W = W
-        return (P,W)
+        self.W = copy.copy(W)
+        self.Theta = copy.copy(Theta)
+        return (W,Theta)
                             
-    def inhomogeneousPoisson(self):
-        """
-        generates a set of arrivals from a functional form
-        using the thinning process
-    
-        Parameters:
-        T: float
-        dT: float
-        function: function
-        functionParameters
-        """
-        rateBound = self.lamb_maximum/self.gamma
-        T = self.alpha
-        J = poisson.rvs(T * rateBound)
-        datesInSeconds = np.random.uniform(0., T, J)
-        intensities = self.normalizedLamb(datesInSeconds) / rateBound
-        r = np.random.uniform(0., 1., J)
-        arrivals = np.take(datesInSeconds, np.where(r < intensities)[0])
-        return arrivals
-    
     def plotProcess(self,plotName=None,saveTo=None): 
         """
         """
         ymin = np.zeros(len(self.W))
-        plt.vlines(self.W, ymin, self.P)
-        plt.plot(self.W,self.P,"ro",markersize=12)
+        plt.vlines(self.Theta, ymin, self.W)
+        plt.plot(self.Theta,self.W,"ro",markersize=12)
         plt.grid(True)
         plt.show()
         

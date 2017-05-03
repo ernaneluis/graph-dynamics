@@ -13,8 +13,8 @@ from abc import ABCMeta, abstractmethod
 from bayesian_networks.utils import functions
 
 matplotlib.rcParams['ps.useafm'] = True
-matplotlib.rcParams['pdf.use14corefonts'] = True
 matplotlib.rcParams['text.usetex'] = True
+matplotlib.rcParams['pdf.use14corefonts'] = True
 
 class CompletlyRandomMeasures(object):
     """
@@ -22,17 +22,22 @@ class CompletlyRandomMeasures(object):
     """
     __metaclass__ = ABCMeta
 
-    def __init__(self, num_dim):
-        self.num_dim = num_dim
-
+    def __init__(self,name_string,identifier_string,K):
+        self.name_string = name_string
+        self.identifier_string = identifier_string
+        self.K = K #integer for stick breaking constructions
+        
     @abstractmethod
-    def jump_measure(self,t):
+    def jump_measure_intensity(self,t):
         raise NotImplemented()
     
     @abstractmethod
-    def lambda_measure(self,t):
+    def lambda_measure_intensity(self,t):
         raise NotImplemented()
     
+    @abstractmethod
+    def normalized_random_measure(self):
+        raise NotImplemented()
     
 class FiniteDimensionalProcess(object):
     """
@@ -161,8 +166,7 @@ class PoissonMeasure:
         else:
             print "Measure evaluated outside definition"
             raise Exception
-        
-        
+             
     def generate_points(self,K):
         """
         this poisson measure is not properly define if you provide the K by hand

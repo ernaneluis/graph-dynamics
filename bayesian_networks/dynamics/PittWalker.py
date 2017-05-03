@@ -116,6 +116,16 @@ class PallaDynamics:
     
     def initializeDynamics(self,K1):
         """
+        
+        #THE NETWORKX GRAPH FOR PLOTTING AND REFERENCE
+        self.network = nx.Graph()
+        self.old_interactions = np.zeros((numberOfNodes,numberOfNodes))
+                        
+        #THIS GENERATES THE C PROCESS WHICH CORRESPONDS TO THE CONTINUOS PART OF THE MEASURE (EMPTY CHAIRS FOR CRP)
+        w_total_mass = gamma.rvs(self.alpha,self.tau + self.phi)
+        number_of_costumers = poisson.rvs(self.phi*w_total_mass)
+        self.ThetasC_old2, self.C_old2 = self.CRP(number_of_costumers)
+        
         """
         CT = []
         
@@ -127,29 +137,7 @@ class PallaDynamics:
         for c in C:
             W_seen.append(gamma_distribution.rvs(c,self.phi*self.tau))
     
-    def CRP(self,numberOfCostumers):
-        """
-        Chinese restaurant process
-        """
-        theta = np.random.choice(self.inhomogeneousPoisson())
-        Thetas = [theta]
-        p = [1./(self.alpha + 1), self.alpha/(self.alpha + 1)]
-        numberOfSeatedCostumers = [1.]
-        numberOfTables = 1
-        for i in range(numberOfCostumers-1):
-            p = np.concatenate([np.array(numberOfSeatedCostumers),[self.alpha]])/(self.alpha + sum(numberOfSeatedCostumers))
-            selectedTable = np.random.choice(np.arange(numberOfTables+1),p=p)
-            if selectedTable == numberOfTables:
-                #NewTableSelected
-                numberOfTables += 1
-                theta = np.random.choice(self.inhomogeneousPoisson())
-                numberOfSeatedCostumers.append(1.)
-                Thetas.append(theta)
-                
-            else:
-                numberOfSeatedCostumers[selectedTable] = numberOfSeatedCostumers[selectedTable] + 1.
-        
-        return (Thetas,numberOfSeatedCostumers)
+
     
     def hiddenCPath(self,T,K1):
         """

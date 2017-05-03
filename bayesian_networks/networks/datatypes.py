@@ -52,9 +52,9 @@ class FiniteProcessGraphs(BayesianNetwork):
     
     def __init__(self, identifier_string,randomMeasure,network=None,type_of_network=1):
         self.name_string = "FiniteProcessGraph"
-        self.identifier_string = identifier_string
         self.measure = randomMeasure
         self.type_of_network = type_of_network
+        self.identifier_string = identifier_string
         
         BayesianNetwork.__init__(self,self.name_string,self.identifier_string)
         if network != None:
@@ -118,9 +118,16 @@ class CaronFoxGraphs(BayesianNetwork):
     
     def __init__(self, identifier_string,randomMeasure,network=None,type_of_network=1):
         self.name_string = "CaronFox"
+        self.type_of_network = type_of_network
+        
+        #obtain measure values
+        self.tau = randomMeasure.tau
+        self.alpha = randomMeasure.alpha
+        self.sigma = randomMeasure.sigma
+        
+        self.measure = randomMeasure
         self.identifier_string = identifier_string
-        self.type_of_network = type_of_network 
-        self.measure = randomMeasure 
+         
         BayesianNetwork.__init__(self,self.name_string,self.identifier_string)
         if network != None:
             print "Network Given"
@@ -128,31 +135,36 @@ class CaronFoxGraphs(BayesianNetwork):
         else:
             self.network = self.generateNetwork()
             
-    def generateNetwork(self,numberOfNodes):
+    def generateNetwork(self,sigma_increment=0.,tau_increment=0.):
         """
         We generate the network according to the paper:
         
         Sparse Graphs Using Exchangable Random Measures
         Francois Caron, Emily B. Fox 
         
-        """        
-        #THE NETWORKX GRAPH FOR PLOTTING AND REFERENCE
+        """
         self.network = nx.Graph()
-        self.old_interactions = np.zeros((numberOfNodes,numberOfNodes))
+        self.full_graph_measure = gamma.rvs(self.sigma+sigma_increment,self.tau+tau_increment) 
+        self.number_of_arrivals =  poisson.rvs(self.full_graph_measure**2.)
         
+        print self.number_of_arrivals
 
-                        
-        #THIS GENERATES THE C PROCESS WHICH CORRESPONDS TO THE CONTINUOS PART OF THE MEASURE (EMPTY CHAIRS FOR CRP)
-        w_total_mass = gamma.rvs(self.alpha,self.tau + self.phi)
-        number_of_costumers = poisson.rvs(self.phi*w_total_mass)
-        self.ThetasC_old2, self.C_old2 = self.CRP(number_of_costumers)
-        
+        costumer_seats,Thetas,numberOfSeatedCostumers = self.measure.normalized_random_measure(self.number_of_arrivals*2)
+        for k in range(self.number_of_arrivals):
+            Uk1 = costumer_seats[2*k]
+            Uk2 = costumer_seats[2*k+1]
+            try:
+                w = self.network.edge[Uk1][Uk2]["weight"]
+                self.network.add_edge(Uk1,Uk2,weight=w+1)
+            except:
+                self.network.add_edge(Uk1,Uk2,weight=1)
+
         return self.network
     
     #===============================
     # INFERENCE
     #===============================
-    def inferMeasure(self):
+    def inferMeasures(self):
         return None
     
     
