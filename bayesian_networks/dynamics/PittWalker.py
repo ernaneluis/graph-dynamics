@@ -1,5 +1,5 @@
 '''
-Created on Apr 17, 201
+Created on Apr 17, 2017
 
 @author: cesar
 '''
@@ -12,6 +12,7 @@ from scipy.special import gamma
 from scipy.stats import gamma as gamma_distribution
 from scipy.integrate import quadrature
 import networkx as nx
+import copy as copy
 import sys
 
 import matplotlib 
@@ -22,7 +23,7 @@ matplotlib.rcParams['text.usetex'] = True
 
 class PallaDynamics:
     
-    def __init__(self,alpha,tau,phi,rho,lamb,lamb_parameters,lamb_maximum):
+    def __init__(self,sigma,tau,alpha,phi,rho,lamb,lamb_parameters,lamb_maximum):
         """
         Here we follow
         
@@ -31,32 +32,54 @@ class PallaDynamics:
         2016
         
         """
+        #MEASURE RELATED VARIABLES
         self.alpha = alpha
         self.tau = tau
+        self.sigma = sigma 
+        
+        #DYNAMICAL VARIABLES
         self.phi = phi
         self.rho = rho
         
         self.lamb = lamb
         self.lamb_parameters = lamb_parameters
         self.lamb_maximum = lamb_maximum
+        
         self.gamma = quadrature(self.lamb, 0., self.alpha, self.lamb_parameters)[0]
+        
         self.processDefined = False
     
     def generateInitialNetwork(self,numberOfNodes):
+        #TO BE SUBSTITUTED ACCORDING TO BFRY PRIORS
         G = process.GammaProcess(self.alpha,self.tau,self.lamb,self.lamb_parameters,self.lamb_maximum)
-        G_measure = G.stickBreakingConstruction(numberOfNodes)
+        W, Theta  = G.stickBreakingConstruction(numberOfNodes)
+         
+        #HERE WE HAVE THE POISSON RANDOM VARIABLES
         self.old_interactions = np.zeros((numberOfNodes,numberOfNodes))
+        
+        #HERE WE HAVE THE C PROCESS
+        self.C_old1 = [poisson.rvs(self.phi*W[node_i]) for node_i in range(len(W))]
+        self.ThetaC_old1 = copy.copy(Theta)
+        
+        #THE NETWORKX GRAPH FOR PLOTTING AND REFERENCE
         self.network = nx.Graph()
         for node_i in range(numberOfNodes):
+            
             for node_j in range(numberOfNodes):
                 if node_i != node_j:
-                    self.old_interactions[node_i,node_j] = poisson.rvs(2*G_measure[0][node_i]*G_measure[0][node_j])
+                    self.old_interactions[node_i,node_j] = poisson.rvs(2*W[node_i]*W[node_j])
                     if self.old_interactions[node_i,node_j] > 0:
                         self.network.add_edge(node_i,node_j)
                 else:
-                    self.old_interactions[node_i,node_j] = poisson.rvs(G_measure[0][node_i]*G_measure[0][node_j])
+                    self.old_interactions[node_i,node_j] = poisson.rvs(W[node_i]*W[node_j])
                     if self.old_interactions[node_i,node_j] > 0:
                         self.network.add_edge(node_i,node_j)
+                        
+        #THIS GENERATES THE C PROCESS WHICH CORRESPONDS TO THE CONTINUOS PART OF THE MEASURE (EMPTY CHAIRS FOR CRP)
+        w_total_mass = gamma.rvs(self.alpha,self.tau + self.phi)
+        number_of_costumers = poisson.rvs(self.phi*w_total_mass)
+        self.ThetasC_old2, self.C_old2 = self.CRP(number_of_costumers)
+        
         return self.network
         
     def normalizedLamb(self,x):

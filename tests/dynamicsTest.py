@@ -17,15 +17,28 @@ class Test(unittest.TestCase):
         def my_omega_measure(t,*parameters):
             return np.sin(t*parameters[0])**2.
         
+        #MEASURE VARIABLES
         self.alpha = 10.
         self.tau = 1.
-        self.phi = 2.
-        self.rho = 1.
+        self.sigma = 10.
+        
+        #TO BE MODIFIED WITH POISSON MEASURES
         self.lamb = my_omega_measure
         self.lamb_parameters = (2*np.pi,)
         self.lamb_maximum = 1.
-        dynamicalNetwork = PittWalker.PallaDynamics(self.alpha,self.tau,self.phi,
-                                     self.lamb,self.lamb_parameters,self.lamb_maximum)
+        
+        #DYNAMICAL VARIABLES
+        self.phi = 2.
+        self.rho = 1.
+        
+        dynamicalNetwork = PittWalker.PallaDynamics(self.sigma,
+                                                    self.tau,
+                                                    self.alpha,
+                                                    self.phi,
+                                                    self.rho,
+                                                    self.lamb,
+                                                    self.lamb_parameters,
+                                                    self.lamb_maximum)
 
         print dynamicalNetwork.CRP(20)    
         
@@ -35,13 +48,20 @@ class Test(unittest.TestCase):
         
         self.alpha = 20.
         self.tau = 1000000000.
+        self.sigma = 20.
         self.phi = 2.
         self.rho = 1.
         self.lamb = my_omega_measure
         self.lamb_parameters = (2*np.pi,)
         self.lamb_maximum = 1.
-        dynamicalNetwork = PittWalker.PallaDynamics(self.alpha,self.tau,self.phi,self.rho,
-                                                    self.lamb,self.lamb_parameters,self.lamb_maximum)
+        dynamicalNetwork = PittWalker.PallaDynamics(self.sigma,
+                                                    self.tau,
+                                                    self.phi,
+                                                    self.rho,
+                                                    self.lamb,
+                                                    self.lamb_parameters,
+                                                    self.lamb_maximum)
+        
         network = dynamicalNetwork.generateInitialNetwork(100) 
         nx.draw(network)
         plt.show()  

@@ -51,6 +51,7 @@ class FiniteGeneralizedGamma(FiniteDimensionalProcess):
         self.sigma = sigma
         self.tau = tau
         self.lambda_measure = lambda_measure
+        self.interval_size = lambda_measure.interval_size 
         self.GenerateProcess()
         
     def GenerateProcess(self):

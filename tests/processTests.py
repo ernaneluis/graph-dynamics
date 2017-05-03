@@ -32,9 +32,11 @@ class Test(unittest.TestCase):
         
         self.alpha = 20.
         self.tau = 1000000000.
+        
         self.lamb = my_omega_measure
         self.lamb_parameters = (2*np.pi,)
         self.lamb_maximum = 1.
+        
         G = process.GammaProcess(self.alpha,self.tau,self.lamb,self.lamb_parameters,self.lamb_maximum)
         G_measure = G.stickBreakingConstruction(K=100)
         G.plotProcess()    
