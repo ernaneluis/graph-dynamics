@@ -16,7 +16,7 @@ class Test(unittest.TestCase):
     
     def generateCaronFox(self):
         
-        self.alpha = 20.
+        self.alpha = 30.
         self.tau = 1.
         self.sigma = self.alpha
         self.process_identifier_string = "GammaProcess"

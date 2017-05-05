@@ -96,7 +96,6 @@ class FiniteProcessGraphs(BayesianNetwork):
                             self.network.add_edge(node_i,node_j)
                         if self.type_of_network == 2:
                             self.network.add_edge(node_i,node_j,weight=n_ii)
-                        
         return self.network
     
     #===============================
@@ -135,7 +134,7 @@ class CaronFoxGraphs(BayesianNetwork):
         else:
             self.network = self.generateNetwork()
             
-    def generateNetwork(self,sigma_increment=0.,tau_increment=0.):
+    def generateNetwork(self,sigma_increment=0.,tau_increment=0.,table_and_costumers=None):
         """
         We generate the network according to the paper:
         
@@ -146,10 +145,9 @@ class CaronFoxGraphs(BayesianNetwork):
         self.network = nx.Graph()
         self.full_graph_measure = gamma.rvs(self.sigma+sigma_increment,self.tau+tau_increment) 
         self.number_of_arrivals =  poisson.rvs(self.full_graph_measure**2.)
-        
-        print self.number_of_arrivals
 
-        costumer_seats,Thetas,numberOfSeatedCostumers = self.measure.normalized_random_measure(self.number_of_arrivals*2)
+        costumer_seats,Thetas,numberOfSeatedCostumers = self.measure.normalized_random_measure(self.number_of_arrivals*2,
+                                                                                               table_and_costumers)
         for k in range(self.number_of_arrivals):
             Uk1 = costumer_seats[2*k]
             Uk2 = costumer_seats[2*k+1]
@@ -160,7 +158,6 @@ class CaronFoxGraphs(BayesianNetwork):
                 self.network.add_edge(Uk1,Uk2,weight=1)
 
         return self.network
-    
     #===============================
     # INFERENCE
     #===============================

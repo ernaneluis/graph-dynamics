@@ -12,7 +12,7 @@ from scipy.integrate import quadrature
 from scipy.stats import poisson, beta, expon
 from bayesian_networks.utils import functions
 from scipy.stats import gamma as gamma_distribution
-from bayesian_networks.random_measures.normalized_process import ChineseRestaurantProcess
+from bayesian_networks.random_measures.normalized_process import ChineseRestaurantProcess, ExtendedChineseRestaurantProcess
 from bayesian_networks.random_measures.datatypes import CompletlyRandomMeasures, PoissonMeasure
 
 
@@ -47,8 +47,13 @@ class GammaProcess(CompletlyRandomMeasures):
     def lambda_measure_intensity(self,theta):
         return functions.uniform_one(theta)
     
-    def normalized_random_measure(self,number_of_arrivals):
-        costumer_seats, Thetas, C = ChineseRestaurantProcess(numberOfCostumers=number_of_arrivals, lambda_measure = self.lambda_measure)
+    def normalized_random_measure(self,number_of_arrivals,table_and_costumers=None):
+        if table_and_costumers == None:
+            costumer_seats, Thetas, C = ChineseRestaurantProcess(numberOfCostumers=number_of_arrivals, lambda_measure = self.lambda_measure)
+        else:
+            costumer_seats, Thetas, C = ExtendedChineseRestaurantProcess(numberOfCostumers=number_of_arrivals, 
+                                                                         lambda_measure=self.lambda_measure,
+                                                                         tables_and_costumers=table_and_costumers)
         return (costumer_seats, Thetas, C)
     
     def stickBreakingConstruction(self,K):
