@@ -10,10 +10,10 @@ from scipy.special import gamma
 from matplotlib import pyplot as plt
 from scipy.integrate import quadrature
 from scipy.stats import poisson, beta, expon
-from bayesian_networks.utils import functions
+from graph_dynamics.utils import functions
 from scipy.stats import gamma as gamma_distribution
-from bayesian_networks.random_measures.normalized_process import ChineseRestaurantProcess, ExtendedChineseRestaurantProcess
-from bayesian_networks.random_measures.datatypes import CompletlyRandomMeasures, PoissonMeasure
+from graph_dynamics.random_measures.normalized_process import ChineseRestaurantProcess, ExtendedChineseRestaurantProcess
+from graph_dynamics.random_measures.datatypes import CompletlyRandomMeasures, PoissonMeasure
 
 
 matplotlib.rcParams['ps.useafm'] = True

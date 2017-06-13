@@ -9,8 +9,8 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
-from bayesian_networks.random_measures import process
-from bayesian_networks.networks.datatypes import CaronFoxGraphs
+from graph_dynamics.random_measures import process
+from graph_dynamics.networks.datatypes import CaronFoxGraphs
 
 class Test(unittest.TestCase):
     

@@ -4,14 +4,17 @@ Created on May 2, 2017
 @author: cesar
 '''
 
+import sys
+sys.path.append("../")
 
 import json
 import unittest
 import numpy as np
 import matplotlib.pyplot as plt
-from bayesian_networks.random_measures import finite_process
-from bayesian_networks.random_measures.datatypes import PoissonMeasure
-from bayesian_networks.random_measures.finite_process import FiniteGeneralizedGamma
+sys.path.append("../")
+from graph_dynamics.random_measures import finite_process
+from graph_dynamics.random_measures.datatypes import PoissonMeasure
+from graph_dynamics.random_measures.finite_process import FiniteGeneralizedGamma
 
 class Test(unittest.TestCase):
     

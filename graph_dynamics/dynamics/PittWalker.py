@@ -6,8 +6,8 @@ Created on Apr 17, 2017
 
 import numpy as np
 from matplotlib import pyplot as plt
-from bayesian_networks.random_measures import process
-from bayesian_networks.random_measures.normalized_process import ChineseRestaurantProcess
+from graph_dynamics.random_measures import process
+from graph_dynamics.random_measures.normalized_process import ChineseRestaurantProcess
 from scipy.stats import poisson, beta, levy_stable, expon
 from scipy.special import gamma as gamma_function
 from scipy.stats import gamma

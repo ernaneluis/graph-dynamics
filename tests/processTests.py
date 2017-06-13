@@ -4,12 +4,15 @@ Created on May 24, 2015
 @author: cesar
 '''
 
+import sys
+sys.path.append("../")
+
 import json
 import unittest
 import matplotlib.pyplot as plt
 import numpy as np
 
-from bayesian_networks.random_measures import process
+from graph_dynamics.random_measures import process
 
 class Test(unittest.TestCase):
     

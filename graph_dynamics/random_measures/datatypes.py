@@ -10,7 +10,7 @@ from collections import namedtuple
 from matplotlib import pyplot as plt
 from scipy.integrate import quadrature
 from abc import ABCMeta, abstractmethod
-from bayesian_networks.utils import functions
+from graph_dynamics.utils import functions
 
 matplotlib.rcParams['ps.useafm'] = True
 matplotlib.rcParams['text.usetex'] = True

@@ -10,9 +10,9 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 
-from bayesian_networks.dynamics import PittWalker
-from bayesian_networks.random_measures import process
-from bayesian_networks.networks.datatypes import CaronFoxGraphs
+from graph_dynamics.dynamics import PittWalker
+from graph_dynamics.random_measures import process
+from graph_dynamics.networks.datatypes import CaronFoxGraphs
 
 
 class Test(unittest.TestCase):
@@ -33,7 +33,7 @@ class Test(unittest.TestCase):
         G.plotProcess()
         self.graph_identifier = "CaronFoxTest"
         self.CaronFoxGraph = CaronFoxGraphs(self.graph_identifier,G)
-        nx.draw(self.CaronFoxGraph.network)
+        #nx.draw(self.CaronFoxGraph.network)
         plt.show()
         
         #Dynamics 

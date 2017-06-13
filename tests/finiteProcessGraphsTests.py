@@ -8,10 +8,10 @@ import json
 import unittest
 import numpy as np
 import matplotlib.pyplot as plt
-from bayesian_networks.random_measures import finite_process
-from bayesian_networks.networks.datatypes import FiniteProcessGraphs 
-from bayesian_networks.random_measures.datatypes import PoissonMeasure
-from bayesian_networks.random_measures.finite_process import FiniteGeneralizedGamma
+from graph_dynamics.random_measures import finite_process
+from graph_dynamics.networks.datatypes import FiniteProcessGraphs 
+from graph_dynamics.random_measures.datatypes import PoissonMeasure
+from graph_dynamics.random_measures.finite_process import FiniteGeneralizedGamma
 
 class Test(unittest.TestCase):
     

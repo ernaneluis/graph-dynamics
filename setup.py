@@ -33,7 +33,7 @@ setup(
 
     # Author details
     author='Cesar Ojeda, Rafet Sifa, Christian Bauckhahe',
-    author_email='Cesar.Ali.Ojeda.Marin@iais.fraunhofer.de',
+    author_email='Cesar.Ali.Ojeda.Marin@iais.fraunhofer.de, Rafet.Sifa@iais.fraunhofer.de',
     
 
     # Choose your license

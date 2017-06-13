@@ -3,6 +3,8 @@ Created on May 3, 2017
 
 @author: cesar
 '''
+
+
 import copy
 import matplotlib
 import numpy as np
@@ -38,7 +40,29 @@ class BayesianNetwork(object):
     @abstractmethod
     def generateNetwork(self):
         raise NotImplemented()
+
+#==============================================================
+#                           ABSTRACT CLASS 
+#==============================================================
+
+class OwnershipGraph(object):
+    """
+    This class is a superclass for all types of kernels (positive definite functions).
+    """
+    __metaclass__ = ABCMeta
+
+    def __init__(self,name_string,identifier_string):
+        self.name_string = name_string
+        self.identifier_string = identifier_string
+        
+    @abstractmethod
+    def inferMeasures(self):
+        raise NotImplemented()
     
+    @abstractmethod
+    def generateIndicatorMatrix(self):
+        raise NotImplemented()
+        
 #==============================================================
 #                           FINITE PROCESS 
 #==============================================================
