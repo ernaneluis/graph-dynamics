@@ -19,6 +19,36 @@ matplotlib.rcParams['ps.useafm'] = True
 matplotlib.rcParams['text.usetex'] = True
 matplotlib.rcParams['pdf.use14corefonts'] = True
 
+class Network(object):
+    """
+    """    
+    __metaclass__ = ABCMeta
+
+    def __init__(self,name_string,identifier_string):
+        self.name_string = name_string
+        self.identifier_string = identifier_string
+        
+    @abstractmethod        
+    def get_networkx(self):
+        raise NotImplemented()
+        
+    @abstractmethod      
+    def get_adjancency_matrix(self):
+        raise NotImplemented()
+
+    @abstractmethod        
+    def get_edge_list(self):
+        raise NotImplemented()
+ 
+    @abstractmethod       
+    def get_number_of_edges(self):
+        raise NotImplemented()
+
+    @abstractmethod        
+    def get_number_of_nodes(self):
+        raise NotImplemented()    
+    
+    
 #==============================================================
 #                           ABSTRACT CLASS 
 #==============================================================
