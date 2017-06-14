@@ -85,6 +85,7 @@ class GammaProcess(CompletlyRandomMeasures):
         
         self.W = copy.copy(W)
         self.Theta = copy.copy(Theta)
+        self.K = K
         return (W,Theta)
                             
     def plotProcess(self,plotName=None,saveTo=None): 

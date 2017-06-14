@@ -19,7 +19,7 @@ matplotlib.rcParams['ps.useafm'] = True
 matplotlib.rcParams['text.usetex'] = True
 matplotlib.rcParams['pdf.use14corefonts'] = True
 
-class Network(object):
+class Graph(object):
     """
     """    
     __metaclass__ = ABCMeta
@@ -48,6 +48,19 @@ class Network(object):
     def get_number_of_nodes(self):
         raise NotImplemented()    
     
+
+class CommunityGraphs(object):
+    """
+    """  
+    __metaclass__ = ABCMeta
+
+    def __init__(self,name_string,identifier_string):
+        self.name_string = name_string
+        self.identifier_string = identifier_string
+        
+    @abstractmethod        
+    def get_nodes(self):
+        raise NotImplemented()
     
 #==============================================================
 #                           ABSTRACT CLASS 
@@ -151,6 +164,7 @@ class FiniteProcessGraphs(BayesianNetwork):
                         if self.type_of_network == 2:
                             self.network.add_edge(node_i,node_j,weight=n_ii)
         return self.network
+    
     
     #===============================
     # INFERENCE
