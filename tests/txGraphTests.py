@@ -15,6 +15,7 @@ from graph_dynamics.networks.tx_graph import TxGraph
 
 class Test(unittest.TestCase):
     
+    
     def generateTxGraph(self):
 
         G = TxGraph(numberOfNodes=15,
