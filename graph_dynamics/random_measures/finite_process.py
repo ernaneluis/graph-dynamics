@@ -87,3 +87,9 @@ class FiniteGeneralizedGamma(FiniteDimensionalProcess):
         B = B - uniformVariable + 1.
         
         return ((A_inv**self.sigma)/B)**(1/self.sigma)
+
+class FiniteGeneralizedGamma(FiniteDimensionalProcess):
+    """
+    Empty class 
+    """
+   
