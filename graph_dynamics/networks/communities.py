@@ -65,4 +65,42 @@ class CommunityTodeschiniCaronGraph(Graph):
         return None
     
     def get_number_of_nodes(self):
-        return None    
+        return None
+    
+
+
+#=====================================================
+# Our research models
+#=====================================================
+
+class HierarchicalMixedMembership(Graph):
+    """
+    """
+    def __init__(self,numberOfNodes,hierarchy):
+        """
+        Parameters:
+        
+        numberOfNodes: int     
+        hierarchy: tag2hierarchy tree object
+        """
+        numberOfNodesInTree = len(hierarchy.treeHandlers.nodeNames(hierarchy))
+        nodesPerLevel = hierarchy.treeHandlers.obtainNodesPerLevel(hierarchy)
+        
+        return None
+    
+    
+    def get_networkx(self):
+        return self.nxgraph
+              
+    def get_adjancency_matrix(self):
+        return self.adjancency_matrix
+
+    def get_edge_list(self):
+        raise None
+        
+    def get_number_of_edges(self):
+        return None
+    
+    def get_number_of_nodes(self):
+        return None
+    

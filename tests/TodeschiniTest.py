@@ -29,14 +29,14 @@ class Test(unittest.TestCase):
                                  self.sigma,
                                  self.tau,
                                  self.alpha,
-                                 K=200)
+                                 K=500)
         
-        numberOfCommunities =  3
-        bK = np.ones(numberOfCommunities)*0.000001
+        numberOfCommunities =  4                                       
+        bK = np.ones(numberOfCommunities)*0.0000001
         #bK[:int(numberOfCommunities*0.5)] = bK[:int(numberOfCommunities*0.5)]*
         aK = np.ones(numberOfCommunities)*0.01
         #aK[:int(numberOfCommunities*0.5)] = aK[:int(numberOfCommunities*0.5)]*20 
-        gammaK = np. ones(numberOfCommunities)*0.000001
+        gammaK = np. ones(numberOfCommunities)*0.0000001
         #gammaK[:int(numberOfCommunities*0.5)] = gammaK[:int(numberOfCommunities*0.5)]*2 
         
         T = CommunityTodeschiniCaronGraph("Test",
