@@ -30,6 +30,7 @@ class Test(unittest.TestCase):
                                  self.tau,
                                  self.alpha,
                                  K=100)
+        
         G.plotProcess()
         self.graph_identifier = "CaronFoxTest"
         self.CaronFoxGraph = CaronFoxGraphs(self.graph_identifier,G)
@@ -42,7 +43,7 @@ class Test(unittest.TestCase):
         
         Palla = PittWalker.PallaDynamics(self.phi,self.rho,self.CaronFoxGraph)
         #C_TimeSeries = Palla.generateHiddenPath(10)
-        Networks_TimeSeries = Palla.generateNetworkPaths(10)
+        Networks_TimeSeries = Palla.generateNetworkPaths_1(10)
         
 if __name__ == '__main__':
     import sys;sys.argv = ['','Test.generateHiddenPaths']

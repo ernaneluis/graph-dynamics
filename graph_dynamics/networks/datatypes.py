@@ -66,7 +66,7 @@ class CommunityGraphs(object):
 #                           ABSTRACT CLASS 
 #==============================================================
 
-class BayesianNetwork(object):
+class BayesianGraph(object):
     """
     This class is a superclass for all types of kernels (positive definite functions).
     """
@@ -110,7 +110,7 @@ class OwnershipGraph(object):
 #                           FINITE PROCESS 
 #==============================================================
     
-class FiniteProcessGraphs(BayesianNetwork):
+class FiniteProcessGraphs(BayesianGraph):
     """
     This class is a superclass for all types of kernels (positive definite functions).
     """
@@ -123,7 +123,7 @@ class FiniteProcessGraphs(BayesianNetwork):
         self.type_of_network = type_of_network
         self.identifier_string = identifier_string
         
-        BayesianNetwork.__init__(self,self.name_string,self.identifier_string)
+        BayesianGraph.__init__(self,self.name_string,self.identifier_string)
         if network != None:
             print "Network Given"
             self.inferMeasure()
@@ -176,7 +176,7 @@ class FiniteProcessGraphs(BayesianNetwork):
 #                           CARON FOX 
 #==============================================================
 
-class CaronFoxGraphs(BayesianNetwork):
+class CaronFoxGraphs(BayesianGraph):
     """
     This class is a superclass for all types of kernels (positive definite functions).
     """
@@ -195,7 +195,7 @@ class CaronFoxGraphs(BayesianNetwork):
         self.measure = randomMeasure
         self.identifier_string = identifier_string
          
-        BayesianNetwork.__init__(self,self.name_string,self.identifier_string)
+        BayesianGraph.__init__(self,self.name_string,self.identifier_string)
         if network != None:
             print "Network Given"
             self.inferMeasure()
@@ -212,7 +212,7 @@ class CaronFoxGraphs(BayesianNetwork):
         """
         self.network = nx.Graph()
         self.full_graph_measure = gamma.rvs(self.sigma+sigma_increment,self.tau+tau_increment) 
-        self.number_of_arrivals =  poisson.rvs(self.full_graph_measure**2.)
+        self.number_of_arrivals =  poisson.rvs(self.full_graph_measure**2.) # THIS CORRESPONDS TO d_t^*
 
         costumer_seats,Thetas,numberOfSeatedCostumers = self.measure.normalized_random_measure(self.number_of_arrivals*2,
                                                                                                table_and_costumers)
