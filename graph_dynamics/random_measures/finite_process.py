@@ -108,7 +108,7 @@ class FiniteStableBeta(FiniteDimensionalProcess):
     \rho(dw) = \frac{\Gamma(1+ c)}{\Gamma(1 - \sigma)\Gamma(c + \sigma)}w^{-1-\sigma} (1-w)^{c+\sigma-1} dw
     $$$
     """
-     def __init__(self,identifier_string,K,sigma,lambda_measure):
+    def __init__(self,identifier_string,K,sigma,lambda_measure):
         """
         Constructor
         
