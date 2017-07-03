@@ -25,6 +25,16 @@ from graph_dynamics.networks.tx_graph import TxGraph
 class TxDynamics(GraphsDynamics):
     
     def __init__(self, initial_graph, number_of_connections):
+        """
+          Constructor
+
+          Parameters
+
+            TxGraph initial_graph:            initial state of a TxGraph instance
+            int     number_of_connections:    max number of connections/edges a node can do
+
+        """
+
         name_string = "GammaProcess"
         type_of_dynamics = "SnapShot"
         GraphsDynamics.__init__(self, initial_graph, type_of_dynamics, number_of_connections)
@@ -35,7 +45,15 @@ class TxDynamics(GraphsDynamics):
 
 
     def generate_graphs_series(self,number_of_steps,output_type):
+        """
+          Method
 
+          Parameters
+
+            int     number_of_steps:   Total time steps to perform dynamics
+            string  output_type:
+
+        """
         
         graph_series = [self.GRAPH]
         for T in range(1,number_of_steps):
