@@ -88,8 +88,51 @@ class FiniteGeneralizedGamma(FiniteDimensionalProcess):
         
         return ((A_inv**self.sigma)/B)**(1/self.sigma)
 
-class FiniteGeneralizedGamma(FiniteDimensionalProcess):
+class FiniteStableBeta(FiniteDimensionalProcess):
     """
-    Empty class 
+    Here we Implement a Stable beta Process of the Form
+    
+    $$
+    \mu_{K}(\cdot) = \sum^{K}_{k=1} W_k \delta_{\theta_k}
+    $$
+    
+    Which is an approximation for the Generalized Gamma Process 
+    
+    With Levy measure
+    $$ 
+    \nu(dw,d\theta) = \rho(dw)\lambda(\theta)
+    $$
+    
+    And the Jump Measure
+    $$
+    \rho(dw) = \frac{\Gamma(1+ c)}{\Gamma(1 - \sigma)\Gamma(c + \sigma)}w^{-1-\sigma} (1-w)^{c+\sigma-1} dw
+    $$$
     """
-   
+    def __init__(self,identifier_string,K,sigma,lambda_measure):
+        """
+        Constructor
+        
+        Parameters
+        
+        identifier_string: string to identify object
+        K: number of atoms generated 
+        
+        """
+        self.name_string = "FiniteStableBetaProcess"
+        self.identifier_string = identifier_string
+        FiniteDimensionalProcess.__init__(self,self.name_string,identifier_string,K)
+        self.sigma = sigma
+        self.lambda_measure = lambda_measure
+        self.interval_size = lambda_measure.interval_size 
+        self.GenerateProcess()
+
+    def GenerateProcess(self):
+        G = np.random.gamma(1-self.sigma,1.,size=self.K)
+        B = np.random.beta(self.sigma,1.,size=self.K)
+        SB = G/B # Here I generate K variables \sim BFRY(sigma)
+        Exp = -1/self.sigma
+        Fact =(self.sigma*self.K)**Exp
+        S = [s * Fact for s in SB] # Here I make them into \sim BFRY(1/K,sigma)
+        self.J=[s/(s+1) for s in S] # Here I make them into the J's in Eq 15 of Lee, James and Choi
+        self.Theta = self.lambda_measure.generate_points(self.K) 
+         

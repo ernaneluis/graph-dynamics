@@ -16,6 +16,19 @@ import time
 class TxGraph():
         
         def __init__(self, numberOfNodes, activity_gamma, rescaling_factor, threshold_min, delta_t):
+            """
+              Constructor
+
+              Parameters
+
+                int     numberOfNodes:     to specify number of nodes of the graph
+                float   activity_gamma:    alpha value of pareto distribution formula
+                int     rescaling_factor:  number which scales the activity potential
+                float   threshold_min:     set the min values of the activity potential from the pareto distribution
+                int     delta_t:           time gap
+
+            """
+
             ######################### config variables #########################
             
             # creating graph
