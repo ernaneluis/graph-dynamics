@@ -48,6 +48,8 @@ class MFRecsys(baserecsys.BaseRecommender):
             a numpy based eigenvector decomposition
             the function returns the sorted eigenvectors and eignevalues
             with respect to the eigenvectors
+
+            @return a tuple containing the sorted eigen-values, eigen-vectors
         '''
         eig_values, eig_col_vectors = LA.eigh(G) #eigenvector decomposition for the hermitian matrices!
         sortedinds = np.argsort(eig_values)[::-1]
@@ -63,7 +65,8 @@ class MFRecsys(baserecsys.BaseRecommender):
             where U left singular matrix (column orthonormal)
                   S contains the singular values(positive)
                   V is the right singular matrix (column orthonormal)
-
+        
+            returns U,S,V
 
         '''
 

@@ -23,10 +23,12 @@ class Test(unittest.TestCase):
     
     def trainALS(self):
 
+        #create a dummy dataset
         # Harry Potter, Avatar, LOTR 3, Gladiator, Titanic, and Glitter
         traindat=np.array([[1,1,1,0,0,0],[1,0,1,0,0,0],[1,1,1,0,0,0],[0,0,1,1,1,0], [0,0,1,1,0,0],[0,0,1,1,1,0]])
 
         pathToResults="/tmp/recsys_test_folder/"
+        #considering a unix system
         os.system("rm -rf {0}".format(pathToResults))
         recommenderModule=mf.MFRecsys()
 
