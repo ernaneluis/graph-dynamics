@@ -15,6 +15,7 @@ sys.path.append("../")
 from graph_dynamics.random_measures import finite_process
 from graph_dynamics.random_measures.datatypes import PoissonMeasure
 from graph_dynamics.random_measures.finite_process import FiniteGeneralizedGamma
+from graph_dynamics.random_measures.finite_process import FiniteStableBeta
 
 class Test(unittest.TestCase):
     
@@ -61,6 +62,21 @@ class Test(unittest.TestCase):
         
         self.FGG.PlotProcess(plotName="{0}.pdf", saveTo="../", showPlot=True)
         
+
+    def generateFiniteStableBeta(self):
+        self.identifier_string = "FSBP Test"
+        self.K = 20.
+        self.sigma = 0.5
+        self.alpha = 10.2
+        self.lambdaMeasure = PoissonMeasure(self.alpha,identifier_string="LambdaMeasure",K=self.K)
+        
+        self.FSB = FiniteStableBeta(self.identifier_string,
+                                          self.K,
+                                          self.sigma,
+                                          self.lambdaMeasure)
+        
+        self.FSB.PlotProcess(plotName="{0}.pdf", saveTo="../", showPlot=True)
+
 if __name__ == '__main__':
-    import sys;sys.argv = ['','Test.generatePoissonMeasure','Test.generateFiniteGeneralizedGamma']
+    import sys;sys.argv = ['','Test.generatePoissonMeasure','Test.generateFiniteGeneralizedGamma','Test.generateFiniteStableBeta']
     unittest.main()
