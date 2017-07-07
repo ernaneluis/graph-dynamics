@@ -3,18 +3,23 @@ Created on Jun 13, 2017
 
 @author: cesar
 '''
-from tag2hierarchy import hierarchy
 import numpy as np
+from tag2hierarchy import hierarchy
+from tag2hierarchy.hierarchy import treeHandlers
 
-def hierarchicalErdosRenyi(numberOfNodes,hierarchy):
+def communitiesPerHierarchyLevel(HMM):
     """
-    
     Parameters:
-    
-    numberOfNodes: int     
-    hierarchy: tag2hierarchy tree object
+        HMM: HIerarchical Graph Class
+    Returns:
+        levelsPartition: dictionary per level with each community assignment
     """
-    numberOfNodesInTree = len(hierarchy.treeHandlers.nodeNames(hierarchy))
-    nodesPerLevel = hierarchy.treeHandlers.obtainNodesPerLevel(hierarchy)
-    
-    return None
+    nodesPerLevel = treeHandlers.obtainNodesPerLevel(HMM.hierarchy)
+    levels = nodesPerLevel.keys()
+    levelsPartition = {level:{k:0 for k in nodesPerLevel[level]} for level in levels}
+    for level in levels:
+        nodes_in_level = nodesPerLevel[level]
+        for node in nodes_in_level:
+            levelsPartition[level][node] = treeHandlers.obtainNodeCargo(HMM.hierarchy,node)['NodesInCommunity']
+    return levelsPartition
+

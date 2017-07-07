@@ -18,7 +18,17 @@ matplotlib.rcParams['pdf.use14corefonts'] = True
 
 class CompletlyRandomMeasures(object):
     """
-    This class is a superclass for all types of kernels (positive definite functions).
+    This class is a superclass for all the completely random measures
+    
+    the CRM take the following form
+    
+    $$
+    W = \sum^{\infty}_{i=1}w_i\delta_{\theta_i}
+    $$
+
+    Where $(w_i,\theta_i)_{i\in \mathbb{N}}$ are the points of a Poisson point process on $\mathbb{R}^2_{+}$ 
+    with mean (or L\'evy measure) $\nu(dw,d\theta) = \rho(dw)\lambda(d\theta)$. 
+    The measure $\rho$ is referred to as the jump part of the L\'evy measure. We denote this process as $W \sim CRM(\rho,\lambda)$
     """
     __metaclass__ = ABCMeta
 
@@ -44,22 +54,52 @@ class FiniteDimensionalProcess(object):
     Here we follow the paper 
     
     Finite Dimensional BFRY Priors and Variational Bayesian Inference 
-    for Power Law Models
+    for Power Law Models, to generate measures of the form 
+    
+    $$
+    W = \sum^{K}_{i=1}w_i\delta_{\theta_i}
+    $$
     
     We use the notation from Caron, since we expect to use these methods for
     graphs and matrices
     
+    
     """
     def __init__(self,name_string,identifier_string,K):
+        """
+        Constructor of the measure
+            name_string: string
+                name of the measure
+            identifier_string:
+                name of the realization of the measure (one such realization is obtained calling )
+            K: int 
+                number of atoms which approximate the measure
+        """
         self.K = K
         self.name_string = name_string
         self.identifier_string = identifier_string
         self.processDefined = False
         
-    def GenerateProcess(self):
+    def GenerateMeasure(self):
+        """
+        Here we create the measure i.e. we generate the atoms 
+        
+        $$
+        W = \sum^{K}_{i=1}w_i\delta_{\theta_i}
+        $$
+        
+        Returns
+        -------
+            (self.W,self.Theta)
+            
+            self.W: list of floats
+                    [w_i]
+            self.Theta
+                    [\theta_i]        
+        """
         raise NotImplemented()
     
-    def GenerateNormalizedProcess(self):
+    def GenerateNormalizedMeasure(self):
         raise NotImplemented
     
     def measure(self,x0,xf):

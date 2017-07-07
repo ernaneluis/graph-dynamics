@@ -3,9 +3,6 @@ Created on Jun 9, 2017
 
 @author: cesar
 '''
-
-
-
 import snap
 import math
 import time
@@ -71,9 +68,6 @@ class ForestFire(GraphsDynamics):
         self.timeSeriesOfNodes = timeSeriesOfNodes 
     
     def generate_graphs_series(self,number_of_steps,output_type=list):
-        """
-        """
-        
         snap_graph = snap_handlers.nx_to_snap(self.initial_graph)
         graph_series = [snap_handlers.snap_to_nx(snap_graph)]
         numberOfNodes = graph_series[0].number_of_nodes()
@@ -91,10 +85,9 @@ class ForestFire(GraphsDynamics):
         
         return graph_series
     
-    
     def define_graphs_series(self,graphs_paths,output_type,dynamical_process):
         return None
-    
+
 #==========================================================================
 # BITCOIN DYNAMICS
 #==========================================================================

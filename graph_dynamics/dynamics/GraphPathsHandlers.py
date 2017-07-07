@@ -9,7 +9,7 @@ import networkx as nx
 def staticGraphInducedBySeries(graph_paths):
     """
     This function creates the static graph induced from the graph series
-    
+    by aggregating all the edges in one graph
     """
     static_graph = nx.Graph()
     for graph_t in graph_paths:
@@ -20,6 +20,7 @@ def temporalGraphFromSeries(graph_paths):
     """
     This function creates temporal graph where
     """
+    #TO DO: time in and time out should be a list, since the same edge can appear and disappear, TAKE NOTICE
     temporal_graph = nx.Graph()
     graph_0 = graph_paths[0]
     temporal_graph.add_edges_from(graph_0.edges(),time_in=0)
@@ -40,7 +41,4 @@ def temporalGraphFromSeries(graph_paths):
 
 
 def seriesFromTemporalGraph(temporal_graph):
-    """
-    
-    """
     return None
