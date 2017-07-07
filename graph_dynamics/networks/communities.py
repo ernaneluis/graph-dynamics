@@ -99,7 +99,7 @@ class HierarchicalMixedMembership(Graph):
         
         prior_dirichlet: float
             this will define the proportion of nodes in a given community belongs to the children community
-            which is nested in the 
+            which is nested in the tree
         """
         #self.numberOfNodesInTree = len(hierarchy.treeHandlers.nodeNames(hierarchy))
         #self.nodesPerLevel = hierarchy.treeHandlers.obtainNodesPerLevel(hierarchy)
@@ -145,6 +145,7 @@ class HierarchicalMixedMembership(Graph):
                 #
                 self.P[np.array(NodesInChildren)[:,np.newaxis],np.array(NodesInChildren)] = \
                 self.P[np.array(NodesInChildren)[:,np.newaxis],np.array(NodesInChildren)]*self.p_0
+                #(treeHandlers.obtainMyLevel(node.children[j])+1)
                 
                 indexSum += indexS
             j = len(indexStart)-1

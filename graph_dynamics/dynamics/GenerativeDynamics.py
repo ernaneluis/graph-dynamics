@@ -6,7 +6,7 @@ Created on Jun 9, 2017
 
 
 
-
+import snap
 import math
 import time
 import pylab
@@ -18,13 +18,100 @@ from scipy.stats import pareto, norm, bernoulli
 import copy
 
 from graph_dynamics.dynamics.datatypes import GraphsDynamics
-
-
 from graph_dynamics.networks.tx_graph import TxGraph
+from graph_dynamics.utils import snap_handlers
+
+#==========================================================================
+# FOREST FIRE
+#==========================================================================
+
+class ForestFire(GraphsDynamics):
+    """
+    This is a wrapper for the snap function Forest Fire
+    
+    """
+    def __init__(self, initial_graph,
+                 BurnExpFireP,StartNNodes,ForwBurnProb,
+                 BackBurnProb,DecayProb,Take2AmbasPrb,OrphanPrb,timeSeriesOfNodes):
+        """
+        initial_graph: networkx graph
+        
+        BurnExpFireP: bool
+        
+        StartNNodes: int
+        
+        ForwBurnProb: double
+        
+        BackBurnProb: double
+        
+        DecayProb: double
+        
+        Take2AmbasPrb: double
+        
+        OrphanPrb: double
+        
+        timeSeriesOfNodes: numpy array
+            the number of new nodes per time step
+        """
+        type_of_dynamics = "snap_shot"
+        GraphsDynamics.__init__(self, initial_graph, type_of_dynamics, None)
+        self.initial_graph = initial_graph
+        
+        self.ff = snap.TFfGGen(BurnExpFireP,StartNNodes,ForwBurnProb,
+                          BackBurnProb,DecayProb,Take2AmbasPrb,OrphanPrb)
+        
+        self.BurnExpFireP = BurnExpFireP
+        self.StartNNodes = StartNNodes
+        self.ForwBurnProb = ForwBurnProb
+        self.BackBurnProb = BackBurnProb
+        self.DecayProb = DecayProb
+        self.Take2AmbasPrb = Take2AmbasPrb
+        self.OrphanPrb = OrphanPrb
+        
+        self.timeSeriesOfNodes = timeSeriesOfNodes 
+    
+    def generate_graphs_series(self,number_of_steps,output_type=list):
+        """
+        """
+        
+        snap_graph = snap_handlers.nx_to_snap(self.initial_graph)
+        graph_series = [snap_handlers.snap_to_nx(snap_graph)]
+        numberOfNodes = graph_series[0].number_of_nodes()
+        
+        if number_of_steps == len(self.timeSeriesOfNodes):
+            if output_type == list:
+                for j, number_of_new_nodes in enumerate(self.timeSeriesOfNodes):
+                    numberOfNodes += number_of_new_nodes
+                    self.ff.SetGraph(snap_graph)
+                    self.ff.AddNodes(int(numberOfNodes), True)
+                    graph_series.append(snap_handlers.snap_to_nx(snap_graph))
+        else:
+            print "Number of steps for series not match nodes time series"
+            raise Exception
+        
+        return graph_series
+    
+    
+    def define_graphs_series(self,graphs_paths,output_type,dynamical_process):
+        return None
+    
+#==========================================================================
+# BITCOIN DYNAMICS
+#==========================================================================
 
 class TxDynamics(GraphsDynamics):
     
     def __init__(self, initial_graph, number_of_connections):
+        """
+          Constructor
+
+          Parameters
+
+            TxGraph initial_graph:            initial state of a TxGraph instance
+            int     number_of_connections:    max number of connections/edges a node can do
+
+        """
+
         name_string = "GammaProcess"
         type_of_dynamics = "SnapShot"
         GraphsDynamics.__init__(self, initial_graph, type_of_dynamics, number_of_connections)
@@ -35,7 +122,15 @@ class TxDynamics(GraphsDynamics):
 
 
     def generate_graphs_series(self,number_of_steps,output_type):
+        """
+          Method
 
+          Parameters
+
+            int     number_of_steps:   Total time steps to perform dynamics
+            string  output_type:
+
+        """
         
         graph_series = [self.GRAPH]
         for T in range(1,number_of_steps):
