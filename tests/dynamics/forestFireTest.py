@@ -45,7 +45,7 @@ class Test(unittest.TestCase):
                                                  OrphanPrb,
                                                  timeSeriesOfNodes)
         
-        graph_paths = dynamics.generate_graphs_series(10)
+        graph_paths = dynamics.generate_graphs_paths(10)
         #static_graph = GraphPathsHandlers.staticGraphInducedBySeries(graph_paths)
         #temporal_graph = GraphPathsHandlers.temporalGraphFromSeries(graph_paths)
         graph_paths_visualization.plotGraphPaths(graph_paths, "forest_fire")

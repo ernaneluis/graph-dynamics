@@ -42,8 +42,8 @@ class Test(unittest.TestCase):
                                                  "OrphanPrb": 0.},
                                               1:{"BurnExpFireP":False,
                                                  "StartNNodes":1,
-                                                 "ForwBurnProb":0.2,
-                                                 "BackBurnProb":0.32,
+                                                 "ForwBurnProb":0.7,
+                                                 "BackBurnProb":0.72,
                                                  "DecayProb":1.0,
                                                  "Take2AmbasPrb":0.,
                                                  "OrphanPrb": 0.},
@@ -56,15 +56,15 @@ class Test(unittest.TestCase):
                                                  "OrphanPrb": 0.},
                                               3:{"BurnExpFireP":False,
                                                  "StartNNodes":1,
-                                                 "ForwBurnProb":0.2,
-                                                 "BackBurnProb":0.32,
+                                                 "ForwBurnProb":0.7,
+                                                 "BackBurnProb":0.72,
                                                  "DecayProb":1.0,
                                                  "Take2AmbasPrb":0.,
                                                  "OrphanPrb": 0.}}
         
         numberOfCommunitiesAndNoise = len(forest_fire_communities_parameters.keys())
                 
-        numberOfSteps = 10
+        numberOfSteps = 24
         #back ground evolution
         timeSeriesCommunity0 = np.ones(numberOfSteps)*2
         timeSeriesCommunity0[0] = 0
@@ -100,10 +100,11 @@ class Test(unittest.TestCase):
                                                                        forest_fire_communities_parameters,
                                                                        timeSeriesOfCommunities)
 
-        graph_series, relabeling, initial_relabeling = dynamics.generate_graphs_series(numberOfSteps)
+        graph_series, relabeling, initial_relabeling = dynamics.generate_graphs_paths(numberOfSteps)
         community_colors =  {c:colors[i] for i,c in enumerate(timeSeriesOfCommunities.keys())}
         
-        graph_paths_visualization.plotGraphPathsCommunities(graph_series[0],
+        fig, ax = plt.subplots(1,1,figsize=(24,12))
+        graph_paths_visualization.plotGraphPathsCommunities(ax,graph_series[0],
                                                             dynamics.full_membership,
                                                             community_colors, 
                                                             series_name="community_ff")

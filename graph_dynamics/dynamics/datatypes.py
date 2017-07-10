@@ -20,39 +20,21 @@ class GraphsDynamics(object):
         self.type_of_dynamics = type_of_dynamics
 
     @abstractmethod
-    def generate_graphs_series(self,number_of_steps,output_type):
+    def generate_graphs_paths(self,number_of_steps,output_type,keep_path_in_memory=True):
         """
-        Applies the kernel function on every pair of data points between :param x and :param x1.
-
-        In case when :param x1 is None the kernel is applied on every pair of points in :param x.
-        :param x: first set of points
-        :param x1: second set of points
-        :return: distance between every two points
         """
         raise NotImplemented()
 
     @abstractmethod
-    def define_graphs_series(self,graphs_paths,output_type,dynamical_process=None):
+    def inference_on_graphs_paths(self,graphs_paths,output_type,dynamical_process=None):
         """
-        Applies the kernel function on every pair of data points between :param x and :param x1.
-
-        In case when :param x1 is None the kernel is applied on every pair of points in :param x.
-        :param x: first set of points
-        :param x1: second set of points
-        :return: distance between every two points
         """
         raise NotImplemented()    
     
     #===============================================
     # For everyone
     #===============================================
-    def macrostates_series(self,T,macrostate):
+    def macrostates_series(self,T,macrostate,macrostate_string):
         """
-        Applies the kernel function on every pair of data points between :param x and :param x1.
-
-        In case when :param x1 is None the kernel is applied on every pair of points in :param x.
-        :param x: first set of points
-        :param x1: second set of points
-        :return: distance between every two points
         """
         return None

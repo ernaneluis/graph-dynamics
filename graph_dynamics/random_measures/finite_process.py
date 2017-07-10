@@ -153,4 +153,4 @@ class FiniteStableBeta(FiniteDimensionalProcess):
         S = [s * Fact for s in SB] # Here I make them into \sim BFRY(1/K,sigma)
         self.W=[s/(s+1) for s in S] # Here I make them into the J's in Eq 15 of Lee, James and Choi
         self.Theta = self.lambda_measure.generate_points(self.K) 
-        self.W_complete
+        self.W_complete = sum(self.W)

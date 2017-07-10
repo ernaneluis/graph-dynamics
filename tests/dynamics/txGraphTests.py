@@ -28,7 +28,7 @@ class Test(unittest.TestCase):
 
         dynamics = TxDynamics(initial_graph=G, number_of_connections=2)
 
-        series = dynamics.generate_graphs_series(number_of_steps=5, output_type="t")
+        series = dynamics.generate_graphs_paths(number_of_steps=5, output_type="t")
 
         # good for small nodes
         position = nx.shell_layout(G.network)

@@ -65,7 +65,7 @@ class Test(unittest.TestCase):
 
     def generateFiniteStableBeta(self):
         self.identifier_string = "FSBP Test"
-        self.K = 20.
+        self.K = 20
         self.sigma = 0.5
         self.alpha = 10.2
         self.lambdaMeasure = PoissonMeasure(self.alpha,identifier_string="LambdaMeasure",K=self.K)

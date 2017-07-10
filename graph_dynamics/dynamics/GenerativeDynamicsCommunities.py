@@ -87,7 +87,7 @@ class CommunitiesForestFire(GraphsDynamics):
         self.timeSeriesOfCommunities = timeSeriesOfCommunities
         self.initial_communities = initial_communities
         
-    def generate_graphs_series(self,number_of_steps,output_type=list):
+    def generate_graphs_paths(self,number_of_steps,output_type=list):
         
         #time series full 
         fullTimeSeriesStack = np.array([self.timeSeriesOfCommunities[c] for c in range(0,self.numberOfCommunitiesAndNoise)])
@@ -158,7 +158,7 @@ class CommunitiesForestFire(GraphsDynamics):
         return graph_series, relabeling, initial_relabeling
     
     
-    def define_graphs_series(self,graphs_paths,output_type,dynamical_process):
+    def inference_on_graphs_paths(self,graphs_paths,output_type,dynamical_process):
         return None
     
     #==============================================

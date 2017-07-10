@@ -6,6 +6,7 @@ Created on May 3, 2017
 
 
 import copy
+import cPickle
 import matplotlib
 import numpy as np
 from networkx import nx
@@ -14,6 +15,7 @@ from matplotlib import pyplot as plt
 from scipy.integrate import quadrature
 from scipy.stats import poisson, gamma
 from abc import ABCMeta, abstractmethod
+from _pyio import __metaclass__
 
 matplotlib.rcParams['ps.useafm'] = True
 matplotlib.rcParams['text.usetex'] = True
@@ -90,7 +92,9 @@ class BayesianGraph(object):
 
 class OwnershipGraph(object):
     """
-    This class is a superclass for all types of kernels (positive definite functions).
+    This class is a superclass for bipartite graph define as
+    costumer-product relationships, initially we except to 
+    use these class for recommender systems
     """
     __metaclass__ = ABCMeta
 
@@ -105,7 +109,50 @@ class OwnershipGraph(object):
     @abstractmethod
     def generateIndicatorMatrix(self):
         raise NotImplemented()
+
+#==============================================================
+#                           ABSTRACT CLASS 
+#==============================================================
+
+class FromFileGraph(object):
+    """
+    This class is a superclass for all types of kernels (positive definite functions).
+    """
+    __metaclass__ = ABCMeta
+
+    def __init__(self,name_string,identifier_string,graph_files_folder,graph_file_string):
+        self.name_string = name_string
+        self.identifier_string = identifier_string
         
+
+class CryptocurrencyGraphs(FromFileGraph):
+    __metaclass__ = ABCMeta
+    def __init__(self,identifier_string,graph_files_folder,graph_file_string,data_file_string,time_index):
+        self.name_string = "CryptoCurrencies"
+        self.identifier_string = identifier_string
+        self.graph_file_string = graph_file_string
+        self.graph_files_folder = graph_files_folder
+        self.data_file_string = data_file_string
+        self.time_index = time_index 
+        
+        FromFileGraph.__init__(self,self.name_string,identifier_string,graph_files_folder,graph_file_string)
+        
+        self.networkx_graph = nx.read_edgelist(self.graph_files_folder+graph_file_string.format(self.time_index))
+        ALL_DATA = cPickle.load(open(self.graph_files_folder+data_file_string.format(time_index),"r"))
+        
+        self.node_data = {}
+        for node_index, node_d in enumerate(ALL_DATA):
+            self.node_data[node_index] = {'cryptocurrency':node_d['cryptocurrency'],
+                                          'DATAFRAME_FIT':node_d['DATAFRAME_FIT'],
+                                          'AV_DATEOFCRASH':node_d['AV_DATEOFCRASH'],
+                                          'STD_DATEOFCRASH':node_d[ 'STD_DATEOFCRASH']}
+            
+    def ecosystem_crash(self):
+        self.ecosystem_crash = {}
+        for node_index, node_d in self.node_data.iteritems():
+            self.ecosystem_crash[node_d['cryptocurrency']] = node_d['AV_DATEOFCRASH']
+        return self.ecosystem_crash
+    
 #==============================================================
 #                           FINITE PROCESS 
 #==============================================================

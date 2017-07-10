@@ -41,7 +41,7 @@ def whichCommunity(community_membership):
     which_community = dict(zip(np.concatenate(nodes_list),np.concatenate(communities_list)))
     return which_community 
 
-def plotGraphPaths(ax,graph_series,series_name="graph_series",show=True,plot_dir=None,series_type="list",colors=None):
+def plotGraphPaths(graph_series,series_name="graph_series",show=True,plot_dir=None,series_type="list",colors=None):
     """
     Simple plot 
     
@@ -56,14 +56,11 @@ def plotGraphPaths(ax,graph_series,series_name="graph_series",show=True,plot_dir
     static_graph = GraphPathsHandlers.staticGraphInducedBySeries(graph_series)
     position = nx.spring_layout(static_graph)
     
-    print "Full position for the dynamics ready"
-    print "Total number of edges in whole paths history: {0} ".format(static_graph.number_of_edges())
-    
     R = np.array(position.values())
     deltaX = abs(max(R[:,0]) - min(R[:,0]))
     deltaY = abs(max(R[:,1]) - min(R[:,1]))
     
-    ax.set_title(series_name.format(0))
+    fig, ax = plt.subplots(1,1,figsize=(12, 14))
     ax.set_xlim(min(R[:,0])-padding*deltaX,max(R[:,0])+padding*deltaX)
     ax.set_ylim(min(R[:,1])-padding*deltaY,max(R[:,1])+padding*deltaY)
     nx.draw_networkx(graph_series[0], position,axis=ax,with_labels=False)
@@ -76,10 +73,9 @@ def plotGraphPaths(ax,graph_series,series_name="graph_series",show=True,plot_dir
     
     if show:
         pylab.ion()
-    for time_index in range(1,T):
+    for i in range(1,T):
         if series_type == "list":
-            ax.set_title(series_name.format(time_index))
-            nx.draw_networkx(graph_series[time_index], position,axis=ax,with_labels=False)
+            nx.draw_networkx(graph_series[i], position,axis=ax,with_labels=False)
             if show:
                 pause(0.2)
             if plot_dir != None:
@@ -89,13 +85,12 @@ def plotGraphPaths(ax,graph_series,series_name="graph_series",show=True,plot_dir
             raise Exception
 
 
-def plotGraphPathsCommunities(ax,graph_series,community_membership,community_colors,series_name="graph_series",show=True,plot_dir=None,series_type="list",colors=None):
+def plotGraphPathsCommunities(graph_series,community_membership,community_colors,series_name="graph_series",show=True,plot_dir=None,series_type="list",colors=None):
     """
     Simple plot 
     
     Parameters
-        ax: matplotlib ax
-        
+    
         graph_series: list of networkx objects
         
         plot_dir: string
@@ -117,11 +112,11 @@ def plotGraphPathsCommunities(ax,graph_series,community_membership,community_col
     deltaX = abs(max(R[:,0]) - min(R[:,0]))
     deltaY = abs(max(R[:,1]) - min(R[:,1]))
     
-    
+    fig, ax = plt.subplots(1,1,figsize=(12, 14))
     ax.set_xlim(min(R[:,0])-padding*deltaX,max(R[:,0])+padding*deltaX)
     ax.set_ylim(min(R[:,1])-padding*deltaY,max(R[:,1])+padding*deltaY)
     
-    nx.draw_networkx(graph_series[0], position,axis=ax,node_color=node_color_list,with_labels=False)
+    nx.draw_networkx(graph_series[0], position,axis=ax,node_color=node_color_list)
 
     print "#==============================================="
     print "# PRINTING GRAPH SERIES"
@@ -133,7 +128,7 @@ def plotGraphPathsCommunities(ax,graph_series,community_membership,community_col
         pylab.ion()
     for i in range(1,T):
         if series_type == "list":
-            nx.draw_networkx(graph_series[i], position,axis=ax,node_color=node_color_list, with_labels=False)
+            nx.draw_networkx(graph_series[i], position,axis=ax,node_color=node_color_list)
             if show:
                 pause(0.2)
             if plot_dir != None:

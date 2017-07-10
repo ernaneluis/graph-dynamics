@@ -67,7 +67,7 @@ class ForestFire(GraphsDynamics):
         
         self.timeSeriesOfNodes = timeSeriesOfNodes 
     
-    def generate_graphs_series(self,number_of_steps,output_type=list):
+    def generate_graphs_paths(self,number_of_steps,output_type=list):
         snap_graph = snap_handlers.nx_to_snap(self.initial_graph)
         graph_series = [snap_handlers.snap_to_nx(snap_graph)]
         numberOfNodes = graph_series[0].number_of_nodes()
@@ -85,7 +85,7 @@ class ForestFire(GraphsDynamics):
         
         return graph_series
     
-    def define_graphs_series(self,graphs_paths,output_type,dynamical_process):
+    def inference_on_graphs_paths(self,graphs_paths,output_type,dynamical_process):
         return None
 
 #==========================================================================
@@ -114,7 +114,7 @@ class TxDynamics(GraphsDynamics):
         self.number_of_connections = number_of_connections
 
 
-    def generate_graphs_series(self,number_of_steps,output_type):
+    def generate_graphs_paths(self,number_of_steps,output_type):
         """
           Method
 
@@ -149,7 +149,7 @@ class TxDynamics(GraphsDynamics):
         return copy.deepcopy(self.GRAPH)
 
 
-    def define_graphs_series(self,graphs_paths,output_type,dynamical_process=None):
+    def inference_on_graphs_paths(self,graphs_paths,output_type,dynamical_process=None):
         """
         """
         return None
