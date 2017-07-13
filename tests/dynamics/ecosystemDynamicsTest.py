@@ -30,9 +30,9 @@ class Test(unittest.TestCase):
         graph_file_string = 'cryptocurrencies_graphdynamics_snapshot_{0}_graph.txt'
         
         EcosystemDynamics = FromFilesDynamics.CryptoCurrencyEcosystemDynamics(identifier_string,
-                                                                      graph_files_folder,
-                                                                      graph_file_string,
-                                                                      data_file_string)
+                                                                              graph_files_folder,
+                                                                              graph_file_string,
+                                                                              data_file_string)
         
         self.graph_paths = EcosystemDynamics.generate_graphs_paths()
         fig, ax = plt.subplots(1,1,figsize=(24,12))

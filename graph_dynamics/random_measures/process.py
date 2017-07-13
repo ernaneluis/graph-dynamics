@@ -9,38 +9,68 @@ import numpy as np
 from scipy.special import gamma
 from matplotlib import pyplot as plt
 from scipy.integrate import quadrature
-from scipy.stats import poisson, beta, expon
 from graph_dynamics.utils import functions
+from scipy.stats import poisson, beta, expon
 from scipy.stats import gamma as gamma_distribution
-from graph_dynamics.random_measures.normalized_process import ChineseRestaurantProcess, ExtendedChineseRestaurantProcess
 from graph_dynamics.random_measures.datatypes import CompletlyRandomMeasures, PoissonMeasure
-
+from graph_dynamics.random_measures.normalized_process import ChineseRestaurantProcess, ExtendedChineseRestaurantProcess
 
 matplotlib.rcParams['ps.useafm'] = True
 matplotlib.rcParams['text.usetex'] = True 
 matplotlib.rcParams['pdf.use14corefonts'] = True
 
-
-#======================================
+#===============================================================
 #  PROCESS 
-#======================================
+#===============================================================
 
 class GammaProcess(CompletlyRandomMeasures):
+    """
+    Completly Random Measure Which is Generated From
+    Parameters or a json object ofthe form
     
-    def __init__(self,identifier_string,sigma,tau,alpha,K=100):
-        """
-        """
+            measure_state["identifier_string"]
+            measure_state["sigma"]
+            measure_state["alpha"]
+            measure_state["tau"]
+            measure_state["measure"]["W"]
+            measure_state["measure"]["Theta"]
+                measure_state["lambda_measure_state"]
+                
+    """
+    def __init__(self,identifier_string=None,sigma=None,tau=None,alpha=None,K=100,measure_state=None):
         name_string = "GammaProcess"
-        CompletlyRandomMeasures.__init__(self,name_string,identifier_string,K)
-        self.identifier_string = identifier_string
-        self.sigma = sigma
-        self.alpha = alpha
-        self.tau = tau
-        self.lambda_measure = PoissonMeasure(self.alpha,identifier_string="LambdaMeasure",K=K)
-        self.processDefined = False
         
-        self.stickBreakingConstruction(K)
-        
+        if measure_state == None:
+            CompletlyRandomMeasures.__init__(self,name_string,identifier_string,K)
+            
+            self.identifier_string = identifier_string
+            self.sigma = sigma
+            self.alpha = alpha
+            self.tau = tau
+            self.lambda_measure = PoissonMeasure(self.alpha,identifier_string="LambdaMeasure",K=K)
+            self.processDefined = False                 #TO DO: check this        
+            self.stickBreakingConstruction(K)
+
+            self.measure_state = {"measure_name":name_string,
+                                  "identifier_string":self.identifier_string,
+                                  "alpha":self.alpha,
+                                  "sigma":self.sigma,
+                                  "tau":self.tau,
+                                  "measure":{"W":self.W,"Theta":self.Theta},
+                                  "lambda_measure_state":self.lambda_measure.get_measure_state()}
+            
+        else:
+            self.measure_state = measure_state
+            self.identifier_string = measure_state["identifier_string"]
+            self.sigma = measure_state["sigma"]
+            self.alpha = measure_state["alpha"]
+            self.tau = measure_state["tau"]
+            self.lambda_measure = PoissonMeasure(measure_state=measure_state["lambda_measure_state"])
+            self.W = measure_state["measure"]["W"]
+            self.Theta = measure_state["measure"]["Theta"] 
+            
+            self.processDefined = False                 #TO DO: check this
+            
     def jump_measure_intensity(self,w):
         return (1./gamma(1-self.sigma))*(w**(-1.-self.sigma))*np.exp(-self.tau*w)
     
@@ -96,7 +126,14 @@ class GammaProcess(CompletlyRandomMeasures):
         plt.plot(self.Theta,self.W,"ro",markersize=12)
         plt.grid(True)
         plt.show()
-        
+
+    def get_measure_state(self):
+        return self.measure_state
+    
+#====================================================================================
+# TO DO: DEFINE BETAPROCESS BELOW AS INHERITANCE
+#====================================================================================
+
 class BetaProcess:
     
     def __init__(self,c,Omega,B0,B0parameters,B0maximum):

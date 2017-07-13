@@ -32,23 +32,23 @@ class ActivityDrivenGraph():
 
         # creating graph
         self.hasGraphAmount = False
-        self.network = nx.Graph()
+        self.networkx_graph = nx.Graph()
         self.activity_potential = self.__calculateActivityPotential(activity_gamma, threshold_min, numberOfNodes)
-        self.network.add_nodes_from(list(xrange(numberOfNodes)))  # creating list of nodes with index from 0 de N-1  adding to the graph
+        self.networkx_graph.add_nodes_from(list(xrange(numberOfNodes)))  # creating list of nodes with index from 0 de N-1  adding to the graph
 
         ######################### end config variables #########################
 
 
         ######################### initializing graph  #########################
         # run over all nodes to set initial attributes
-        for n in self.network.nodes():
+        for n in self.networkx_graph.nodes():
             ## what is the purpose of rescaling factor?
             # ai = xi*n => probability per unit time to create new interactions with other nodes
             # activity_firing_rate is an probability number than [0,1]
-            self.network.node[n]['activity_firing_rate'] = self.activity_potential[n] * rescaling_factor
+            self.networkx_graph.node[n]['activity_firing_rate'] = self.activity_potential[n] * rescaling_factor
 
             # With probability ai*delta_t each vertex i becomes active and generates m links that are connected to m other randomly selected vertices
-            self.network.node[n]['activity_probability'] = self.network.node[n]['activity_firing_rate'] * delta_t
+            self.networkx_graph.node[n]['activity_probability'] = self.networkx_graph.node[n]['activity_firing_rate'] * delta_t
 
     ######################### PRIVATE  METHODS  #########################
 
@@ -62,16 +62,16 @@ class ActivityDrivenGraph():
 
     def get_active_nodes(self):
         # return the list of choosed active nodes
-        return [n for n in self.network.nodes() if self.network.node[n]['type'] == 1]
+        return [n for n in self.networkx_graph.nodes() if self.networkx_graph.node[n]['type'] == 1]
 
     def number_of_nodes(self):
-        return self.network.number_of_nodes()
+        return self.networkx_graph.number_of_nodes()
 
     def get_activity_firing_rate(self, node):
-        return self.network.node[node]['activity_firing_rate']
+        return self.networkx_graph.node[node]['activity_firing_rate']
 
     def get_node_type(self, node):
-        return self.network.node[node]['type']
+        return self.networkx_graph.node[node]['type']
 
     def set_node_type(self, node):
         ## assign a node attribute nonactive or active
@@ -80,7 +80,7 @@ class ActivityDrivenGraph():
         if (activity_firing_rate > 1):
             activity_firing_rate = 1 / activity_firing_rate
         # set if a node is active or not
-        self.network.node[node]['type'] = bernoulli.rvs(activity_firing_rate)
+        self.networkx_graph.node[node]['type'] = bernoulli.rvs(activity_firing_rate)
 
 
 class PerraGraph(ActivityDrivenGraph):
@@ -105,8 +105,8 @@ class PerraGraph(ActivityDrivenGraph):
 
             ######################### initializing graph  #########################
             # run over all nodes to set initial attributes
-            for n in self.network.nodes():
-                self.network.node[n]['walker'] = 0
+            for n in self.networkx_graph.nodes():
+                self.networkx_graph.node[n]['walker'] = 0
 
             self.init_walkers(number_walkers)
 
@@ -117,7 +117,7 @@ class PerraGraph(ActivityDrivenGraph):
         def init_walkers(self, number_walkers):
             # create W walkers on those nodes
             self.number_walkers = number_walkers
-            generate_walkers = np.random.choice(self.network.nodes(), size=number_walkers, replace=False)
+            generate_walkers = np.random.choice(self.networkx_graph.nodes(), size=number_walkers, replace=False)
             for node in generate_walkers:
                 self.add_walker(node)
 
@@ -126,16 +126,16 @@ class PerraGraph(ActivityDrivenGraph):
             self.add_walker(_to)
 
         def add_walker(self, node):
-            self.network.node[node]['walker'] += 1
+            self.networkx_graph.node[node]['walker'] += 1
 
         def remove_walker(self, node):
-            self.network.node[node]['walker'] -= 1
+            self.networkx_graph.node[node]['walker'] -= 1
 
         # return list of nodes which has walkers
         def get_walkers(self):
             out = []
-            for node in self.network.nodes():
-                if self.network.node[node]['walker'] > 0:
+            for node in self.networkx_graph.nodes():
+                if self.networkx_graph.node[node]['walker'] > 0:
                     out += [node]
 
             return out

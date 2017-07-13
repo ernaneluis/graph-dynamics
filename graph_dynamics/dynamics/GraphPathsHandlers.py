@@ -34,11 +34,8 @@ def temporalGraphFromSeries(graph_paths):
         temporal_graph.add_edges_from(new_edges.edges(),time_in=t)
         for edge_removed in old_edges.edges():
             temporal_graph[edge_removed[0]][edge_removed[1]]["time_out"] = t
-                
         graph_0 = graph_1
-    
     return temporal_graph
-
 
 def seriesFromTemporalGraph(temporal_graph):
     return None

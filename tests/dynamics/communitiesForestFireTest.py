@@ -108,7 +108,6 @@ class Test(unittest.TestCase):
                                                             dynamics.full_membership,
                                                             community_colors, 
                                                             series_name="community_ff")
-        print "Ready"
         
 if __name__ == '__main__':
     import sys;sys.argv = ['','Test.communitiesForestFireTest']

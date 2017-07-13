@@ -62,22 +62,22 @@ class TxGraph(PerraGraph):
             self.hasGraphAmount = True
 
             # calculate the wealth distribution following pareto law
-            A = pareto.rvs(amount_pareto_gama, loc=amount_threshold, scale=1, size=self.network.number_of_nodes())
+            A = pareto.rvs(amount_pareto_gama, loc=amount_threshold, scale=1, size=self.networkx_graph.number_of_nodes())
             self.amount = A / max(A)
 
             # run over all nodes to set initial attributes
-            for n in self.network.nodes():
+            for n in self.networkx_graph.nodes():
                 # setting the node the initial amount of wealth
-                self.network.node[n]['amount'] = self.amount[n]
+                self.networkx_graph.node[n]['amount'] = self.amount[n]
 
         def get_amount(self, node):
-            return self.network.node[node]['amount']
+            return self.networkx_graph.node[node]['amount']
 
         def add_amount(self, node, amount):
-            self.network.node[node]['amount'] += amount
+            self.networkx_graph.node[node]['amount'] += amount
 
         def remove_amount(self, node, amount):
-            self.network.node[node]['amount'] -= amount
+            self.networkx_graph.node[node]['amount'] -= amount
 
         def get_nodes_amounts(self):
-            return [self.network.node[node]['amount'] for node in self.network.nodes()]
+            return [self.networkx_graph.node[node]['amount'] for node in self.networkx_graph.nodes()]

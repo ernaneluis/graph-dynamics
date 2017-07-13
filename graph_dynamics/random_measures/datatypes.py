@@ -3,6 +3,7 @@ Created on Jun 1, 2015
 
 @author: cesar
 '''
+import copy
 import matplotlib
 import numpy as np
 from scipy.stats import poisson
@@ -49,6 +50,10 @@ class CompletlyRandomMeasures(object):
     def normalized_random_measure(self):
         raise NotImplemented()
     
+    @abstractmethod
+    def get_measure_state(self):
+        raise NotImplemented()
+        
 class FiniteDimensionalProcess(object):
     """
     Here we follow the paper 
@@ -126,6 +131,10 @@ class FiniteDimensionalProcess(object):
         if saveTo != None:
             plt.savefig(saveTo+plotName.format(self.identifier_string))
 
+    @abstractmethod
+    def get_measure_state(self):
+        raise NotImplemented()
+    
 class PoissonMeasure:
     """
     This class defines a measure in the interval $A \in \mathds{R}^{+}$. 
@@ -136,43 +145,87 @@ class PoissonMeasure:
     
     Which was defined with an intensity function $\lambda(\cdot)$.
     """
-    def __init__(self,interval_size,identifier_string="PoissonMeasure",K=None,
+    def __init__(self,interval_size=None,measure_state=None,identifier_string="PoissonMeasure",K=None,
                  isLebesque=True,name_string=None,intensity=None,intensity_parameters=None,upper_bound=None):
         """
+        THIS CONSTRUCTOR CAN BE INITIALIZED WITH PARAMETERS
+        OR DIRECTLY WITH A JSON OBJECT WITH THE FOLLOWING KEYS
+        
+        measure_state["indentifier_string"] string
+        measure_state["interval_size"] float
+        measure_state["measure_complete"] float
+        measure_state["measure"]["W"] list of floats 
+        measure_state["measure"]["Theta"] list of floats
+            
         """
-        self.identifier_string = identifier_string
-        self.isLebesque = isLebesque
-        self.isDefined = False
-        if not isLebesque:
-            self.name_string = name_string
-            self.intensity = intensity
-            self.intensity_parameters = intensity_parameters
-            self.interval_size = interval_size
-            self.upper_bound = upper_bound
-            self.measure_complete = quadrature(self.intensity, 0., self.interval_size, self.intensity_parameters)[0]
+        self.name_string = "PoissonMeasure"
+        
+        #PARAMETERS FOR GENERATION OF ARRIVALS IS REQUIRED
+        if measure_state == None:
+            self.identifier_string = identifier_string
+            self.isLebesque = isLebesque
+            self.isDefined = False
+        
+            #HERE WE DEFINE THE INTENSITIES
+            if not isLebesque:
+                self.name_string = name_string
+                self.intensity = intensity
+                self.intensity_parameters = intensity_parameters
+                self.interval_size = interval_size
+                self.upper_bound = upper_bound
+                self.measure_complete = quadrature(self.intensity, 0., self.interval_size, self.intensity_parameters)[0]
+            else:
+                self.intensity = functions.uniform_one
+                self.intensity_parameters = (None,)
+                self.interval_size = interval_size
+                self.measure_complete = interval_size
+                self.upper_bound = 1.
+            
+            #HERE WE GENERATE THE THETA VALUES (ARRIVALS)
+            if K != None:
+                self.K = K 
+                self.generate_points(K)
+            else:
+                if self.isLebesque:
+                    self.K = int(poisson.rvs(self.measure_complete))
+                    self.generate_points(self.K)
+                else:
+                    #HERE WE SIMPLY USE THE THINNING PROCEDURE
+                    J = poisson.rvs(self.interval_size * self.upper_bound)
+                    datesInSeconds = np.random.uniform(0., self.interval_size, J)
+                    intensities = self.intensity(datesInSeconds, *self.intensity_parameters) / self.upper_bound
+                    r = np.random.uniform(0., 1., J)
+                    self.Theta = np.take(datesInSeconds, np.where(r < intensities)[0])
+                    self.K = len(self.Theta)
+                    self.W = np.ones(len(self.Theta))
+                    
+            self.measure_state = {"Name":self.name_string,
+                                  "indentifier_string":self.identifier_string,
+                                  "isLebesque":self.isLebesque,
+                                  "interval_size":interval_size,
+                                  "upper_bound":upper_bound,
+                                  "measure_complete":self.measure_complete,
+                                  "measure":{"W":self.W,"Theta":self.Theta}}
+            
+        #DEFINITION IS GIVEN IN A JSON FILE             
         else:
+            print measure_state
+            self.indentifier_string = measure_state["indentifier_string"]
+            self.interval_size = measure_state["interval_size"]
+            self.measure_complete = measure_state["measure_complete"]
+            self.K = len(measure_state["measure"]["Theta"])
+            self.W = measure_state["measure"]["W"]
+            self.Theta = measure_state["measure"]["Theta"]
+            
+            # TODO: EVERY JSON RECOVERY FUNCTION SHOULD RECOVER FUNCTIONS AS WELL
+            self.isLebesque = True
             self.intensity = functions.uniform_one
             self.intensity_parameters = (None,)
-            self.interval_size = interval_size
             self.upper_bound = 1.
-            self.measure_complete = interval_size
-        
-        if K != None:
-            self.K = K 
-            self.generate_points(K)
-        else:
-            if self.isLebesque:
-                self.K = poisson.rvs(self.measure_complete)
-                self.generate_points(self.K)
-            else:
-                #HERE WE SIMPLY USE THE THINNING PROCEDURE
-                J = poisson.rvs(self.interval_size * self.upper_bound)
-                datesInSeconds = np.random.uniform(0., self.interval_size, J)
-                intensities = self.intensity(datesInSeconds, *self.intensity_parameters) / self.upper_bound
-                r = np.random.uniform(0., 1., J)
-                self.Theta = np.take(datesInSeconds, np.where(r < intensities)[0])
-                self.K = len(self.Theta)
-                self.W = np.ones(len(self.Theta))
+            self.measure_state = copy.copy(measure_state)
+            
+    def get_measure_state(self):
+        return self.measure_state
                 
     def normalized_intensity(self,x):
         """
@@ -213,7 +266,7 @@ class PoissonMeasure:
         expects the number of arrivals as defined before hand
         """
         if self.isLebesque:
-            self.Theta = np.random.uniform(0,self.interval_size,K)
+            self.Theta = np.random.uniform(0,int(self.interval_size),int(K))
             self.W = np.ones(len(self.Theta))
         else:
             Points = []
@@ -242,3 +295,4 @@ class PoissonMeasure:
             plt.show()
         if saveTo != None:
             plt.savefig(saveTo+plotName)
+            

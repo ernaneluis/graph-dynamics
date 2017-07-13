@@ -135,7 +135,7 @@ class PerraDynamics(GraphsDynamics):
         """
         """
         # 0 clear connections
-        self.GRAPH.network.remove_edges_from(self.GRAPH.network.edges())
+        self.GRAPH.networkx_graph.remove_edges_from(self.GRAPH.networkx_graph.edges())
         # 1 select nodes to be active
         after_connections = self.__set_nodes_active()
         # 2 make conenctions from activacted nodes
@@ -151,7 +151,7 @@ class PerraDynamics(GraphsDynamics):
         return None
 
     def __set_nodes_active(self):
-        for n in self.GRAPH.network.nodes():
+        for n in self.GRAPH.networkx_graph.nodes():
             self.GRAPH.set_node_type(n)
 
         return self.GRAPH
@@ -165,7 +165,7 @@ class PerraDynamics(GraphsDynamics):
             selected_nodes = [(node, random.randint(0, self.GRAPH.number_of_nodes() - 1)) for e in
                               range(self.number_of_connections)]
             # make connections/edges
-            self.GRAPH.network.add_edges_from(selected_nodes)
+            self.GRAPH.networkx_graph.add_edges_from(selected_nodes)
 
         return self.GRAPH
 
@@ -173,7 +173,7 @@ class PerraDynamics(GraphsDynamics):
         walkers = self.GRAPH.get_walkers()
         for node in walkers:
             # look at their neighbors: nodes that the walker is making an connection
-            neighbors_nodes = self.GRAPH.network.neighbors(node)
+            neighbors_nodes = self.GRAPH.networkx_graph.neighbors(node)
 
             if len(neighbors_nodes) > 0:
                 # when a walker will not propagate he will stay at the same node
@@ -227,7 +227,7 @@ class TxDynamics(PerraDynamics):
         #     """
         #     """
         #     #0 clear connections
-        #     self.GRAPH.network.remove_edges_from(self.GRAPH.network.edges())
+        #     self.GRAPH.networkx_graph.remove_edges_from(self.GRAPH.networkx_graph.edges())
         #     #1 select nodes to be active
         #     after_connections = self.__set_nodes_active()
         #     #2 make conenctions from activacted nodes

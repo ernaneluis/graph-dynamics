@@ -14,7 +14,6 @@ from mpl_toolkits.mplot3d import Axes3D
 # importlib.import_module('mpl_toolkits.mplot3d').__path__
 
 from matplotlib.pyplot import pause
-from mpl_toolkits.mplot3d import Axes3D
 # import matplotlib.pyplot as plt
 
 import matplotlib.path as mpath
@@ -25,7 +24,6 @@ from graph_dynamics.dynamics.GenerativeDynamics import TxDynamics
 from graph_dynamics.networks.tx_graph import TxGraph
 
 class Test(unittest.TestCase):
-    
     
     def generateTxGraph(self):
 
@@ -41,14 +39,14 @@ class Test(unittest.TestCase):
 
         dynamics = TxDynamics(initial_graph=G, number_of_connections=2)
 
-        series = dynamics.generate_graphs_paths(number_of_steps=5, output_type="t")
+        series = dynamics.generate_graphs_paths(number_of_steps=30, output_type="t")
 
         # good for small nodes
-        position = nx.shell_layout(G.network)
+        position = nx.shell_layout(G.networkx_graph)
         # good for big nodes
-        # position = nx.random_layout(network.GRAPH)
+        # position = nx.random_layout(networkx_graph.GRAPH)
 
-        # self.visualize_graph_3D(series=series, position=position)
+        #self.visualize_graph_3D(series=series, position=position)
         self.visualize_graph(series=series, position=position)
 
         plt.show()
@@ -69,17 +67,17 @@ class Test(unittest.TestCase):
             # non active nodes are grey
             color_map = {1: 'r', 0: 'grey'}
             # draw
-            nx.draw(txgraph.network,
+            nx.draw(txgraph.networkx_graph,
                     pos=position,
                     with_labels=True,
-                    node_color=[color_map[txgraph.get_node_type(n)] for n in txgraph.network.nodes()])  ## construct a list of colors then pass to node_color
+                    node_color=[color_map[txgraph.get_node_type(n)] for n in txgraph.networkx_graph.nodes()])  ## construct a list of colors then pass to node_color
 
 
             # walkers are blue
             if(txgraph.hasGraphAmount):
                 print txgraph.get_walkers()
                 # add walkers to the plot as blue nodes
-                nx.draw_networkx_nodes(txgraph.network, position, node_size=1000, nodelist=txgraph.get_walkers(), node_color='blue')
+                nx.draw_networkx_nodes(txgraph.networkx_graph, position, node_size=1000, nodelist=txgraph.get_walkers(), node_color='blue')
                 # add amount of each node as green color
                 labels = {}
                 for idx, label in enumerate(txgraph.get_nodes_amounts()):
@@ -90,7 +88,7 @@ class Test(unittest.TestCase):
                     t[1] += 0.20
                     position[p] = tuple(t)
 
-                nx.draw_networkx_labels(txgraph.network, position, labels, font_size=10, font_color='g')
+                nx.draw_networkx_labels(txgraph.networkx_graph, position, labels, font_size=10, font_color='g')
 
             pause(3)
             plt.clf()  # Clear figure
@@ -98,7 +96,8 @@ class Test(unittest.TestCase):
     # https://matplotlib.org/examples/shapes_and_collections/path_patch_demo.html
     # https://matplotlib.org/examples/mplot3d/bars3d_demo.html
     def visualize_graph_3D(self, series, position):
-
+        """
+        """
         fig = plt.figure()
         ax = Axes3D(fig)
 
@@ -125,7 +124,7 @@ class Test(unittest.TestCase):
 
             # add edges
 
-            edges = txgraph.network.edges()
+            edges = txgraph.networkx_graph.edges()
 
             for idx, e in enumerate(edges):
                 edge = edges[idx]

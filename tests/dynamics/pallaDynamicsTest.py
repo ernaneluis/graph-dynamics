@@ -18,7 +18,6 @@ from graph_dynamics.networks.datatypes import CaronFoxGraphs
 
 class Test(unittest.TestCase):
     
-
     def evaluateEdgesMemory(self):
         #Defines process for the graph ########################################
         self.tau = 1.
@@ -37,28 +36,41 @@ class Test(unittest.TestCase):
         self.rho = 100.
         Palla = PittWalker.PallaDynamics(self.phi,self.rho,self.CaronFoxGraph)
         # generate dynamics
-        Palla.generateNetworkPaths_1(3)
+        Palla.generateNetworkPaths(3)
        
     def generateHiddenPaths(self):
         #Defines process for the graph ########################################
         self.tau = 1.
         self.alpha = 20.
         self.sigma = self.alpha
-        self.process_identifier_string = "GammaProcess"
-        G = process.GammaProcess(self.process_identifier_string,
+        self.process_identifier = "GammaProcess"
+        G = process.GammaProcess(self.process_identifier,
                                  self.sigma,
                                  self.tau,
                                  self.alpha,
                                  K=100)
         self.graph_identifier = "CaronFoxTest"
         self.CaronFoxGraph = CaronFoxGraphs(self.graph_identifier,G)
+
         #Defines Dynamics ###################################################### 
         self.phi = 0.2
         self.rho = 1.
-        Palla = PittWalker.PallaDynamics(self.phi,self.rho,self.CaronFoxGraph)
+        number_of_steps = 10
+        number_of_steps_in_memory = number_of_steps
+        
+        gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/"
+        
+        gd_dynamical_parameters = {"number_of_steps":number_of_steps,
+                                   "number_of_steps_in_memory":number_of_steps_in_memory,
+                                   "gd_directory":gd_directory,
+                                   "dynamics_identifier":"palla_dynamics_test",
+                                   "graph_class":"CaronFox",
+                                   "verbose":True}
+        
+        Palla = PittWalker.PallaDynamics(self.phi,self.rho,self.CaronFoxGraph,gd_dynamical_parameters)
         # generate dynamics
-        graph_paths = Palla.generateNetworkPaths_1(10)
-        graph_paths_visualization.plotGraphPaths(graph_paths, "palla_dynamics")
+        graph_paths = Palla.generate_graphs_paths(self.CaronFoxGraph, 10)
+        #graph_paths_visualization.plotGraphPaths(graph_paths, "palla_dynamics")
         
 if __name__ == '__main__':
     import sys;sys.argv = ['','Test.generateHiddenPaths']

@@ -30,7 +30,7 @@ class Test(unittest.TestCase):
         G.plotProcess()
         self.graph_identifier = "CaronFoxTest"
         CaronFoxGraph = CaronFoxGraphs(self.graph_identifier,G)
-        nx.draw(CaronFoxGraph.network)
+        nx.draw(CaronFoxGraph.networkx_graph)
         plt.show()
         
 if __name__ == '__main__':

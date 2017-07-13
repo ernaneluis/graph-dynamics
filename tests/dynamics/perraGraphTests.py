@@ -31,9 +31,9 @@ class Test(unittest.TestCase):
         series = dynamics.generate_graphs_paths(number_of_steps=5, output_type="t")
 
         # good for small nodes
-        position = nx.shell_layout(G.network)
+        position = nx.shell_layout(G.networkx_graph)
         # good for big nodes
-        # position = nx.random_layout(network.GRAPH)
+        # position = nx.random_layout(networkx_graph.GRAPH)
 
         # self.visualize_graph_3D(series=series, position=position)
         self.visualize_graph(series=series, position=position)
@@ -56,16 +56,16 @@ class Test(unittest.TestCase):
             # non active nodes are grey
             color_map = {1: 'r', 0: 'grey'}
             # draw
-            nx.draw(txgraph.network,
+            nx.draw(txgraph.networkx_graph,
                     pos=position,
                     with_labels=True,
-                    node_color=[color_map[txgraph.get_node_type(n)] for n in txgraph.network.nodes()])  ## construct a list of colors then pass to node_color
+                    node_color=[color_map[txgraph.get_node_type(n)] for n in txgraph.networkx_graph.nodes()])  ## construct a list of colors then pass to node_color
 
 
             # walkers are blue
             print txgraph.get_walkers()
             # add walkers to the plot as blue nodes
-            nx.draw_networkx_nodes(txgraph.network, position, node_size=1000, nodelist=txgraph.get_walkers(), node_color='blue')
+            nx.draw_networkx_nodes(txgraph.networkx_graph, position, node_size=1000, nodelist=txgraph.get_walkers(), node_color='blue')
 
 
             pause(3)
@@ -101,7 +101,7 @@ class Test(unittest.TestCase):
 
             # add edges
 
-            edges = txgraph.network.edges()
+            edges = txgraph.networkx_graph.edges()
 
             for idx, e in enumerate(edges):
                 edge = edges[idx]

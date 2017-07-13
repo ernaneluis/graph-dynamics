@@ -14,8 +14,6 @@ from tag2hierarchy.hierarchy import treeHandlers
 
 
 class CommunityTodeschiniCaronGraph(Graph):
-    """
-    """
     def __init__(self,
                  identifier_string,
                  numberOfCommunities,
@@ -68,6 +66,9 @@ class CommunityTodeschiniCaronGraph(Graph):
     
     def get_number_of_nodes(self):
         return None
+    
+    def get_graph_state(self):
+        return {"state":"graph state undefined!"}
     
 #=====================================================
 # Our research models
@@ -176,6 +177,9 @@ class HierarchicalMixedMembership(Graph):
     
     def get_number_of_nodes(self):
         return None
+    
+    def get_graph_state(self):
+        return {"state":"graph state undefined!"}
     
 #===========================================================================
 # OLD FUNCTIONS

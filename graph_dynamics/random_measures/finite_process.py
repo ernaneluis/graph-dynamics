@@ -54,6 +54,13 @@ class FiniteGeneralizedGamma(FiniteDimensionalProcess):
         self.interval_size = lambda_measure.interval_size 
         self.W, self.Theta = self.GenerateMeasure()
         
+        # TO DO: MEASURE STATE SHOULD INCLUDE THE MEASURE DEFINITION (W, Theta)
+        self.measure_state = {"measure_name":self.name_string,
+                              "measure_identifier":self.identifier_string,
+                              "sigma":sigma,
+                              "tau":tau,
+                              "lambda_measure_state":lambda_measure.get_measure_state()}
+        
     def GenerateMeasure(self):
         """
         Here we create the measure i.e. we generate the atoms 
@@ -105,6 +112,9 @@ class FiniteGeneralizedGamma(FiniteDimensionalProcess):
         B = B - uniformVariable + 1.
         return ((A_inv**self.sigma)/B)**(1/self.sigma)
 
+    def get_measure_state(self):
+        return self.measure_state
+    
 class FiniteStableBeta(FiniteDimensionalProcess):
     """
     Here we Implement a Stable beta Process of the Form
@@ -154,3 +164,6 @@ class FiniteStableBeta(FiniteDimensionalProcess):
         self.W=[s/(s+1) for s in S] # Here I make them into the J's in Eq 15 of Lee, James and Choi
         self.Theta = self.lambda_measure.generate_points(self.K) 
         self.W_complete = sum(self.W)
+
+    def get_measure_state(self):
+        return None

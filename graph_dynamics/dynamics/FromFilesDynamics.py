@@ -53,7 +53,6 @@ class CryptoCurrencyEcosystemDynamics(GraphsDynamics):
             
         GraphsDynamics.__init__(self,nxg,"snap_shot", None)
         
-
     def generate_graphs_paths(self,number_of_steps=None,output_type="networkx_list",keep_path_in_memory=True):
         """
         """
