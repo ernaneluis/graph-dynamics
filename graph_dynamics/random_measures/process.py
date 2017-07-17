@@ -56,7 +56,7 @@ class GammaProcess(CompletlyRandomMeasures):
                                   "alpha":self.alpha,
                                   "sigma":self.sigma,
                                   "tau":self.tau,
-                                  "measure":{"W":self.W,"Theta":self.Theta},
+                                  "measure":{"W":self.W.tolist(),"Theta":self.Theta.tolist()},
                                   "lambda_measure_state":self.lambda_measure.get_measure_state()}
             
         else:
@@ -66,8 +66,8 @@ class GammaProcess(CompletlyRandomMeasures):
             self.alpha = measure_state["alpha"]
             self.tau = measure_state["tau"]
             self.lambda_measure = PoissonMeasure(measure_state=measure_state["lambda_measure_state"])
-            self.W = measure_state["measure"]["W"]
-            self.Theta = measure_state["measure"]["Theta"] 
+            self.W = np.asarray(measure_state["measure"]["W"])
+            self.Theta = np.asarray(measure_state["measure"]["Theta"]) 
             
             self.processDefined = False                 #TO DO: check this
             
@@ -113,10 +113,10 @@ class GammaProcess(CompletlyRandomMeasures):
             roundNumber += 1
         self.processDefined = True
         
-        self.W = copy.copy(W)
-        self.Theta = copy.copy(Theta)
+        self.W = np.asarray(copy.copy(W))
+        self.Theta = np.asarray(copy.copy(Theta))
         self.K = K
-        return (W,Theta)
+        return (np.asarray(W),np.asarray(Theta))
                             
     def plotProcess(self,plotName=None,saveTo=None): 
         """

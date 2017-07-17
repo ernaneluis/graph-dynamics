@@ -4,11 +4,15 @@ Created on Jun 9, 2017
 @author: cesar
 '''
 import os
+import copy
+import json
 import numpy as np
+import networkx as nx
 from matplotlib import pyplot as plt
 from abc import ABCMeta, abstractmethod
 from graph_dynamics.dynamics import Macrostates
 from graph_dynamics.networks import datatypes 
+from time import sleep
 
 #HERE WE CONCATENATE ALL AVAILABLE GRAPH CLASSES
 graph_class_dictionary = datatypes.graph_class_dictionary   
@@ -51,7 +55,7 @@ class GraphsDynamics(object):
     def get_dynamics_state(self):
         raise NotImplemented()
     
-    def evolve(self,N):
+    def evolve(self,N,initial_graph=None):
         """
         Function for handling the evolution, files and macro states
         
@@ -68,8 +72,13 @@ class GraphsDynamics(object):
         gd_dynamical_parameters = self.get_dynamics_state()
         gd_directory = gd_dynamical_parameters["gd_directory"]
         steps_in_memory = gd_dynamical_parameters["number_of_steps_in_memory"]
-        macrostates_names = gd_dynamical_parameters["macrostates"]
+        macrostates_names = gd_dynamical_parameters["macrostates"]        
         
+        #==================================================
+        # CHECK ALL FILES
+        #==================================================
+        
+        #make sure folder for output is ready
         self.foldername =  gd_directory + self.dynamics_identifier + "_gd/"
         if not os.path.exists(self.foldername):
             os.makedirs(self.foldername)
@@ -77,10 +86,14 @@ class GraphsDynamics(object):
         ALL_DYNAMIC_FILES_NAME = os.listdir(self.foldername)
         GRAPH_FILES = [filename for filename in ALL_DYNAMIC_FILES_NAME if "gGD" in filename]
         STATE_FILES = [filename for filename in ALL_DYNAMIC_FILES_NAME if "sGD" in filename]
-        
-        ALL_TIME_INDEXES = [int(filename.split("_")[3]) for filename in GRAPH_FILES]
         try:
-            latest_index = max(ALL_TIME_INDEXES)
+            ALL_TIME_INDEXES = [int(filename.split("_")[2]) for filename in GRAPH_FILES]
+        except:
+            print "Wrong filename, dynamic identifier cannot have underscore (_) "
+            raise Exception
+        
+        try:
+            latest_index = max(ALL_TIME_INDEXES)    
         except:
             latest_index = 0
         
@@ -93,58 +106,86 @@ class GraphsDynamics(object):
         # DEFINE INITIAL GRAPH FROM LATEST STATE
         #==================================================
         
-        latest_graph_state_filename = "{0}_sGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
-        latest_graph_state = open(latest_graph_state_filename,"r").read()
-        initial_graph = graph_class_dictionary[gd_dynamical_parameters["graph_class"]](latest_graph_state)
-        
+        if len(GRAPH_FILES) > 0:
+            
+            graph_filename = self.foldername+"{0}_gGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
+            graphstate_filename = self.foldername+"{0}_sGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
+            
+            latest_graph_state = json.load(open(graphstate_filename,"r"))
+            latest_graph = nx.read_edgelist(graph_filename)
+            
+            initial_graph = graph_class_dictionary[gd_dynamical_parameters["graph_class"]](graph_state=latest_graph_state,networkx_graph=latest_graph)
+            
         #==================================================
         
         print "#{0} STEPS EVOLUTION STARTED FOR {1}".format(N,self.dynamics_identifier)
         print "#STARTING EVOLUTION AT STEP {0}".format(latest_index)
         
-        if N < steps_in_memory:
-            GRAPHS_IN_MEMORY = self.generate_graphs_paths(initial_graph,N)
-            
-            #FOR ALL GRAPHS IN MEMORY EVALUATE THE MACROSTATES AND OUTPUT
-            for time_increment, graph_object in enumerate(GRAPHS_IN_MEMORY):
-                edge_list = graph_object.get_edge_list()
-                graph_state = graph_object.get_graph_state()
-                
-                latest_index = time_increment + 1
-                graph_filename = self.foldername+"{0}_gGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
-                graphstate_filename = self.foldername+"{0}_sGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
-                macrostate_filename = self.foldername+"{0}_mGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
-                
-                open(graph_filename,"w").write("\n".join(["{0} {1}".format(a[0],a[1]) for a in edge_list]))
-                open(graphstate_filename,"w").write(graph_state)
-                
-                #TO DO: parallelize calls to macrostates
-                macrostate_json = {}
-                for macrostate_function_name in macrostates_names:
-                    macrostate_json[macrostate_function_name] = Macrostates.macrostate_function_dictionary[macrostate_function_name](graph_object)
-                open(macrostate_filename,"w").write(macrostate_json)
-        else:
-            steps = np.concatenate([np.repeat(steps_in_memory,N / steps_in_memory),np.array([N % steps_in_memory])])
-            for i_number_of_steps in steps:
-                
-                GRAPHS_IN_MEMORY = self.generate_graphs_paths(i_number_of_steps)        
-                #FOR ALL GRAPHS IN MEMORY EVALUATE THE MACROSTATES AND OUTPUT
-                for time_increment, graph_object in enumerate(GRAPHS_IN_MEMORY):
-                    edge_list = graph_object.get_edge_list()
-                    graph_state = graph_object.get_graph_state()
+        if  latest_index <  N:
+            N = N - latest_index
+            if N < steps_in_memory:
+                if latest_index == 0:
+                    GRAPHS_IN_MEMORY = self.generate_graphs_paths(initial_graph,N)
+                else:
+                    GRAPHS_IN_MEMORY = self.generate_graphs_paths(initial_graph,N)[1:]
                     
-                    latest_index = time_increment + 1
+                #FOR ALL GRAPHS IN MEMORY EVALUATE THE MACROSTATES AND OUTPUT
+                for graph_object in GRAPHS_IN_MEMORY:
+                    graph_state = graph_object.get_graph_state()
+
                     graph_filename = self.foldername+"{0}_gGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
                     graphstate_filename = self.foldername+"{0}_sGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
                     macrostate_filename = self.foldername+"{0}_mGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
                     
                     #TO DO: create the edge list file without the need for networkx
-                    graph_object.get_networkx().write_edgelist(graph_object,graph_filename)
-                    open(graphstate_filename,"w").write(graph_state)
+                    nx.write_edgelist(graph_object.get_networkx(),graph_filename)
+                    with open(graphstate_filename,"w") as outfile:
+                        json.dump(graph_state, outfile)
                     
                     #TO DO: parallelize calls to macrostates
                     macrostate_json = {}
                     for macrostate_function_name in macrostates_names:
-                        macrostate_json[macrostate_function_name] = Macrostates.macrostate_function_dictionary[macrostate_function_name](graph_object)
-                    open(macrostate_filename,"w").write(macrostate_json)
+                        macrostate_json[macrostate_function_name] = Macrostates.macrostate_function_dictionary[macrostate_function_name](graph_object)                        
+                    with open(macrostate_filename,"w") as outfile:
+                        json.dump(macrostate_json, outfile)
+                        
+                    latest_index += 1                    
+            else:
+                if (N % steps_in_memory) != 0:
+                    steps = np.concatenate([np.repeat(steps_in_memory,N / steps_in_memory),np.array([N % steps_in_memory])])
+                else:
+                    steps = np.repeat(steps_in_memory,N / steps_in_memory)
                     
+                for i_number_of_steps in steps:
+                    
+                    if latest_index == 0:
+                        GRAPHS_IN_MEMORY = self.generate_graphs_paths(initial_graph,i_number_of_steps)
+                    else:
+                        GRAPHS_IN_MEMORY = self.generate_graphs_paths(initial_graph,i_number_of_steps+1)[1:]
+                        
+                    #FOR ALL GRAPHS IN MEMORY EVALUATE THE MACROSTATES AND OUTPUT
+                    for  graph_object in GRAPHS_IN_MEMORY:
+                        graph_state = graph_object.get_graph_state()
+                        
+                        graph_filename = self.foldername+"{0}_gGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
+                        graphstate_filename = self.foldername+"{0}_sGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
+                        macrostate_filename = self.foldername+"{0}_mGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
+                        
+                        #TO DO: create the edge list file without the need for networkx
+                        nx.write_edgelist(graph_object.get_networkx(),graph_filename)
+                        with open(graphstate_filename,"w") as outfile:
+                            json.dump(graph_state, outfile)
+                        
+                        #TO DO: parallelize calls to macrostates
+                        macrostate_json = {}
+                        for macrostate_function_name in macrostates_names:
+                            macrostate_json[macrostate_function_name] = Macrostates.macrostate_function_dictionary[macrostate_function_name](graph_object)                        
+                        with open(macrostate_filename,"w") as outfile:
+                            json.dump(macrostate_json, outfile)
+                        
+                        latest_index += 1
+                        
+                initial_graph = copy.deepcopy(GRAPHS_IN_MEMORY[-1])
+        else:
+            print "#EVOLUTION READY"
+            

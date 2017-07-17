@@ -51,25 +51,30 @@ class Test(unittest.TestCase):
                                  K=100)
         self.graph_identifier = "CaronFoxTest"
         self.CaronFoxGraph = CaronFoxGraphs(self.graph_identifier,G)
-
+        
         #Defines Dynamics ###################################################### 
         self.phi = 0.2
         self.rho = 1.
-        number_of_steps = 10
-        number_of_steps_in_memory = number_of_steps
-        
-        gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/"
-        
+        number_of_steps = 100
+        number_of_steps_in_memory = 5
+    
+        gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/"    
         gd_dynamical_parameters = {"number_of_steps":number_of_steps,
                                    "number_of_steps_in_memory":number_of_steps_in_memory,
                                    "gd_directory":gd_directory,
-                                   "dynamics_identifier":"palla_dynamics_test",
+                                   "dynamics_identifier":"palladynamic",
+                                   "macrostates":["degree_distribution"],
                                    "graph_class":"CaronFox",
                                    "verbose":True}
         
-        Palla = PittWalker.PallaDynamics(self.phi,self.rho,self.CaronFoxGraph,gd_dynamical_parameters)
+        Palla = PittWalker.PallaDynamics(self.phi,
+                                         self.rho,
+                                         self.CaronFoxGraph,
+                                         gd_dynamical_parameters)
+        
         # generate dynamics
-        graph_paths = Palla.generate_graphs_paths(self.CaronFoxGraph, 10)
+        Palla.evolve(number_of_steps,self.CaronFoxGraph)
+        
         #graph_paths_visualization.plotGraphPaths(graph_paths, "palla_dynamics")
         
 if __name__ == '__main__':

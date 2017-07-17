@@ -205,17 +205,17 @@ class PoissonMeasure:
                                   "interval_size":interval_size,
                                   "upper_bound":upper_bound,
                                   "measure_complete":self.measure_complete,
-                                  "measure":{"W":self.W,"Theta":self.Theta}}
+                                  "measure":{"W":self.W.tolist(),"Theta":self.Theta.tolist()}}
             
         #DEFINITION IS GIVEN IN A JSON FILE             
         else:
-            print measure_state
+            #print measure_state
             self.indentifier_string = measure_state["indentifier_string"]
             self.interval_size = measure_state["interval_size"]
             self.measure_complete = measure_state["measure_complete"]
             self.K = len(measure_state["measure"]["Theta"])
-            self.W = measure_state["measure"]["W"]
-            self.Theta = measure_state["measure"]["Theta"]
+            self.W = np.asarray(measure_state["measure"]["W"])
+            self.Theta = np.asarray(measure_state["measure"]["Theta"])
             
             # TODO: EVERY JSON RECOVERY FUNCTION SHOULD RECOVER FUNCTIONS AS WELL
             self.isLebesque = True

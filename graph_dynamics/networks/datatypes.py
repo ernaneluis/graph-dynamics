@@ -61,10 +61,7 @@ class Graph(object):##<------------------
     def get_number_of_nodes(self):
         raise NotImplemented()    
     
-
 class CommunityGraphs(Graph):
-    """
-    """  
     __metaclass__ = ABCMeta
 
     def __init__(self,name_string,identifier_string):
@@ -251,7 +248,10 @@ class CaronFoxGraphs(BayesianGraph):
                         2:"Directed",
                         3:"Bipartite"}
     
-    def __init__(self, identifier_string=None,randomMeasure=None,graph_state=None,networkx_graph=None):
+    def __init__(self, identifier_string=None,
+                       randomMeasure=None,
+                       graph_state=None,networkx_graph=None):
+        
         self.name_string = "CaronFox"
         self.type_of_network = 1
         

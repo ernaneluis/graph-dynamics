@@ -160,18 +160,13 @@ class PallaDynamics(GraphsDynamics):
             sigma_increment = sum(tables_and_costumers.keys())
             tau_increment = 2*self.phi
                 
-            print "Number of current edges prior forget {0}".format(self.CaronFoxGraph_0.networkx_graph.number_of_edges())
             self.__forgetInteractions(self.CaronFoxGraph_0.networkx_graph)
-            print "Number of current edges prior forget {0}".format(self.CaronFoxGraph_0.networkx_graph.number_of_edges())       
-            
+       
             self.__updateInteractions(self.CaronFoxGraph_0,
                                       sigma_increment,
                                       tau_increment,
                                       tables_and_costumers)
             
-            
-            print "Number of current nodes {0}".format(self.CaronFoxGraph_0.networkx_graph.number_of_nodes())
-            print "Number of current edges {0}".format(self.CaronFoxGraph_0.networkx_graph.number_of_edges())
             Networks_TimeSeries.append(self.CaronFoxGraph_0.networkx_graph)
             
         return Networks_TimeSeries
@@ -186,15 +181,12 @@ class PallaDynamics(GraphsDynamics):
             T: int
         """
         GraphList = []
-        
         self.CaronFoxGraph_0 = copy.deepcopy(initial_graph) 
         NetworkList = self.generateNetworkPaths(T)
-        
-        for graph, C in zip(NetworkList,self.C_TimeSeries):
-            CG = CaronFoxGraphs(graph_state=self.CaronFoxGraph_0.get_graph_state())
+        for networkxgraph, C in zip(NetworkList,self.C_TimeSeries):
+            CG = CaronFoxGraphs(graph_state=self.CaronFoxGraph_0.get_graph_state(),networkx_graph=networkxgraph)
             CG.set_C(C)
             GraphList.append(CG)
-            
         return GraphList
     
     def set_graph_path(self):
