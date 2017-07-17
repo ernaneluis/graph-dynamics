@@ -85,10 +85,24 @@ class ForestFire(GraphsDynamics):
         
         return graph_series
     
-    def inference_on_graphs_paths(self,graphs_paths,output_type,dynamical_process):
+    def set_graph_path(self):
+        """
+        Empirical Data
+        """
         return None
+        
+    def inference_on_graphs_paths(self):
+        """
+        Learning/Training
+        """
+        return None
+        
 
-
+    def get_dynamics_state(self):
+        """
+        """
+        return None
+ 
 
 #==========================================================================
 # Perra DYNAMICS
@@ -124,7 +138,6 @@ class PerraDynamics(GraphsDynamics):
             string  output_type:
 
         """
-
         graph_series = [self.GRAPH]
         for T in range(1, number_of_steps):
             graph_series.append(self.evolve_function(graph_series[T - 1]))
