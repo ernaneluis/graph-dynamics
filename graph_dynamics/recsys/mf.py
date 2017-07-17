@@ -1,6 +1,7 @@
 '''
 
-A module for matrix factorization based recommender systems. The data to be modeled here is ideally preference data indicating user's preference to items
+A module for matrix factorization based recommender systems. 
+The data to be modeled here is ideally preference data indicating user's preference to items
 We are given a binary preference matrix encoding P preferences of m users to n items(P^[m x n]) and f being number of latent factors.
 The algorithm implemented minimizes:
     E(X,Y)=|| P-XY' ||^2
@@ -233,9 +234,16 @@ class MFRecsys(baserecsys.BaseRecommender):
             self.configs=recsysIO.readJsonToADict(pathToResultsDir+"/"+"config.json")
 
     def basicPredict(self,mUserIndex,mProductIndex):
+        """
+        estimate the association between a given user and product
+        """
         return np.dot(self.Y[mProductIndex],self.X[mUserIndex])
+    
     def basicPredictSingleUser(self,mUserIndex,topL=5):
-
+        """
+        out of all items 
+        take the topL for user mUserIndex
+        """
         #estimated similarities of items to the user:
         p_hat_u=np.dot(self.Y,self.X[mUserIndex])
         topLToPredict=np.argsort(p_hat_u)[::-1][:topL]

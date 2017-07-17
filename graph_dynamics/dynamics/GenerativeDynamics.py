@@ -3,9 +3,6 @@ Created on Jun 9, 2017
 
 @author: cesar
 '''
-
-
-
 import snap
 import math
 import time
@@ -70,10 +67,7 @@ class ForestFire(GraphsDynamics):
         
         self.timeSeriesOfNodes = timeSeriesOfNodes 
     
-    def generate_graphs_series(self,number_of_steps,output_type=list):
-        """
-        """
-        
+    def generate_graphs_paths(self,number_of_steps,output_type=list):
         snap_graph = snap_handlers.nx_to_snap(self.initial_graph)
         graph_series = [snap_handlers.snap_to_nx(snap_graph)]
         numberOfNodes = graph_series[0].number_of_nodes()
@@ -91,16 +85,16 @@ class ForestFire(GraphsDynamics):
         
         return graph_series
     
-    
-    def define_graphs_series(self,graphs_paths,output_type,dynamical_process):
+    def inference_on_graphs_paths(self,graphs_paths,output_type,dynamical_process):
         return None
-    
+
+
+
 #==========================================================================
-# BITCOIN DYNAMICS
+# Perra DYNAMICS
 #==========================================================================
 
-class TxDynamics(GraphsDynamics):
-    
+class PerraDynamics(GraphsDynamics):
     def __init__(self, initial_graph, number_of_connections):
         """
           Constructor
@@ -116,12 +110,11 @@ class TxDynamics(GraphsDynamics):
         type_of_dynamics = "SnapShot"
         GraphsDynamics.__init__(self, initial_graph, type_of_dynamics, number_of_connections)
 
-        #graph is a type of TxGraph
+        # graph is a type of TxGraph
         self.GRAPH = initial_graph
         self.number_of_connections = number_of_connections
 
-
-    def generate_graphs_series(self,number_of_steps,output_type):
+    def generate_graphs_paths(self, number_of_steps, output_type):
         """
           Method
 
@@ -131,36 +124,32 @@ class TxDynamics(GraphsDynamics):
             string  output_type:
 
         """
-        
+
         graph_series = [self.GRAPH]
-        for T in range(1,number_of_steps):
-            graph_series.append(self.evolve_function(graph_series[T-1]))
-    
+        for T in range(1, number_of_steps):
+            graph_series.append(self.evolve_function(graph_series[T - 1]))
+
         return graph_series
 
-    def evolve_function(self,dynamical_process=None):
+    def evolve_function(self, dynamical_process=None):
         """
         """
-        #0 clear connections
+        # 0 clear connections
         self.GRAPH.network.remove_edges_from(self.GRAPH.network.edges())
-        #1 select nodes to be active
+        # 1 select nodes to be active
         after_connections = self.__set_nodes_active()
-        #2 make conenctions from activacted nodes
+        # 2 make conenctions from activacted nodes
         before_connections = self.__set_connections()
-        #3 make random walk
-        #if amount were set then graph can do random walk
-        if(self.GRAPH.hasGraphAmount):
-            walked = self.__set_propagate_walker()
-
+        # 3 make random walk
+        walked = self.__set_propagate_walker()
 
         return copy.deepcopy(self.GRAPH)
 
-
-    def define_graphs_series(self,graphs_paths,output_type,dynamical_process=None):
+    def inference_on_graphs_paths(self, graphs_paths, output_type, dynamical_process=None):
         """
         """
         return None
-       
+
     def __set_nodes_active(self):
         for n in self.GRAPH.network.nodes():
             self.GRAPH.set_node_type(n)
@@ -173,7 +162,8 @@ class TxDynamics(GraphsDynamics):
         # for each selected node make M connections
         for node in active_nodes:
             # select random M nodes to make M connection
-            selected_nodes = [(node, random.randint(0, self.GRAPH.number_of_nodes() - 1)) for e in range(self.number_of_connections)]
+            selected_nodes = [(node, random.randint(0, self.GRAPH.number_of_nodes() - 1)) for e in
+                              range(self.number_of_connections)]
             # make connections/edges
             self.GRAPH.network.add_edges_from(selected_nodes)
 
@@ -204,5 +194,49 @@ class TxDynamics(GraphsDynamics):
         return self.GRAPH
 
 
+# ==========================================================================
+# BITCOIN DYNAMICS
+# ==========================================================================
 
+class TxDynamics(PerraDynamics):
+    def __init__(self, initial_graph, number_of_connections):
+        """
+          Constructor
+
+          Parameters
+
+            TxGraph initial_graph:            initial state of a TxGraph instance
+            int     number_of_connections:    max number of connections/edges a node can do
+
+        """
+
+        name_string = "GammaProcess"
+        type_of_dynamics = "SnapShot"
+        # GraphsDynamics.__init__(self, initial_graph, type_of_dynamics, number_of_connections)
+
+        # #graph is a type of TxGraph
+        # self.GRAPH = initial_graph
+        # self.number_of_connections = number_of_connections
+
+        PerraDynamics.__init__(self, initial_graph, number_of_connections)
+
+
+
+
+        # def evolve_function(self,dynamical_process=None):
+        #     """
+        #     """
+        #     #0 clear connections
+        #     self.GRAPH.network.remove_edges_from(self.GRAPH.network.edges())
+        #     #1 select nodes to be active
+        #     after_connections = self.__set_nodes_active()
+        #     #2 make conenctions from activacted nodes
+        #     before_connections = self.__set_connections()
+        #     #3 make random walk
+        #     #if amount were set then graph can do random walk
+        #     walked = self.__set_propagate_walker()
+        #
+        #
+        #     return copy.deepcopy(self.GRAPH)
+        #
 

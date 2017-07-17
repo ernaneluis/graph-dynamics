@@ -22,6 +22,17 @@ matplotlib.rcParams['ps.useafm'] = True
 matplotlib.rcParams['pdf.use14corefonts'] = True
 matplotlib.rcParams['text.usetex'] = True 
 
+def removeEdges(graph):
+    """
+    removes edges with weight 0 
+    """
+    edgesToRemove = []
+    for w, n  in graph.edge.iteritems():
+        for a,v in n.iteritems():
+            if v["weight"] == 0:
+                edgesToRemove.append((w,a))
+    graph.remove_edges_from(edgesToRemove)
+    
 class PallaDynamics:
     
     def __init__(self,phi,rho,CaronFoxGraph):
@@ -63,7 +74,6 @@ class PallaDynamics:
         for theta, c in zip(Thetas_2,C_2):
             C_measure[theta] = c
         
-        print C_measure
         C_TimeSeries.append(C_measure)
         for i in range(1,T):
             # FROM OLD ATOMS
@@ -122,7 +132,7 @@ class PallaDynamics:
         for node, neigh in currentCaronNetwork.edge.iteritems():
             for ng, weight in neigh.iteritems():
                 currentCaronNetwork[node][ng]["weight"] = binom.rvs(weight["weight"],np.exp(-self.rho))
-
+        removeEdges(currentCaronNetwork)
     
     def __updateInteractions(self,currentCaronGraph,sigma_increment=0.,tau_increment=0.,table_and_costumers=None):
         """
@@ -172,9 +182,12 @@ class PallaDynamics:
                     
             sigma_increment = sum(tables_and_costumers.keys())
             tau_increment = 2*self.phi
-            
-            print "Number of old tables {0}".format(sigma_increment)
+                
+
+            print "Number of current edges prior forget {0}".format(self.CaronFoxGraph_0.network.number_of_edges())
             self.__forgetInteractions(self.CaronFoxGraph_0.network)
+            print "Number of current edges prior forget {0}".format(self.CaronFoxGraph_0.network.number_of_edges())       
+            
             self.__updateInteractions(self.CaronFoxGraph_0,
                                       sigma_increment,
                                       tau_increment,
@@ -182,6 +195,7 @@ class PallaDynamics:
             
             
             print "Number of current nodes {0}".format(self.CaronFoxGraph_0.network.number_of_nodes())
+            print "Number of current edges {0}".format(self.CaronFoxGraph_0.network.number_of_edges())
             Networks_TimeSeries.append(self.CaronFoxGraph_0.network)
             
         return Networks_TimeSeries

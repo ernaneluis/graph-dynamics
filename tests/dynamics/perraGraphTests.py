@@ -3,43 +3,30 @@ Created on May 3, 2017
 
 @author: cesar
 '''
-import json
 import unittest
-import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-
-# import importlib
-# importlib.import_module('mpl_toolkits.mplot3d').__path__
-
 from matplotlib.pyplot import pause
 from mpl_toolkits.mplot3d import Axes3D
-# import matplotlib.pyplot as plt
-
 import matplotlib.path as mpath
-import matplotlib.patches as mpatches
 
 
-from graph_dynamics.dynamics.GenerativeDynamics import TxDynamics
-from graph_dynamics.networks.tx_graph import TxGraph
+from graph_dynamics.dynamics.GenerativeDynamics import PerraDynamics
+from graph_dynamics.networks.perra_graph import PerraGraph
 
 class Test(unittest.TestCase):
     
     
     def generateTxGraph(self):
 
-        G = TxGraph(numberOfNodes=15,
+        G = PerraGraph(numberOfNodes=15,
                     activity_gamma=2.8,
                     rescaling_factor=10,
                     threshold_min=0.001,
                     delta_t=1,
-                    number_walkers=2,
-                    amount_pareto_gama=1.9,
-                    amount_threshold= 0.001)
-
-
-        dynamics = TxDynamics(initial_graph=G, number_of_connections=2)
+                    number_walkers=2)
+        # G.set_walker(number_walkers=2)
+        dynamics = PerraDynamics(initial_graph=G, number_of_connections=2)
 
         series = dynamics.generate_graphs_paths(number_of_steps=5, output_type="t")
 
@@ -76,21 +63,10 @@ class Test(unittest.TestCase):
 
 
             # walkers are blue
-            if(txgraph.hasGraphAmount):
-                print txgraph.get_walkers()
-                # add walkers to the plot as blue nodes
-                nx.draw_networkx_nodes(txgraph.network, position, node_size=1000, nodelist=txgraph.get_walkers(), node_color='blue')
-                # add amount of each node as green color
-                labels = {}
-                for idx, label in enumerate(txgraph.get_nodes_amounts()):
-                    labels[idx] = label
+            print txgraph.get_walkers()
+            # add walkers to the plot as blue nodes
+            nx.draw_networkx_nodes(txgraph.network, position, node_size=1000, nodelist=txgraph.get_walkers(), node_color='blue')
 
-                for p in position:  # raise text positions
-                    t = list(position[p])
-                    t[1] += 0.20
-                    position[p] = tuple(t)
-
-                nx.draw_networkx_labels(txgraph.network, position, labels, font_size=10, font_color='g')
 
             pause(3)
             plt.clf()  # Clear figure

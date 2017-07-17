@@ -3,6 +3,8 @@ Created on Jun 13, 2017
 
 @author: cesar
 '''
+import sys
+import random
 import numpy as np
 import networkx as nx
 from scipy.stats import bernoulli
@@ -67,8 +69,6 @@ class CommunityTodeschiniCaronGraph(Graph):
     def get_number_of_nodes(self):
         return None
     
-
-
 #=====================================================
 # Our research models
 #=====================================================
@@ -177,3 +177,69 @@ class HierarchicalMixedMembership(Graph):
     def get_number_of_nodes(self):
         return None
     
+#===========================================================================
+# OLD FUNCTIONS
+#===========================================================================
+
+def barabasiAlbertCommunities(numberOfNodesPerCommunities,numberOfBridgesPerCommunity,barabasiParameter=3):
+    """
+    This graph simply connects a number of alber barabasi graphs
+    
+    Parameters:
+        numberOfNodesPerCommunities: list of int
+        numberOfBridgesPerCommunity: list of int
+        barabasiParameter: int
+    """
+    numberOfNodes = sum(numberOfNodesPerCommunities)
+    numberOfCommunities = len(numberOfNodesPerCommunities)
+    subGraphs = []
+    #generate subgrahps
+    for c in numberOfNodesPerCommunities:
+        subGraphs.append( nx.barabasi_albert_graph(c,barabasiParameter) )
+
+    #renaming
+    for i in range(1,numberOfCommunities):
+        myMap = dict(zip(subGraphs[i].nodes(),
+                     range(max(subGraphs[i-1].nodes())+1,max(subGraphs[i-1].nodes())+1+len(subGraphs[i].nodes()))))
+        subGraphs[i] = nx.relabel_nodes(subGraphs[i],myMap)
+
+    #creates full graph
+    fullGraph = nx.Graph()
+    for c in range(numberOfCommunities):
+        fullGraph.add_edges_from(subGraphs[c].edges())
+
+
+    #who are the bridges
+    bridgesInCommunity = []
+    for c in range(numberOfCommunities):
+        bridgesInCommunity.append(random.sample(subGraphs[c].nodes(),numberOfBridgesPerCommunity[c]))
+
+
+    e = np.zeros((numberOfCommunities,numberOfCommunities))
+    #reconnect
+    for c in range(numberOfCommunities):
+        otherComm = set(range(numberOfCommunities)).difference(set([c]))
+        try:
+            totalExtraNodes = np.concatenate([subGraphs[a].nodes() for a in otherComm])
+            bridgesNeighbors = random.sample(totalExtraNodes,numberOfBridgesPerCommunity[c])
+            for b in bridgesNeighbors:
+                for i in range(numberOfCommunities):
+                    if(b in subGraphs[i]):
+                        e[c,i]+=1
+                        e[i,c]+=1
+
+            for bridgeNode, bridgeNeigbor in zip(bridgesInCommunity[c],bridgesNeighbors):
+                fullGraph.add_edge(bridgeNode,bridgeNeigbor)
+        except:
+            print sys.exc_info
+            
+    # TO DO: check modularity
+    for i  in range(numberOfCommunities):
+        e[i,i] = subGraphs[i].number_of_edges()
+
+    e = e/fullGraph.number_of_edges()
+    Q = 0
+    for i in range(numberOfCommunities):
+        Q += e[i,i] - (e[i,:].sum())**2
+    
+    return (fullGraph,subGraphs,Q,bridgesInCommunity)

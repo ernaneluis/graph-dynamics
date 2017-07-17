@@ -43,24 +43,12 @@ class Test(unittest.TestCase):
                             intensity_parameters=self.intensity_parameters,
                             upper_bound=self.upper_bound)
         
-        #PM.generate_points(20)
-        PM.PlotProcess(self.plotName, self.whereToPlot)
-        
-        #==============
-        # Lebesque
-        #==============
-        #PM = PoissonMeasure(interval_size=self.interval_size,
-        #                    identifier_string="UniformPoissonMeasure",
-        #                    K=None,
-        #                    isLebesque=True,
-        #                    name_string="PoissonTest")
-        
-        #PM.generate_points(20)
-        #PM.PlotProcess(self.plotName, self.whereToPlot, showPlot=True)
+        PM.generate_points(20)
+        PM.PlotProcess(self.plotName, showPlot=True)
     
     def generateFiniteGeneralizedGamma(self):
         self.identifier_string = "FGGP Test"
-        self.K = 20.
+        self.K = 20
         self.sigma = 0.5
         self.tau = 0.5
         self.alpha = 10.2
@@ -77,7 +65,7 @@ class Test(unittest.TestCase):
 
     def generateFiniteStableBeta(self):
         self.identifier_string = "FSBP Test"
-        self.K = 20.
+        self.K = 20
         self.sigma = 0.5
         self.alpha = 10.2
         self.lambdaMeasure = PoissonMeasure(self.alpha,identifier_string="LambdaMeasure",K=self.K)
