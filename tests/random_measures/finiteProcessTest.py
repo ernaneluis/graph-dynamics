@@ -5,13 +5,13 @@ Created on May 2, 2017
 '''
 
 import sys
-sys.path.append("../")
+sys.path.append("../../")
 
 import json
 import unittest
 import numpy as np
 import matplotlib.pyplot as plt
-sys.path.append("../")
+sys.path.append("../../")
 from graph_dynamics.random_measures import finite_process
 from graph_dynamics.random_measures.datatypes import PoissonMeasure
 from graph_dynamics.random_measures.finite_process import FiniteGeneralizedGamma
@@ -28,7 +28,7 @@ class Test(unittest.TestCase):
         self.intensity = my_lambda_intensity
         self.intensity_parameters = (2*np.pi,)
         self.upper_bound = 2.
-        self.whereToPlot = "../data/"
+        self.whereToPlot = "./Plots/"
         self.plotName = "PoissonMeasure.pdf"  
         
         #==============
@@ -72,7 +72,7 @@ class Test(unittest.TestCase):
                                           self.tau,
                                           self.lambdaMeasure)
         
-        self.FGG.PlotProcess(plotName="{0}.pdf", saveTo="../", showPlot=True)
+        self.FGG.PlotProcess(plotName="{0}.pdf", saveTo="./Plots/", showPlot=True)
         
 
     def generateFiniteStableBeta(self):
@@ -87,7 +87,7 @@ class Test(unittest.TestCase):
                                           self.sigma,
                                           self.lambdaMeasure)
         
-        self.FSB.PlotProcess(plotName="{0}.pdf", saveTo="../", showPlot=True)
+        self.FSB.PlotProcess(plotName="{0}.pdf", saveTo="./Plots/", showPlot=True)
 
 if __name__ == '__main__':
     import sys;sys.argv = ['','Test.generatePoissonMeasure','Test.generateFiniteGeneralizedGamma','Test.generateFiniteStableBeta']

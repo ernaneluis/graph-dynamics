@@ -5,7 +5,7 @@ Created on May 24, 2015
 '''
 
 import sys
-sys.path.append("../")
+sys.path.append("../../")
 
 import json
 import unittest
