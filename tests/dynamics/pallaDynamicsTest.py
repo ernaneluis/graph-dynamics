@@ -56,7 +56,7 @@ class Test(unittest.TestCase):
         self.phi = 0.2
         self.rho = 1.
         number_of_steps = 100
-        number_of_steps_in_memory = 5
+        number_of_steps_in_memory = 10
     
         gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/"    
         gd_dynamical_parameters = {"number_of_steps":number_of_steps,

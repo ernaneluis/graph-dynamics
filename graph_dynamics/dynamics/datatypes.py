@@ -70,9 +70,78 @@ class GraphsDynamics(object):
             gd_dynamical_parameters: dict
         """
         gd_dynamical_parameters = self.get_dynamics_state()
-        gd_directory = gd_dynamical_parameters["gd_directory"]
         steps_in_memory = gd_dynamical_parameters["number_of_steps_in_memory"]
         macrostates_names = gd_dynamical_parameters["macrostates"]        
+        
+        #==================================================
+        # CHECK ALL FILES
+        #==================================================
+        
+        ALL_DYNAMIC_FILES_NAME, GRAPH_FILES, STATE_FILES, ALL_TIME_INDEXES, latest_index = self.handle_files()
+        
+        #==================================================
+        # DEFINE INITIAL GRAPH FROM LATEST STATE
+        #==================================================        
+        
+        if len(GRAPH_FILES) > 0:
+            initial_graph = self.get_graph(latest_index)
+
+
+        print "#{0} STEPS EVOLUTION STARTED FOR {1}".format(N,self.dynamics_identifier)
+        print "#STARTING EVOLUTION AT STEP {0}".format(latest_index)
+        
+        if  latest_index <  N:
+            N = N - latest_index
+            if N < steps_in_memory:
+                if latest_index == 0:
+                    GRAPHS_IN_MEMORY = self.generate_graphs_paths(initial_graph,N)
+                else:
+                    GRAPHS_IN_MEMORY = self.generate_graphs_paths(initial_graph,N)[1:]
+                    
+                #FOR ALL GRAPHS IN MEMORY EVALUATE THE MACROSTATES AND OUTPUT
+                for graph_object in GRAPHS_IN_MEMORY:
+                    self.output_graph_state(graph_object,latest_index)
+                    self.calculate_output_macrostates(graph_object,latest_index,macrostates_names)
+                    latest_index += 1
+                    
+            else:
+                if (N % steps_in_memory) != 0:
+                    steps = np.concatenate([np.repeat(steps_in_memory,N / steps_in_memory),np.array([N % steps_in_memory])])
+                else:
+                    steps = np.repeat(steps_in_memory,N / steps_in_memory)
+                    
+                for i_number_of_steps in steps:
+                    if latest_index == 0:
+                        GRAPHS_IN_MEMORY = self.generate_graphs_paths(initial_graph,i_number_of_steps)
+                    else:
+                        GRAPHS_IN_MEMORY = self.generate_graphs_paths(initial_graph,i_number_of_steps+1)[1:]
+                    #FOR ALL GRAPHS IN MEMORY EVALUATE THE MACROSTATES AND OUTPUT
+                    for  graph_object in GRAPHS_IN_MEMORY:
+                        self.output_graph_state(graph_object,latest_index)
+                        self.calculate_output_macrostates(graph_object,latest_index,macrostates_names)
+                        latest_index += 1
+                        
+                initial_graph = copy.deepcopy(GRAPHS_IN_MEMORY[-1])
+        else:
+            print "#EVOLUTION READY"
+    
+    def get_graph_path_window(self,index_0,index_f):
+        """
+        """
+        ALL_DYNAMIC_FILES_NAME, GRAPH_FILES, STATE_FILES, ALL_TIME_INDEXES, latest_index = self.handle_files()
+        
+        return None
+        
+    def handle_files(self):
+        """
+        Using the dynamical state we check all files
+        
+        Returns
+        -------
+        ALL_DYNAMIC_FILES_NAME, GRAPH_FILES, STATE_FILES, ALL_TIME_INDEXES, latest_index
+        """
+        gd_dynamical_parameters = self.get_dynamics_state()
+        gd_directory = gd_dynamical_parameters["gd_directory"]
         
         #==================================================
         # CHECK ALL FILES
@@ -102,90 +171,39 @@ class GraphsDynamics(object):
             print "#CHECK FOLDER {0}".format(self.foldername)
             raise Exception
         
-        #==================================================
-        # DEFINE INITIAL GRAPH FROM LATEST STATE
-        #==================================================
+        return  ALL_DYNAMIC_FILES_NAME, GRAPH_FILES, STATE_FILES, ALL_TIME_INDEXES, latest_index
+    
+    def output_graph_state(self,graph_object,latest_index):
+        """
+        Handles the json output
+        """
+        graph_state = graph_object.get_graph_state()
+        graph_filename = self.foldername+"{0}_gGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
+        graphstate_filename = self.foldername+"{0}_sGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
+        #TO DO: create the edge list file without the need for networkx
+        nx.write_edgelist(graph_object.get_networkx(),graph_filename)
+        with open(graphstate_filename,"w") as outfile:
+            json.dump(graph_state, outfile)
+    
+    def calculate_output_macrostates(self,graph_object,latest_index,macrostates_names):
+        """
+        Calculates the macro states and outputs them in folder
+        """
+        macrostate_filename = self.foldername+"{0}_mGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
+        #TO DO: parallelize calls to macrostates
+        macrostate_json = {}
+        for macrostate_function_name in macrostates_names:
+            macrostate_json[macrostate_function_name] = Macrostates.macrostate_function_dictionary[macrostate_function_name](graph_object)                        
+        with open(macrostate_filename,"w") as outfile:
+            json.dump(macrostate_json, outfile)
+            
+    def get_graph(self,time_index):
+        gd_dynamical_parameters = self.get_dynamics_state()
+        graph_filename = self.foldername+"{0}_gGD_{1}_.gd".format(self.dynamics_identifier,time_index)
+        graphstate_filename = self.foldername+"{0}_sGD_{1}_.gd".format(self.dynamics_identifier,time_index)
         
-        if len(GRAPH_FILES) > 0:
-            
-            graph_filename = self.foldername+"{0}_gGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
-            graphstate_filename = self.foldername+"{0}_sGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
-            
-            latest_graph_state = json.load(open(graphstate_filename,"r"))
-            latest_graph = nx.read_edgelist(graph_filename)
-            
-            initial_graph = graph_class_dictionary[gd_dynamical_parameters["graph_class"]](graph_state=latest_graph_state,networkx_graph=latest_graph)
-            
-        #==================================================
+        latest_graph_state = json.load(open(graphstate_filename,"r"))
+        latest_graph = nx.read_edgelist(graph_filename)
         
-        print "#{0} STEPS EVOLUTION STARTED FOR {1}".format(N,self.dynamics_identifier)
-        print "#STARTING EVOLUTION AT STEP {0}".format(latest_index)
-        
-        if  latest_index <  N:
-            N = N - latest_index
-            if N < steps_in_memory:
-                if latest_index == 0:
-                    GRAPHS_IN_MEMORY = self.generate_graphs_paths(initial_graph,N)
-                else:
-                    GRAPHS_IN_MEMORY = self.generate_graphs_paths(initial_graph,N)[1:]
-                    
-                #FOR ALL GRAPHS IN MEMORY EVALUATE THE MACROSTATES AND OUTPUT
-                for graph_object in GRAPHS_IN_MEMORY:
-                    graph_state = graph_object.get_graph_state()
-
-                    graph_filename = self.foldername+"{0}_gGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
-                    graphstate_filename = self.foldername+"{0}_sGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
-                    macrostate_filename = self.foldername+"{0}_mGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
-                    
-                    #TO DO: create the edge list file without the need for networkx
-                    nx.write_edgelist(graph_object.get_networkx(),graph_filename)
-                    with open(graphstate_filename,"w") as outfile:
-                        json.dump(graph_state, outfile)
-                    
-                    #TO DO: parallelize calls to macrostates
-                    macrostate_json = {}
-                    for macrostate_function_name in macrostates_names:
-                        macrostate_json[macrostate_function_name] = Macrostates.macrostate_function_dictionary[macrostate_function_name](graph_object)                        
-                    with open(macrostate_filename,"w") as outfile:
-                        json.dump(macrostate_json, outfile)
-                        
-                    latest_index += 1                    
-            else:
-                if (N % steps_in_memory) != 0:
-                    steps = np.concatenate([np.repeat(steps_in_memory,N / steps_in_memory),np.array([N % steps_in_memory])])
-                else:
-                    steps = np.repeat(steps_in_memory,N / steps_in_memory)
-                    
-                for i_number_of_steps in steps:
-                    
-                    if latest_index == 0:
-                        GRAPHS_IN_MEMORY = self.generate_graphs_paths(initial_graph,i_number_of_steps)
-                    else:
-                        GRAPHS_IN_MEMORY = self.generate_graphs_paths(initial_graph,i_number_of_steps+1)[1:]
-                        
-                    #FOR ALL GRAPHS IN MEMORY EVALUATE THE MACROSTATES AND OUTPUT
-                    for  graph_object in GRAPHS_IN_MEMORY:
-                        graph_state = graph_object.get_graph_state()
-                        
-                        graph_filename = self.foldername+"{0}_gGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
-                        graphstate_filename = self.foldername+"{0}_sGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
-                        macrostate_filename = self.foldername+"{0}_mGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
-                        
-                        #TO DO: create the edge list file without the need for networkx
-                        nx.write_edgelist(graph_object.get_networkx(),graph_filename)
-                        with open(graphstate_filename,"w") as outfile:
-                            json.dump(graph_state, outfile)
-                        
-                        #TO DO: parallelize calls to macrostates
-                        macrostate_json = {}
-                        for macrostate_function_name in macrostates_names:
-                            macrostate_json[macrostate_function_name] = Macrostates.macrostate_function_dictionary[macrostate_function_name](graph_object)                        
-                        with open(macrostate_filename,"w") as outfile:
-                            json.dump(macrostate_json, outfile)
-                        
-                        latest_index += 1
-                        
-                initial_graph = copy.deepcopy(GRAPHS_IN_MEMORY[-1])
-        else:
-            print "#EVOLUTION READY"
-            
+        graph_object = graph_class_dictionary[gd_dynamical_parameters["graph_class"]](graph_state=latest_graph_state,networkx_graph=latest_graph)
+        return graph_object 
