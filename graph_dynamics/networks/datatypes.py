@@ -64,14 +64,14 @@ class Graph(object):##<------------------
 class VanillaGraph(Graph):
     """
     This graph can be used as a handler in order to
-    analyse files
+    analyse files, it simply holds a networkx graph
     """
-    def __init__(self,graph_state=None,networkx_graph=None):
+    def __init__(self,identifier_string,graph_state=None,networkx_graph=None):
         self.name_string = "VanillaGraph"
         self.type_of_network = 1
-        
+        self.identifier_string = identifier_string
         #initialize with parameters
-        if graph_state==None:
+        if networkx_graph==None:
             self.networkx_graph = nx.barabasi_albert_graph(100, 3)
             self.graph_state = {"None":None}
         #initialize with json object

@@ -191,4 +191,4 @@ def learn_embeddings(walks,args):
                      workers=args["workers"], 
                      iter=args["iter"])
     model.wv.save_word2vec_format(args["output"])
-    
+    return model.wv 

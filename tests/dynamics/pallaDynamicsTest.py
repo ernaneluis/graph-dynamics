@@ -20,6 +20,7 @@ class Test(unittest.TestCase):
     
     def evaluateEdgesMemory(self):
         #Defines process for the graph ########################################
+        
         self.tau = 1.
         self.alpha = 20.
         self.sigma = self.alpha
@@ -31,6 +32,7 @@ class Test(unittest.TestCase):
                                  K=100)
         self.graph_identifier = "CaronFoxTest"
         self.CaronFoxGraph = CaronFoxGraphs(self.graph_identifier,G)
+        
         #Defines Dynamics ###################################################### 
         self.phi = 1.
         self.rho = 100.
@@ -39,6 +41,7 @@ class Test(unittest.TestCase):
         Palla.generateNetworkPaths(3)
        
     def generateHiddenPaths(self):
+        
         #Defines process for the graph ########################################
         self.tau = 1.
         self.alpha = 20.
@@ -59,7 +62,7 @@ class Test(unittest.TestCase):
         number_of_steps_in_memory = 10
     
         gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/"
-        gd_directory = "/home/cesar/Desktop/Simulations/"    
+        #gd_directory = "/home/cesar/Desktop/Simulations/"
         gd_dynamical_parameters = {"number_of_steps":number_of_steps,
                                    "number_of_steps_in_memory":number_of_steps_in_memory,
                                    "gd_directory":gd_directory,
@@ -75,7 +78,6 @@ class Test(unittest.TestCase):
         
         # generate dynamics
         Palla.evolve(number_of_steps,self.CaronFoxGraph)
-        
         #graph_paths_visualization.plotGraphPaths(graph_paths, "palla_dynamics")
         
 if __name__ == '__main__':

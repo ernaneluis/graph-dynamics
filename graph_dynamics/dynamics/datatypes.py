@@ -29,7 +29,14 @@ class GraphsDynamics(object):
             
         """ 
         self.dynamics_identifier = gd_dynamical_parameters["dynamics_identifier"]
-        
+        self.dynamics_foldername =  gd_dynamical_parameters["gd_directory"] + self.dynamics_identifier + "_gd/"
+        #make sure folder for output is ready
+        if not os.path.exists(self.dynamics_foldername):
+            print "New Dynamics Directory"
+            os.makedirs(self.dynamics_foldername)
+        else:
+            print "Dynamics Directory Exists"
+            
     @abstractmethod
     def generate_graphs_paths(self,initial_graph,N):
         """
@@ -140,19 +147,10 @@ class GraphsDynamics(object):
         -------
         ALL_DYNAMIC_FILES_NAME, GRAPH_FILES, STATE_FILES, ALL_TIME_INDEXES, latest_index
         """
-        gd_dynamical_parameters = self.get_dynamics_state()
-        gd_directory = gd_dynamical_parameters["gd_directory"]
-        
         #==================================================
         # CHECK ALL FILES
-        #==================================================
-        
-        #make sure folder for output is ready
-        self.foldername =  gd_directory + self.dynamics_identifier + "_gd/"
-        if not os.path.exists(self.foldername):
-            os.makedirs(self.foldername)
-            
-        ALL_DYNAMIC_FILES_NAME = os.listdir(self.foldername)
+        #==================================================            
+        ALL_DYNAMIC_FILES_NAME = os.listdir(self.dynamics_foldername)
         GRAPH_FILES = [filename for filename in ALL_DYNAMIC_FILES_NAME if "gGD" in filename]
         STATE_FILES = [filename for filename in ALL_DYNAMIC_FILES_NAME if "sGD" in filename]
         try:
@@ -160,7 +158,6 @@ class GraphsDynamics(object):
         except:
             print "Wrong filename, dynamic identifier cannot have underscore (_) "
             raise Exception
-        
         try:
             latest_index = max(ALL_TIME_INDEXES)    
         except:
@@ -168,7 +165,7 @@ class GraphsDynamics(object):
         
         if not (len(GRAPH_FILES) == len(STATE_FILES)):
             print "#PROBLEM WITH DYNAMICAL GRAPH FILES, FILE MISSING"
-            print "#CHECK FOLDER {0}".format(self.foldername)
+            print "#CHECK FOLDER {0}".format(self.dynamics_foldername)
             raise Exception
         
         return  ALL_DYNAMIC_FILES_NAME, GRAPH_FILES, STATE_FILES, ALL_TIME_INDEXES, latest_index
@@ -178,8 +175,8 @@ class GraphsDynamics(object):
         Handles the json output
         """
         graph_state = graph_object.get_graph_state()
-        graph_filename = self.foldername+"{0}_gGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
-        graphstate_filename = self.foldername+"{0}_sGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
+        graph_filename = self.dynamics_foldername+"{0}_gGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
+        graphstate_filename = self.dynamics_foldername+"{0}_sGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
         #TO DO: create the edge list file without the need for networkx
         nx.write_edgelist(graph_object.get_networkx(),graph_filename)
         with open(graphstate_filename,"w") as outfile:
@@ -189,7 +186,7 @@ class GraphsDynamics(object):
         """
         Calculates the macro states and outputs them in folder
         """
-        macrostate_filename = self.foldername+"{0}_mGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
+        macrostate_filename = self.dynamics_foldername+"{0}_mGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
         #TO DO: parallelize calls to macrostates
         macrostate_json = {}
         for macrostate_function_name in macrostates_names:
@@ -199,8 +196,8 @@ class GraphsDynamics(object):
             
     def get_graph(self,time_index):
         gd_dynamical_parameters = self.get_dynamics_state()
-        graph_filename = self.foldername+"{0}_gGD_{1}_.gd".format(self.dynamics_identifier,time_index)
-        graphstate_filename = self.foldername+"{0}_sGD_{1}_.gd".format(self.dynamics_identifier,time_index)
+        graph_filename = self.dynamics_foldername+"{0}_gGD_{1}_.gd".format(self.dynamics_identifier,time_index)
+        graphstate_filename = self.dynamics_foldername+"{0}_sGD_{1}_.gd".format(self.dynamics_identifier,time_index)
         
         latest_graph_state = json.load(open(graphstate_filename,"r"))
         latest_graph = nx.read_edgelist(graph_filename)
