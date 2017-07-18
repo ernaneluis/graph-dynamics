@@ -58,7 +58,8 @@ class Test(unittest.TestCase):
         number_of_steps = 100
         number_of_steps_in_memory = 10
     
-        gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/"    
+        gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/"
+        gd_directory = "/home/cesar/Desktop/Simulations/"    
         gd_dynamical_parameters = {"number_of_steps":number_of_steps,
                                    "number_of_steps_in_memory":number_of_steps_in_memory,
                                    "gd_directory":gd_directory,

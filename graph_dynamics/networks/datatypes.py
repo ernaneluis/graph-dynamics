@@ -60,6 +60,48 @@ class Graph(object):##<------------------
     @abstractmethod        
     def get_number_of_nodes(self):
         raise NotImplemented()    
+
+class VanillaGraph(Graph):
+    """
+    This graph can be used as a handler in order to
+    analyse files
+    """
+    def __init__(self,graph_state=None,networkx_graph=None):
+        self.name_string = "VanillaGraph"
+        self.type_of_network = 1
+        
+        #initialize with parameters
+        if graph_state==None:
+            self.networkx_graph = nx.barabasi_albert_graph(100, 3)
+            self.graph_state = {"None":None}
+        #initialize with json object
+        else:
+            self.graph_state = copy.copy(graph_state)
+            self.networkx_graph = networkx_graph
+            
+        Graph.__init__(self,self.name_string,self.identifier_string,self.graph_state)
+
+    def get_graph_state(self):
+        """
+        This function should return a json object with all 
+        parameters required to initialize such a graph 
+        """
+        return self.graph_state
+            
+    def get_networkx(self):
+        return self.networkx_graph
+          
+    def get_adjancency_matrix(self):
+        return nx.adjacency_matrix(self.networkx_graph)
+
+    def get_edge_list(self):
+        return self.networkx_graph.edge
+     
+    def get_number_of_edges(self):
+        return self.networkx_graph.number_of_edges()
+     
+    def get_number_of_nodes(self):
+        return self.networkx_graph.number_of_nodes()     
     
 class CommunityGraphs(Graph):
     __metaclass__ = ABCMeta
