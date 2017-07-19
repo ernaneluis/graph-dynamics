@@ -1,0 +1,6 @@
+Communities
+*******************
+
+
+.. automodule:: dynamic_graphs.communities.hierarchical
+	:members:

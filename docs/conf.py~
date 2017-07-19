@@ -41,7 +41,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'BayesianNetworks'
+project = u'GraphDynamics'
 copyright = u'2017, Cesar Ojeda'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -233,8 +233,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'TagToHierarchy', u'sample Documentation',
-   u'Kostadin Cvejoski', 'TagToHierarchy', 'One line description of project.',
+  ('index', 'BayesianNetwork', u'sample Documentation',
+   u'Cesar Ojeda', 'BayesianNetwork', 'One line description of project.',
    'Miscellaneous'),
 ]
 

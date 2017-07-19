@@ -23,12 +23,12 @@ class CompletlyRandomMeasures(object):
     
     the CRM take the following form
     
-    $$
-    W = \sum^{\infty}_{i=1}w_i\delta_{\theta_i}
-    $$
+   
+    :math:`W = \sum^{\infty}_{i=1}w_i\delta_{ \\theta_i }`
 
-    Where $(w_i,\theta_i)_{i\in \mathbb{N}}$ are the points of a Poisson point process on $\mathbb{R}^2_{+}$ 
-    with mean (or L\'evy measure) $\nu(dw,d\theta) = \rho(dw)\lambda(d\theta)$. 
+    :math:`(w_i,\\theta_i)_{i\in \mathbb{N}}` are the points of a Poisson point process on  
+    :math: '\mathbb{R}^2_{+}' 
+    with mean (or L\'evy measure) $\nu(dw,d\theta) = \rho(dw)\lambda(d\\theta)$. 
     The measure $\rho$ is referred to as the jump part of the L\'evy measure. We denote this process as $W \sim CRM(\rho,\lambda)$
     """
     __metaclass__ = ABCMeta

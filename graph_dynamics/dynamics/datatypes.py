@@ -3,6 +3,8 @@ Created on Jun 9, 2017
 
 @author: cesar
 '''
+
+
 import os
 import copy
 import json
@@ -18,7 +20,12 @@ from time import sleep
 graph_class_dictionary = datatypes.graph_class_dictionary   
 
 class GraphsDynamics(object):
+    """
+    This is a class to specify a graph 
     
+    :math:`\underline{x}=[  x_{1}, ...,  x_{n}]^{T}`
+    
+    """
     __metaclass__ = ABCMeta
     def __init__(self,gd_dynamical_parameters):
         """

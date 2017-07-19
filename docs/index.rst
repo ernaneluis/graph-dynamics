@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Bayesian Networks documentation!
+Welcome to Graph Dynamics Documentation
 ======================================================
 
 Contents:
@@ -12,14 +12,18 @@ Contents:
    :maxdepth: 2
    
    intro
+   installation
    
 .. toctree::
    :maxdepth: 2
    :caption: API Reference
    
-   process
-   
-   
+   communities
+   dynamics
+   embeddings
+   networks
+   random_measures
+
 
 
 Indices and tables
