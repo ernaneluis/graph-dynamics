@@ -6,6 +6,7 @@ Created on Jul 4, 2017
 import copy
 import numpy as np
 import networkx as nx
+import pandas as pd
 import datetime
 #from samba.dcerpc.atsvc import DAYSOFWEEK_WEDNESDAY
 
@@ -40,24 +41,52 @@ def temporalGraphFromSeries(graph_paths):
         graph_0 = graph_1
     return temporal_graph
 
-def seriesFromTemporalGraph(gd_folder,dynamics_identifier,temporalFileName,stepsInGraph=7,parseunix=False):
+def seriesFromTemporalGraph(gd_folder,dynamics_identifier,temporalFileName,cumulative,stepsInGraph="days",numberOfstepsInGraph=7,parseunix=False):
     """
+    From a temporal graph, creates snapshots which replicates 
+    the dynamics.Dynamics.evolve output (19/07/2017)
+    
+    Parameters
+    ----------
+    gd_folder,
+    dynamics_identifier,
+    temporalFileName,
+    cumulative,
+    stepsInGraph="days",
+    numberOfstepsInGraph=7,
+    parseunix=False
     """
-    temporal_edges = np.loadtxt(temporalFileName,delimiter=" ")
-    if parseunix:
-        days = map(datetime.datetime.fromtimestamp,temporal_edges[:,2])
-        minday = min(days)
-        maxday = max(days)
-        print maxday
-        print minday
-        print "Total Day Difference: ",(maxday - minday).days
-        days = [(a-minday).days for a in days]
-        raise Exception
+    if cumulative:
+        temporal_edges = np.loadtxt(temporalFileName,delimiter=" ")
+        if parseunix:
+            if stepsInGraph=="days":
+                days = map(datetime.datetime.fromtimestamp,temporal_edges[:,2])
+                minday = min(days)
+                maxday = max(days)
+                print "Max Edge Day: ",maxday
+                print "Min Edge Day: ",minday
+                print "Total Day Difference: ",(maxday - minday).days
+                dayfrequency = pd.date_range(start=minday,end=maxday , periods="D")
+            elif stepsInGraph=="months":
+                days = map(datetime.datetime.fromtimestamp,temporal_edges[:,2])
+                minday = min(days)
+                maxday = max(days)
+                print "Max Edge Day: ",maxday
+                print "Min Edge Day: ",minday
+                print "Total Day Difference: ",(maxday - minday).days
+                dayfrequency = pd.date_range(start=minday,end=maxday , periods="M")
+            for time_index, current_day in enumerate(dayfrequency):
+                graph_file_name  = gd_folder+"{0}_gGD_{1}_.gd".format(dynamics_identifier,time_index)
+                current_edges = np.take(temporal_edges,np.where(days < current_day)[0],axis=0)[:,[0,1]]
+                np.savetxt(graph_file_name,current_edges)
+        else: #not need to analyse unixtime
+            days = temporal_edges[:,2]
+            minDay = int(min(days))
+            maxDay = int(max(days))
+            for time_index, current_day in enumerate(range(minDay,maxDay,stepsInGraph)):
+                graph_file_name  = gd_folder+"{0}_gGD_{1}_.gd".format(dynamics_identifier,time_index)
+                current_edges = np.take(temporal_edges,np.where(days < current_day)[0],axis=0)[:,[0,1]]
+                np.savetxt(graph_file_name,current_edges)
     else:
-        days = temporal_edges[:,2]
-    minDay = int(min(days))
-    maxDay = int(max(days))
-    for time_index, current_day in enumerate(range(minDay,maxDay,stepsInGraph)):
-        graph_file_name  = gd_folder+"{0}_gGD_{1}_.gd".format(dynamics_identifier,time_index)
-        current_edges = np.take(temporal_edges,np.where(days < current_day)[0],axis=0)[:,[0,1]]
-        np.savetxt(graph_file_name,current_edges)
+        print "Window Snapshot not Implemented"
+        raise Exception
