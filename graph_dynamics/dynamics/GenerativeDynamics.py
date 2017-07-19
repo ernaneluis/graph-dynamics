@@ -17,6 +17,7 @@ import copy
 from graph_dynamics.dynamics.datatypes import GraphsDynamics
 from graph_dynamics.networks.tx_graph import TxGraph
 from graph_dynamics.utils import snap_handlers
+from graph_dynamics.networks.datatypes import VanillaGraph
 
 #==========================================================================
 # FOREST FIRE
@@ -27,9 +28,7 @@ class ForestFire(GraphsDynamics):
     This is a wrapper for the snap function Forest Fire
     
     """
-    def __init__(self, initial_graph,
-                 BurnExpFireP,StartNNodes,ForwBurnProb,
-                 BackBurnProb,DecayProb,Take2AmbasPrb,OrphanPrb,timeSeriesOfNodes):
+    def __init__(self, initial_graph,forestFireParameters,timeSeriesOfNodes):
         """
         initial_graph: networkx graph
         
@@ -50,13 +49,7 @@ class ForestFire(GraphsDynamics):
         timeSeriesOfNodes: numpy array
             the number of new nodes per time step
         """
-        type_of_dynamics = "snap_shot"
-        GraphsDynamics.__init__(self, initial_graph, type_of_dynamics, None)
-        self.initial_graph = initial_graph
-        
-        self.ff = snap.TFfGGen(BurnExpFireP,StartNNodes,ForwBurnProb,
-                          BackBurnProb,DecayProb,Take2AmbasPrb,OrphanPrb)
-        
+        (BurnExpFireP,StartNNodes,ForwBurnProb,BackBurnProb,DecayProb,Take2AmbasPrb,OrphanPrb) = forestFireParameters
         self.BurnExpFireP = BurnExpFireP
         self.StartNNodes = StartNNodes
         self.ForwBurnProb = ForwBurnProb
@@ -64,6 +57,17 @@ class ForestFire(GraphsDynamics):
         self.DecayProb = DecayProb
         self.Take2AmbasPrb = Take2AmbasPrb
         self.OrphanPrb = OrphanPrb
+        
+        type_of_dynamics = "snap_shot"
+        GraphsDynamics.__init__(self, initial_graph, type_of_dynamics, None)
+        self.initial_graph = initial_graph
+        
+        Vanilla =  VanillaGraph(dynamics_identifier,
+                                {"None":None},
+                                initial_graph)
+
+        self.ff = snap.TFfGGen(BurnExpFireP,StartNNodes,ForwBurnProb,
+                               BackBurnProb,DecayProb,Take2AmbasPrb,OrphanPrb)
         
         self.timeSeriesOfNodes = timeSeriesOfNodes 
     

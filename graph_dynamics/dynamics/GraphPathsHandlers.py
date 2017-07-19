@@ -4,7 +4,10 @@ Created on Jul 4, 2017
 @author: cesar
 '''
 import copy
+import numpy as np
 import networkx as nx
+import datetime
+from samba.dcerpc.atsvc import DAYSOFWEEK_WEDNESDAY
 
 def staticGraphInducedBySeries(graph_paths):
     """
@@ -37,5 +40,24 @@ def temporalGraphFromSeries(graph_paths):
         graph_0 = graph_1
     return temporal_graph
 
-def seriesFromTemporalGraph(temporal_graph):
-    return None
+def seriesFromTemporalGraph(gd_folder,dynamics_identifier,temporalFileName,stepsInGraph=7,parseunix=False):
+    """
+    """
+    temporal_edges = np.loadtxt(temporalFileName,delimiter=" ")
+    if parseunix:
+        days = map(datetime.datetime.fromtimestamp,temporal_edges[:,2])
+        minday = min(days)
+        maxday = max(days)
+        print maxday
+        print minday
+        print "Total Day Difference: ",(maxday - minday).days 
+        days = [(a-minday).days for a in days]
+        raise Exception
+    else:
+        days = temporal_edges[:,2]
+    minDay = int(min(days))
+    maxDay = int(max(days))
+    for time_index, current_day in enumerate(range(minDay,maxDay,stepsInGraph)):
+        graph_file_name  = gd_folder+"{0}_gGD_{1}_.gd".format(dynamics_identifier,time_index)
+        current_edges = np.take(temporal_edges,np.where(days < current_day)[0],axis=0)[:,[0,1]]
+        np.savetxt(graph_file_name,current_edges)

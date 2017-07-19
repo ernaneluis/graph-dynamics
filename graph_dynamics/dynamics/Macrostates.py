@@ -8,6 +8,7 @@ CALLED BY THE DYNAMICS
 
 ALL FUNCTION SHERE DEFINED MUST RETURN A JSON
 '''
+import sys
 import json
 import numpy as np
 import networkx as nx
@@ -57,7 +58,7 @@ def node2vec_macrostates(Graph,*nargs):
     
     Returns
     ------
-    node2vecs
+    json: node2vecs
     """ 
     args = nargs[0][0]
     #= Graph.get_networkx()
@@ -76,6 +77,7 @@ def node2vec_macrostates(Graph,*nargs):
     json_embeddings = dict(zip(embeddings.index2word,[e.tolist() for e in embeddings.syn0]))
     return json_embeddings
 
+
 def evaluate_vanilla_macrostates(gd_dynamics,macrostates_names,macrostates_run_ideintifier):
     """
     """
@@ -84,25 +86,28 @@ def evaluate_vanilla_macrostates(gd_dynamics,macrostates_names,macrostates_run_i
     dynamics_identifier = GRAPH_FILES[0].split("_")[0]
     
     #TO DO: parallelize calls to macrostates
-    for graph_filename in GRAPH_FILES:
+    for graph_filename in GRAPH_FILES: 
         time_index = int(graph_filename.split("_")[-2])
-        networkx_graph = nx.read_edgelist(gd_dynamics+graph_filename)
-        Vanilla =  VanillaGraph(dynamics_identifier,{"None":None},networkx_graph)
-        macrostate_filename = gd_dynamics+"{0}_mGD_{1}_{2}_.gd".format(dynamics_identifier,
-                                                               macrostates_run_ideintifier,                    
-                                                               time_index)
-        macrostate_json = {}
-        for macrostate_function in macrostates_names:
-            macrostate_function_name = macrostate_function[0]
-            macrostate_function_parameters = macrostate_function[1]
-            macrostate_json[macrostate_function_name] = macrostate_function_dictionary[macrostate_function_name](Vanilla,*macrostate_function_parameters)
-                                   
-        with open(macrostate_filename,"w") as outfile:
-            json.dump(macrostate_json, outfile)
+        if time_index != 0:
+            print "Evaluating Time {0} for {1}".format(time_index,macrostates_run_ideintifier)
+            networkx_graph = nx.read_edgelist(gd_dynamics+graph_filename)
+            Vanilla =  VanillaGraph(dynamics_identifier,{"None":None},networkx_graph)
+            macrostate_filename = gd_dynamics+"{0}_mGD_{1}_{2}_.gd".format(dynamics_identifier,
+                                                                   macrostates_run_ideintifier,                    
+                                                                   time_index)
+            macrostate_json = {}
+            for macrostate_function in macrostates_names:
+                macrostate_function_name = macrostate_function[0]
+                macrostate_function_parameters = macrostate_function[1]
+                macrostate_json[macrostate_function_name] = macrostate_function_dictionary[macrostate_function_name](Vanilla,*macrostate_function_parameters)
+                                       
+            with open(macrostate_filename,"w") as outfile:
+                json.dump(macrostate_json, outfile)
+
             
-#=====================================
-#
-#=====================================
+#========================================================================================================================
+# THE FOLLOWING DICTIONARY HOLDS ALL MACROSTATES WHICH CAN BE CALLED BY THE EVOLUTION FUNCTION OF GRAPH DYNAMICS 
+#========================================================================================================================
 
 macrostate_function_dictionary = {"degree_distribution":degree_distribution,
                                   "node2vec_macrostates":node2vec_macrostates,

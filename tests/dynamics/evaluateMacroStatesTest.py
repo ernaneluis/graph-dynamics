@@ -34,11 +34,14 @@ class Test(unittest.TestCase):
                  "undirected":True,
                  "output":"../../data/emb/karate.emb"},)
          
-        gd_dynamics = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/Empy-States_gd/"
-        #macrostates_names = [("node2vec_macrostates",(nargs,)),("basic_stats")]
-        macrostates_names = [("basic_stats",())]
-        #macrostates_names = [("pagerank",())]
-        macrostates_run_ideintifier = "basicstatsMacro"
+        gd_dynamics = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/cit-HepPh_gd/"
+        
+        macrostates_names = [("pagerank",()),
+                             ("node2vec_macrostates",(nargs,))]
+        
+        #macrostates_names = [("basic_stats",())]
+        #macrostates_names = []
+        macrostates_run_ideintifier = "node2vecPageRankMacro"
         
         Macrostates.evaluate_vanilla_macrostates(gd_dynamics, macrostates_names, macrostates_run_ideintifier)    
         

@@ -26,6 +26,8 @@ class Test(unittest.TestCase):
     
     def forestFireTest(self):
         barabasi_graph = nx.barabasi_albert_graph(100,3)
+        number_of_steps = 100
+                
         BurnExpFireP = False
         StartNNodes = 1
         ForwBurnProb = 0.2
@@ -33,16 +35,23 @@ class Test(unittest.TestCase):
         DecayProb = 1.0
         Take2AmbasPrb =  0.
         OrphanPrb =  0.
+
+        forestFireParameters = (BurnExpFireP,StartNNodes,ForwBurnProb,BackBurnProb,DecayProb,Take2AmbasPrb,OrphanPrb) 
+        timeSeriesOfNodes = np.ones(number_of_steps)*10
+        number_of_steps_in_memory = 10
+         
+        gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/"
+        #gd_directory = "/home/cesar/Desktop/Simulations/"
+        gd_dynamical_parameters = {"number_of_steps":number_of_steps,
+                                   "number_of_steps_in_memory":number_of_steps_in_memory,
+                                   "gd_directory":gd_directory,
+                                   "dynamics_identifier":"forestfire",
+                                   "macrostates":["degree_distribution"],
+                                   "graph_class":"VanillaGraph",
+                                   "verbose":True}
         
-        timeSeriesOfNodes = np.ones(10)*10
         dynamics = GenerativeDynamics.ForestFire(barabasi_graph, 
-                                                 BurnExpFireP,
-                                                 StartNNodes,
-                                                 ForwBurnProb,
-                                                 BackBurnProb,
-                                                 DecayProb,
-                                                 Take2AmbasPrb,
-                                                 OrphanPrb,
+                                                 forestFireParameters,
                                                  timeSeriesOfNodes)
         
         graph_paths = dynamics.generate_graphs_paths(10)
