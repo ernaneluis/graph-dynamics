@@ -20,14 +20,14 @@ class Test(unittest.TestCase):
     def evaluateGraphPathHandlers(self):
         """
         """
-        directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Embeddings/Data/"
-        temporalFileName = 'Temporal-Cit-HepTh.txt'
-        dynamics_identifier = 'Cit-HepTh'
-        gd_folder = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/cit-HepTh_gd/"
+        directory = "/home/cesar/Data/Dynamics/EmpiricalData/"
+        temporalFileName = 'sx-mathoverflow.txt'
+        dynamics_identifier = 'sx-mathoverflow'
+        gd_folder = "/home/cesar/Data/Dynamics/Simulations/mathoverflow_gd/"
         GraphPathsHandlers.seriesFromTemporalGraph(gd_folder, 
                                                    dynamics_identifier, 
                                                    directory+temporalFileName, 
-                                                   parseunix=False)
+                                                   parseunix=True)
         
 if __name__ == '__main__':
     import sys;sys.argv = ['','Test.evaluateGraphPathHandlers']

@@ -7,7 +7,7 @@ import copy
 import numpy as np
 import networkx as nx
 import datetime
-from samba.dcerpc.atsvc import DAYSOFWEEK_WEDNESDAY
+#from samba.dcerpc.atsvc import DAYSOFWEEK_WEDNESDAY
 
 def staticGraphInducedBySeries(graph_paths):
     """
@@ -18,7 +18,7 @@ def staticGraphInducedBySeries(graph_paths):
     for graph_t in graph_paths:
         static_graph.add_edges_from(graph_t.edges())
     return static_graph
-    
+
 def temporalGraphFromSeries(graph_paths):
     """
     This function creates temporal graph where
@@ -30,10 +30,10 @@ def temporalGraphFromSeries(graph_paths):
     for t,graph_1 in enumerate(graph_paths[1:]):
         new_edges = copy.deepcopy(graph_1)
         old_edges = copy.deepcopy(graph_0)
-        
+
         new_edges.remove_edges_from(graph_0.edges())
         old_edges.remove_edges_from(graph_1.edges())
-                
+
         temporal_graph.add_edges_from(new_edges.edges(),time_in=t)
         for edge_removed in old_edges.edges():
             temporal_graph[edge_removed[0]][edge_removed[1]]["time_out"] = t
@@ -50,7 +50,7 @@ def seriesFromTemporalGraph(gd_folder,dynamics_identifier,temporalFileName,steps
         maxday = max(days)
         print maxday
         print minday
-        print "Total Day Difference: ",(maxday - minday).days 
+        print "Total Day Difference: ",(maxday - minday).days
         days = [(a-minday).days for a in days]
         raise Exception
     else:
