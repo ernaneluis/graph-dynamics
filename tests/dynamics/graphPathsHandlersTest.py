@@ -20,13 +20,19 @@ class Test(unittest.TestCase):
     def evaluateGraphPathHandlers(self):
         """
         """
-        directory = "/home/cesar/Data/Dynamics/EmpiricalData/"
+        #directory = "/home/cesar/Data/Dynamics/EmpiricalData/"
+        #temporalFileName = 'sx-mathoverflow.txt'
+        #dynamics_identifier = 'sx-mathoverflow'
+        
+        directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Embeddings/Data/"
         temporalFileName = 'sx-mathoverflow.txt'
         dynamics_identifier = 'sx-mathoverflow'
-        gd_folder = "/home/cesar/Data/Dynamics/Simulations/mathoverflow_gd/"
+        gd_folder = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/sx-mathoverflow_gd/"
         GraphPathsHandlers.seriesFromTemporalGraph(gd_folder, 
                                                    dynamics_identifier, 
-                                                   directory+temporalFileName, 
+                                                   directory+temporalFileName,
+                                                   cumulative=True,
+                                                   stepsInGraph="months",
                                                    parseunix=True)
         
 if __name__ == '__main__':

@@ -41,7 +41,7 @@ def temporalGraphFromSeries(graph_paths):
         graph_0 = graph_1
     return temporal_graph
 
-def seriesFromTemporalGraph(gd_folder,dynamics_identifier,temporalFileName,cumulative,stepsInGraph="days",numberOfstepsInGraph=7,parseunix=False):
+def seriesFromTemporalGraph(gd_folder,dynamics_identifier,temporalFileName,cumulative,stepsInGraph="months",numberOfstepsInGraph=1,parseunix=False):
     """
     From a temporal graph, creates snapshots which replicates 
     the dynamics.Dynamics.evolve output (19/07/2017)
@@ -60,21 +60,21 @@ def seriesFromTemporalGraph(gd_folder,dynamics_identifier,temporalFileName,cumul
         temporal_edges = np.loadtxt(temporalFileName,delimiter=" ")
         if parseunix:
             if stepsInGraph=="days":
-                days = map(datetime.datetime.fromtimestamp,temporal_edges[:,2])
+                days = np.array(map(datetime.datetime.fromtimestamp,temporal_edges[:,2]))
                 minday = min(days)
                 maxday = max(days)
                 print "Max Edge Day: ",maxday
                 print "Min Edge Day: ",minday
                 print "Total Day Difference: ",(maxday - minday).days
-                dayfrequency = pd.date_range(start=minday,end=maxday , periods="D")
+                dayfrequency = pd.date_range(start=minday,end=maxday , freq="{0}D".format(numberOfstepsInGraph))
             elif stepsInGraph=="months":
-                days = map(datetime.datetime.fromtimestamp,temporal_edges[:,2])
+                days = np.array(map(datetime.datetime.fromtimestamp,temporal_edges[:,2]))
                 minday = min(days)
                 maxday = max(days)
                 print "Max Edge Day: ",maxday
                 print "Min Edge Day: ",minday
                 print "Total Day Difference: ",(maxday - minday).days
-                dayfrequency = pd.date_range(start=minday,end=maxday , periods="M")
+                dayfrequency = pd.date_range(start=minday,end=maxday , freq="{0}MS".format(numberOfstepsInGraph))
             for time_index, current_day in enumerate(dayfrequency):
                 graph_file_name  = gd_folder+"{0}_gGD_{1}_.gd".format(dynamics_identifier,time_index)
                 current_edges = np.take(temporal_edges,np.where(days < current_day)[0],axis=0)[:,[0,1]]
