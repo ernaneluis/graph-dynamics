@@ -17,7 +17,26 @@ from graph_dynamics.networks import datatypes
 from time import sleep
 
 #HERE WE CONCATENATE ALL AVAILABLE GRAPH CLASSES
-graph_class_dictionary = datatypes.graph_class_dictionary   
+graph_class_dictionary = datatypes.graph_class_dictionary
+   
+def files_names(DYNAMICS_PARAMETERS,time_index,macrostate_file_indentifier=None):
+    """
+    Returns
+    -------
+    dynamics_foldername,graph_filename,graphstate_filename,macrostate_filename
+            strings with the files names for a time step in a  _gd directory 
+    """ 
+    dynamics_identifier = DYNAMICS_PARAMETERS["dynamics_identifier"]
+    dynamics_foldername =  DYNAMICS_PARAMETERS["simulations_directory"] + dynamics_identifier + "_gd/"
+    graph_filename = "{0}_gGD_{1}_.gd".format(dynamics_identifier,time_index)
+    graphstate_filename = "{0}_sGD_{1}_.gd".format(dynamics_identifier,time_index)
+    
+    if macrostate_file_indentifier != None:
+        macrostate_filename = "{0}_mGD_{1}_{2}_.gd".format(dynamics_identifier,
+                                                                               macrostate_file_indentifier,                    
+                                                                               time_index)
+        
+    return  dynamics_foldername,graph_filename,graphstate_filename,macrostate_filename
 
 class GraphsDynamics(object):
     """
@@ -31,19 +50,53 @@ class GraphsDynamics(object):
         """
         Parameters
         ----------
-            initial_networks: Graph object (graph_dynamics.networks.datatypes)
-            dynamics_identifier: string
-            
+            gd_dynamical_parameters: JSON
+                this is a json object which contains all the information regarding how the dynaimcsis going to be handle:
+                
+                gd_dynamical_parameters = {"number_of_steps":int,
+                                           "number_of_steps_in_memory":int,
+                                           "simulations_directory":string,
+                                           "dynamics_identifier":"palladynamic-embeddings",
+                                           "graph_class":string,
+                                           "verbose":bool}
+                                           
+                number_of_steps: number of full simulations steps
+                number_of_steps_in_memory: number of graphs and macro states to be kept in memory prior to ouput
+                simulations_directory: where the _gd  folder is created
+                graph_class: this is the class available for simulation in graph_class_dictionary 
+                verbose: level of logger
+                
         """ 
         self.dynamics_identifier = gd_dynamical_parameters["dynamics_identifier"]
-        self.dynamics_foldername =  gd_dynamical_parameters["gd_directory"] + self.dynamics_identifier + "_gd/"
+        self.dynamics_foldername =  gd_dynamical_parameters["simulations_directory"] + self.dynamics_identifier + "_gd/"
+        
+
+        input_json = set(gd_dynamical_parameters.keys())
+        expected = set(["number_of_steps",
+                        "number_of_steps_in_memory",
+                        "simulations_directory",
+                        "dynamics_identifier",
+                        "graph_class",
+                        "verbose",
+                        "datetime_timeseries",
+                        "initial_date",
+                        "DynamicsClassParameters",
+                        "macrostates"])
+        
+        if not (input_json == expected):
+            print "Wrong dynamical parameters in Dynamic Class"
+            print input_json.difference(expected)
+            raise Exception
+        
         #make sure folder for output is ready
         if not os.path.exists(self.dynamics_foldername):
             print "New Dynamics Directory"
             os.makedirs(self.dynamics_foldername)
         else:
             print "Dynamics Directory Exists"
-            
+        
+        json.dump(gd_dynamical_parameters,open(self.dynamics_foldername+"DYNAMICS_PARAMETERS","w"))
+        
     @abstractmethod
     def generate_graphs_paths(self,initial_graph,N):
         """
@@ -81,7 +134,7 @@ class GraphsDynamics(object):
         ----------
             N: int 
                 number of steps
-            gd_dynamical_parameters: dict
+            initial_graph: Graph Object
         """
         gd_dynamical_parameters = self.get_dynamics_state()
         steps_in_memory = gd_dynamical_parameters["number_of_steps_in_memory"]
@@ -99,7 +152,10 @@ class GraphsDynamics(object):
         
         if len(GRAPH_FILES) > 0:
             initial_graph = self.get_graph(latest_index)
-
+        if initial_graph == None:
+            print "Wrong graph initialization in evolve function"
+            raise Exception
+            
 
         print "#{0} STEPS EVOLUTION STARTED FOR {1}".format(N,self.dynamics_identifier)
         print "#STARTING EVOLUTION AT STEP {0}".format(latest_index)
@@ -111,13 +167,11 @@ class GraphsDynamics(object):
                     GRAPHS_IN_MEMORY = self.generate_graphs_paths(initial_graph,N)
                 else:
                     GRAPHS_IN_MEMORY = self.generate_graphs_paths(initial_graph,N)[1:]
-                    
                 #FOR ALL GRAPHS IN MEMORY EVALUATE THE MACROSTATES AND OUTPUT
                 for graph_object in GRAPHS_IN_MEMORY:
                     self.output_graph_state(graph_object,latest_index)
                     self.calculate_output_macrostates(graph_object,latest_index,macrostates_names)
                     latest_index += 1
-                    
             else:
                 if (N % steps_in_memory) != 0:
                     steps = np.concatenate([np.repeat(steps_in_memory,N / steps_in_memory),np.array([N % steps_in_memory])])
@@ -152,7 +206,7 @@ class GraphsDynamics(object):
         
         Returns
         -------
-        ALL_DYNAMIC_FILES_NAME, GRAPH_FILES, STATE_FILES, ALL_TIME_INDEXES, latest_index
+            ALL_DYNAMIC_FILES_NAME, GRAPH_FILES, STATE_FILES, ALL_TIME_INDEXES, latest_index
         """
         #==================================================
         # CHECK ALL FILES
@@ -193,15 +247,29 @@ class GraphsDynamics(object):
         """
         Calculates the macro states and outputs them in folder
         """
-        macrostate_filename = self.dynamics_foldername+"{0}_mGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
+        macrostate_filename = self.dynamics_foldername+"{0}_mGD_{1}_{2}_.gd".format(self.dynamics_identifier,
+                                                                                    self.dynamics_identifier+"-macros",                    
+                                                                                    latest_index)
         #TO DO: parallelize calls to macrostates
         macrostate_json = {}
-        for macrostate_function_name in macrostates_names:
-            macrostate_json[macrostate_function_name] = Macrostates.macrostate_function_dictionary[macrostate_function_name](graph_object)                        
+        for macrostate_function in macrostates_names:
+            macrostate_function_name = macrostate_function[0]
+            macrostate_function_parameters = macrostate_function[1]
+            macrostate_json[macrostate_function_name] = Macrostates.macrostate_function_dictionary[macrostate_function_name](graph_object,*macrostate_function_parameters)
+                                    
         with open(macrostate_filename,"w") as outfile:
             json.dump(macrostate_json, outfile)
             
     def get_graph(self,time_index):
+        """
+        Create a graph object from a given time index
+        
+        It only requires the state and adjacency to be defined there
+        
+        Returns
+        -------
+            graph_object: Graph object (graph_dynamics.networks.datatypes)
+        """
         gd_dynamical_parameters = self.get_dynamics_state()
         graph_filename = self.dynamics_foldername+"{0}_gGD_{1}_.gd".format(self.dynamics_identifier,time_index)
         graphstate_filename = self.dynamics_foldername+"{0}_sGD_{1}_.gd".format(self.dynamics_identifier,time_index)

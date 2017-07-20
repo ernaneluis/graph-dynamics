@@ -16,13 +16,14 @@ class Test(unittest.TestCase):
     def copyFoldersTest(self):
         """
         """
-        gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/"
+        simulations_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/"
         old_dynamic_identifier = "palladynamic"
         new_dynamic_identifier = "Empy-States"
-        gd_files_handler.copy_and_rename_graphs(gd_directory, 
-                                                old_dynamic_identifier, 
-                                                new_dynamic_identifier)
-
+        #gd_files_handler.copy_and_rename_graphs(simulations_directory, 
+        #                                        old_dynamic_identifier, 
+        #                                        new_dynamic_identifier)
+        gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/palladynamic-embeddings_gd/"
+        gd_files_handler.gd_folder_stats(gd_directory)
         
 if __name__ == '__main__':
     import sys;sys.argv = ['','Test.copyFoldersTest']

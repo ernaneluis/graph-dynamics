@@ -4,7 +4,7 @@ Created on Jul 12, 2017
 @author: cesar
 
 THIS ARE THE FUNCTIONS TO BE 
-CALLED BY THE DYNAMICS
+CALLED BY THE DYNAMICS EVOLVE FUNCTION 
 
 ALL FUNCTION SHERE DEFINED MUST RETURN A JSON
 '''
@@ -60,7 +60,7 @@ def node2vec_macrostates(Graph,*nargs):
     ------
     json: node2vecs
     """ 
-    args = nargs[0][0]
+    args = nargs[0]
     #= Graph.get_networkx()
     nx_G = Graph.get_networkx()
     G = node2vec.Graph(nx_G, 
@@ -80,15 +80,21 @@ def node2vec_macrostates(Graph,*nargs):
 
 def evaluate_vanilla_macrostates(gd_dynamics,macrostates_names,macrostates_run_ideintifier):
     """
-    """
-    ALL_TIME_INDEXES, GRAPH_FILES = gd_files_handler.gd_folder_stats(gd_dynamics)
-    GRAPH_FILES.sort()
-    dynamics_identifier = GRAPH_FILES[0].split("_")[0]
+    This function evaluates macrostates in gd directories with no states
     
+    Parameters
+    ----------
+    gd_dynamics: gd directory name of dynamics
+    macrostates_names: list 
+                    [(macro-string1,macro_parameters1),...,(macro-string_M,macro_parameters_M)]
+    """
+    ALL_TIME_INDEXES,DYNAMICS_PARAMETERS,macroNumbers = gd_files_handler.gd_folder_stats(gd_dynamics)
+    dynamics_foldername = gd_dynamics 
+    dynamics_identifier = DYNAMICS_PARAMETERS["dynamics_identifier"]
     #TO DO: parallelize calls to macrostates
-    for graph_filename in GRAPH_FILES: 
-        time_index = int(graph_filename.split("_")[-2])
-        if time_index != 0:
+    for time_index in ALL_TIME_INDEXES: 
+        graph_filename = dynamics_foldername+"{0}_gGD_{1}_.gd".format(dynamics_identifier,time_index)
+        try:
             print "Evaluating Time {0} for {1}".format(time_index,macrostates_run_ideintifier)
             networkx_graph = nx.read_edgelist(gd_dynamics+graph_filename)
             Vanilla =  VanillaGraph(dynamics_identifier,{"None":None},networkx_graph)
@@ -103,7 +109,8 @@ def evaluate_vanilla_macrostates(gd_dynamics,macrostates_names,macrostates_run_i
                                        
             with open(macrostate_filename,"w") as outfile:
                 json.dump(macrostate_json, outfile)
-
+        except:
+            print "Problem with time index {0}".format(time_index)
             
 #========================================================================================================================
 # THE FOLLOWING DICTIONARY HOLDS ALL MACROSTATES WHICH CAN BE CALLED BY THE EVOLUTION FUNCTION OF GRAPH DYNAMICS 

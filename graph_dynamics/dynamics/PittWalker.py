@@ -32,6 +32,7 @@ def removeEdges(graph):
         for a,v in n.iteritems():
             if v["weight"] == 0:
                 edgesToRemove.append((w,a))
+                print "removed"
     graph.remove_edges_from(edgesToRemove)
     
 class PallaDynamics(GraphsDynamics):
@@ -52,8 +53,8 @@ class PallaDynamics(GraphsDynamics):
         self.rho = rho
         
         self.gd_dynamical_parameters = gd_dynamical_parameters
-        self.gd_dynamical_parameters["Phi"] = phi
-        self.gd_dynamical_parameters["Rho"] = rho 
+        self.gd_dynamical_parameters["DynamicsClassParameters"]={"Phi":phi,
+                                                         "Rho":rho} 
         
         #GRAPH
         self.CaronFoxGraph_0 = CaronFoxGraph
@@ -109,7 +110,8 @@ class PallaDynamics(GraphsDynamics):
         """
         for node, neigh in currentCaronNetwork.edge.iteritems():
             for ng, weight in neigh.iteritems():
-                currentCaronNetwork[node][ng]["weight"] = binom.rvs(weight["weight"],np.exp(-self.rho))
+                new_nodes = binom.rvs(weight["weight"],np.exp(-self.rho))
+                currentCaronNetwork[node][ng]["weight"] = new_nodes 
         removeEdges(currentCaronNetwork)
     
     def __updateInteractions(self,currentCaronGraph,sigma_increment=0.,tau_increment=0.,table_and_costumers=None):

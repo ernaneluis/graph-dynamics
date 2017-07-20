@@ -18,6 +18,7 @@ from graph_dynamics.networks.datatypes import CaronFoxGraphs
 
 class Test(unittest.TestCase):
     
+    
     def evaluateEdgesMemory(self):
         #Defines process for the graph ########################################
         
@@ -56,20 +57,40 @@ class Test(unittest.TestCase):
         self.CaronFoxGraph = CaronFoxGraphs(self.graph_identifier,G)
         
         #Defines Dynamics ###################################################### 
-        self.phi = 0.2
-        self.rho = 1.
+        self.phi = 1.
+        self.rho = 0.
         number_of_steps = 100
-        number_of_steps_in_memory = 10
+        number_of_steps_in_memory = 1
     
-        gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/"
+        simulations_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/"
         #gd_directory = "/home/cesar/Desktop/Simulations/"
         gd_dynamical_parameters = {"number_of_steps":number_of_steps,
                                    "number_of_steps_in_memory":number_of_steps_in_memory,
-                                   "gd_directory":gd_directory,
-                                   "dynamics_identifier":"palladynamic",
-                                   "macrostates":["degree_distribution"],
+                                   "simulations_directory":simulations_directory,
+                                   "dynamics_identifier":"palladynamic2embeddings",
                                    "graph_class":"CaronFox",
-                                   "verbose":True}
+                                   "verbose":True,
+                                   "datetime_timeseries":False,
+                                   "initial_date":1}
+
+        #Macro States ========================================================================
+        nargs = {"input":"../../data/graph/karate.edgelist",
+                "dimensions":128,
+                 "directed":False,
+                 "p":0.001,
+                 "q":2,
+                 "num_walks":10,
+                 "walk_length":80,
+                 "window_size":10,
+                 "workers":8,
+                 "iter":1,
+                 "weighted":False,
+                 "undirected":True,
+                 "output":"../../data/emb/karate.emb"}
+        
+        gd_dynamical_parameters["macrostates"] =  [("basic_stats",())]
+                                                   #("pagerank",()),
+                                                   #("node2vec_macrostates",(nargs,))]
         
         Palla = PittWalker.PallaDynamics(self.phi,
                                          self.rho,
