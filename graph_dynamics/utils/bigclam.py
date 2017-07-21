@@ -23,7 +23,8 @@ class BigClam():
         # 1.step Learning F
         # iteratively update Fu for each u and stop the iteration if the likelihood does not increase (increase less than 0.001%) after we update Fu for all u
         for it in range(maxNumberOfIterations):
-            for u in self.G.nodes():
+            for u, node in enumerate(self.G.nodes()):
+                # u = index of the node
                 # oldFu   = self.F[u][:]
                 deltaL  = self.gradient(u)
                 # calculate new value for Fu
@@ -48,15 +49,13 @@ class BigClam():
         #3. step: Color then
         self.values  = self.createNodeColorValuesDifferent(self.community_cluster)
 
-        print(self.values)
-
     def init_f(self):
         f = np.zeros((self.numberOfNodes, self.numberOfCommunities))
 
-        for u in self.G.nodes():
-            for k in self.initial_communities:
+        for idx, u in enumerate(self.G.nodes()):
+            for idy, k in enumerate(self.initial_communities):
                 if (u in k):
-                    f[u][k] = 1
+                    f[idx][idy] = 1
         return f
 
     def init_communities(self):
@@ -74,7 +73,6 @@ class BigClam():
         # remove duplicated neighborhood communities
         return [x for n, x in enumerate(init_communities) if x not in init_communities[:n]]
 
-
     # DeltaL
     def gradient(self, u):
         # see equasion between (3) and (4) at the paper
@@ -84,17 +82,17 @@ class BigClam():
         fv_sum_neighbors_exp    = np.zeros(numberOfCommunities)
         fv_sum_neighbors        = np.zeros(numberOfCommunities)
 
-        for v in self.G.neighbors(u):
+        node = self.G.nodes()[u]
+        neighbors = self.G.neighbors(node)
+        for v, node in enumerate(neighbors):
             fv                       = self.F[v][:]
             exp                      = np.exp(-np.dot(fu, fv)) / (1. - np.exp(-np.dot(fu, fv)))
             fv_sum_neighbors_exp    += fv * exp
-
             fv_sum_neighbors        += fv
 
         fv_sum_not_neighbors = (fv_sum - fu - fv_sum_neighbors)
         deltaL               = fv_sum_neighbors_exp - fv_sum_not_neighbors
         return deltaL
-
 
     def affiliationToCommunities(self, affiliation):
         """
