@@ -9,6 +9,7 @@ import networkx as nx
 import pandas as pd
 import json
 import datetime
+import time
 from graph_dynamics.dynamics.datatypes import DYNAMICS_PARAMETERS_KEYS
 #from samba.dcerpc.atsvc import DAYSOFWEEK_WEDNESDAY
 
@@ -45,10 +46,10 @@ def temporalGraphFromSeries(graph_paths):
 
 def seriesFromTemporalGraph(gd_directory,dynamics_identifier,temporalFileName,cumulative,stepsInGraph="months",numberOfstepsInGraph=1,parseunix=False):
     """
-    From a temporal graph, creates snapshots which replicates 
-    the dynamics.Dynamics.evolve output, this should create a 
-    gd_directory with no states 
-     
+    From a temporal graph, creates snapshots which replicates
+    the dynamics.Dynamics.evolve output, this should create a
+    gd_directory with no states
+
     Parameters
     ----------
     gd_directory,
@@ -97,24 +98,24 @@ def seriesFromTemporalGraph(gd_directory,dynamics_identifier,temporalFileName,cu
             DYNAMICS_PARAMETERS["number_of_steps"] = len(days)
         else:
             DYNAMICS_PARAMETERS["number_of_steps"] = len(dayfrequency)
-            DYNAMICS_PARAMETERS["initial_date"] = min(dayfrequency)
+            DYNAMICS_PARAMETERS["initial_date"] = time.mktime(min(dayfrequency).timetuple())
             DYNAMICS_PARAMETERS["datetime_timeseries"] = True
-        
+
         dynamics_identifier = gd_directory.split("/")
         dynamics_identifier = dynamics_identifier[-2].split("_")[0]
         simulation_directory = "/".join(gd_directory.split("/")[:-2])+"/"
-        
+
         DYNAMICS_PARAMETERS["number_of_steps_in_memory"] = 1
         DYNAMICS_PARAMETERS["simulations_directory"] = simulation_directory
         DYNAMICS_PARAMETERS["dynamics_identifier"] = dynamics_identifier
         DYNAMICS_PARAMETERS["graph_class"] = "VanillaGraph"
         DYNAMICS_PARAMETERS["verbose"] = False
-        DYNAMICS_PARAMETERS["DynamicsClassParameters"] = {"DefinedFromTemporalGraph":True}
+        DYNAMICS_PARAMETERS["DynamicsClassParameters"] = {"DefinedFromTemporalGraph":True,"stepsInGraph":stepsInGraph}
         DYNAMICS_PARAMETERS["macrostates"] = {None:None}
-        
+
         json.dump(DYNAMICS_PARAMETERS,
           open(gd_directory+"DYNAMICS_PARAMETERS","w"))
-        
+
     else:
         print "Window Snapshot not Implemented"
         raise Exception
