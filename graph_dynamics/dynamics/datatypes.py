@@ -18,12 +18,13 @@ from time import sleep
 
 #HERE WE CONCATENATE ALL AVAILABLE GRAPH CLASSES
 graph_class_dictionary = datatypes.graph_class_dictionary
+DYNAMICS_PARAMETERS_KEYS = ["number_of_steps","number_of_steps_in_memory","simulations_directory","dynamics_identifier","graph_class","verbose","datetime_timeseries","initial_date","DynamicsClassParameters","macrostates"]
    
 def files_names(DYNAMICS_PARAMETERS,time_index,macrostate_file_indentifier=None):
     """
     Returns
     -------
-    dynamics_foldername,graph_filename,graphstate_filename,macrostate_filename
+    gd_directory,graph_filename,graphstate_filename,macrostate_filename
             strings with the files names for a time step in a  _gd directory 
     """ 
     dynamics_identifier = DYNAMICS_PARAMETERS["dynamics_identifier"]
@@ -42,21 +43,21 @@ class GraphsDynamics(object):
     """
     This is a class to specify a graph 
     
-    :math:`\underline{x}=[  x_{1}, ...,  x_{n}]^{T}`
+    :math:`[\mathbf{G}_1,\mathbf{G}_2,\dots,\mathbf{G}_T]`
     
     """
     __metaclass__ = ABCMeta
-    def __init__(self,gd_dynamical_parameters):
+    def __init__(self,DYNAMICS_PARAMETERS):
         """
         Parameters
         ----------
-            gd_dynamical_parameters: JSON
+            DYNAMICS_PARAMETERS: JSON
                 this is a json object which contains all the information regarding how the dynaimcsis going to be handle:
                 
-                gd_dynamical_parameters = {"number_of_steps":int,
+                DYNAMICS_PARAMETERS = {"number_of_steps":int,
                                            "number_of_steps_in_memory":int,
                                            "simulations_directory":string,
-                                           "dynamics_identifier":"palladynamic-embeddings",
+                                           "dynamics_identifier":"string",
                                            "graph_class":string,
                                            "verbose":bool}
                                            
@@ -67,21 +68,10 @@ class GraphsDynamics(object):
                 verbose: level of logger
                 
         """ 
-        self.dynamics_identifier = gd_dynamical_parameters["dynamics_identifier"]
-        self.dynamics_foldername =  gd_dynamical_parameters["simulations_directory"] + self.dynamics_identifier + "_gd/"
-        
-
-        input_json = set(gd_dynamical_parameters.keys())
-        expected = set(["number_of_steps",
-                        "number_of_steps_in_memory",
-                        "simulations_directory",
-                        "dynamics_identifier",
-                        "graph_class",
-                        "verbose",
-                        "datetime_timeseries",
-                        "initial_date",
-                        "DynamicsClassParameters",
-                        "macrostates"])
+        self.dynamics_identifier = DYNAMICS_PARAMETERS["dynamics_identifier"]
+        self.gd_directory =  DYNAMICS_PARAMETERS["simulations_directory"] + self.dynamics_identifier + "_gd/"
+        input_json = set(DYNAMICS_PARAMETERS.keys())
+        expected = set(DYNAMICS_PARAMETERS_KEYS)
         
         if not (input_json == expected):
             print "Wrong dynamical parameters in Dynamic Class"
@@ -89,13 +79,14 @@ class GraphsDynamics(object):
             raise Exception
         
         #make sure folder for output is ready
-        if not os.path.exists(self.dynamics_foldername):
+        if not os.path.exists(self.gd_directory):
             print "New Dynamics Directory"
-            os.makedirs(self.dynamics_foldername)
+            os.makedirs(self.gd_directory)
         else:
             print "Dynamics Directory Exists"
         
-        json.dump(gd_dynamical_parameters,open(self.dynamics_foldername+"DYNAMICS_PARAMETERS","w"))
+        json.dump(DYNAMICS_PARAMETERS,
+                  open(self.gd_directory+"DYNAMICS_PARAMETERS","w"))
         
     @abstractmethod
     def generate_graphs_paths(self,initial_graph,N):
@@ -136,27 +127,22 @@ class GraphsDynamics(object):
                 number of steps
             initial_graph: Graph Object
         """
-        gd_dynamical_parameters = self.get_dynamics_state()
-        steps_in_memory = gd_dynamical_parameters["number_of_steps_in_memory"]
-        macrostates_names = gd_dynamical_parameters["macrostates"]        
-        
+        DYNAMICS_PARAMETERS = self.get_dynamics_state()
+        steps_in_memory = DYNAMICS_PARAMETERS["number_of_steps_in_memory"]
+        macrostates_names = DYNAMICS_PARAMETERS["macrostates"]        
         #==================================================
         # CHECK ALL FILES
         #==================================================
-        
         ALL_DYNAMIC_FILES_NAME, GRAPH_FILES, STATE_FILES, ALL_TIME_INDEXES, latest_index = self.handle_files()
-        
         #==================================================
         # DEFINE INITIAL GRAPH FROM LATEST STATE
         #==================================================        
-        
         if len(GRAPH_FILES) > 0:
             initial_graph = self.get_graph(latest_index)
         if initial_graph == None:
             print "Wrong graph initialization in evolve function"
             raise Exception
-            
-
+        
         print "#{0} STEPS EVOLUTION STARTED FOR {1}".format(N,self.dynamics_identifier)
         print "#STARTING EVOLUTION AT STEP {0}".format(latest_index)
         
@@ -211,7 +197,7 @@ class GraphsDynamics(object):
         #==================================================
         # CHECK ALL FILES
         #==================================================            
-        ALL_DYNAMIC_FILES_NAME = os.listdir(self.dynamics_foldername)
+        ALL_DYNAMIC_FILES_NAME = os.listdir(self.gd_directory)
         GRAPH_FILES = [filename for filename in ALL_DYNAMIC_FILES_NAME if "gGD" in filename]
         STATE_FILES = [filename for filename in ALL_DYNAMIC_FILES_NAME if "sGD" in filename]
         try:
@@ -226,7 +212,7 @@ class GraphsDynamics(object):
         
         if not (len(GRAPH_FILES) == len(STATE_FILES)):
             print "#PROBLEM WITH DYNAMICAL GRAPH FILES, FILE MISSING"
-            print "#CHECK FOLDER {0}".format(self.dynamics_foldername)
+            print "#CHECK FOLDER {0}".format(self.gd_directory)
             raise Exception
         
         return  ALL_DYNAMIC_FILES_NAME, GRAPH_FILES, STATE_FILES, ALL_TIME_INDEXES, latest_index
@@ -236,8 +222,8 @@ class GraphsDynamics(object):
         Handles the json output
         """
         graph_state = graph_object.get_graph_state()
-        graph_filename = self.dynamics_foldername+"{0}_gGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
-        graphstate_filename = self.dynamics_foldername+"{0}_sGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
+        graph_filename = self.gd_directory+"{0}_gGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
+        graphstate_filename = self.gd_directory+"{0}_sGD_{1}_.gd".format(self.dynamics_identifier,latest_index)
         #TO DO: create the edge list file without the need for networkx
         nx.write_edgelist(graph_object.get_networkx(),graph_filename)
         with open(graphstate_filename,"w") as outfile:
@@ -247,7 +233,7 @@ class GraphsDynamics(object):
         """
         Calculates the macro states and outputs them in folder
         """
-        macrostate_filename = self.dynamics_foldername+"{0}_mGD_{1}_{2}_.gd".format(self.dynamics_identifier,
+        macrostate_filename = self.gd_directory+"{0}_mGD_{1}_{2}_.gd".format(self.dynamics_identifier,
                                                                                     self.dynamics_identifier+"-macros",                    
                                                                                     latest_index)
         #TO DO: parallelize calls to macrostates
@@ -255,8 +241,7 @@ class GraphsDynamics(object):
         for macrostate_function in macrostates_names:
             macrostate_function_name = macrostate_function[0]
             macrostate_function_parameters = macrostate_function[1]
-            macrostate_json[macrostate_function_name] = Macrostates.macrostate_function_dictionary[macrostate_function_name](graph_object,*macrostate_function_parameters)
-                                    
+            macrostate_json[macrostate_function_name] = Macrostates.macrostate_function_dictionary[macrostate_function_name](graph_object,*macrostate_function_parameters)                     
         with open(macrostate_filename,"w") as outfile:
             json.dump(macrostate_json, outfile)
             
@@ -271,8 +256,8 @@ class GraphsDynamics(object):
             graph_object: Graph object (graph_dynamics.networks.datatypes)
         """
         gd_dynamical_parameters = self.get_dynamics_state()
-        graph_filename = self.dynamics_foldername+"{0}_gGD_{1}_.gd".format(self.dynamics_identifier,time_index)
-        graphstate_filename = self.dynamics_foldername+"{0}_sGD_{1}_.gd".format(self.dynamics_identifier,time_index)
+        graph_filename = self.gd_directory+"{0}_gGD_{1}_.gd".format(self.dynamics_identifier,time_index)
+        graphstate_filename = self.gd_directory+"{0}_sGD_{1}_.gd".format(self.dynamics_identifier,time_index)
         
         latest_graph_state = json.load(open(graphstate_filename,"r"))
         latest_graph = nx.read_edgelist(graph_filename)

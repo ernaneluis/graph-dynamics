@@ -7,7 +7,9 @@ import copy
 import numpy as np
 import networkx as nx
 import pandas as pd
+import json
 import datetime
+from graph_dynamics.dynamics.datatypes import DYNAMICS_PARAMETERS_KEYS
 #from samba.dcerpc.atsvc import DAYSOFWEEK_WEDNESDAY
 
 def staticGraphInducedBySeries(graph_paths):
@@ -41,14 +43,15 @@ def temporalGraphFromSeries(graph_paths):
         graph_0 = graph_1
     return temporal_graph
 
-def seriesFromTemporalGraph(gd_folder,dynamics_identifier,temporalFileName,cumulative,stepsInGraph="months",numberOfstepsInGraph=1,parseunix=False):
+def seriesFromTemporalGraph(gd_directory,dynamics_identifier,temporalFileName,cumulative,stepsInGraph="months",numberOfstepsInGraph=1,parseunix=False):
     """
     From a temporal graph, creates snapshots which replicates 
-    the dynamics.Dynamics.evolve output (19/07/2017)
-    
+    the dynamics.Dynamics.evolve output, this should create a 
+    gd_directory with no states 
+     
     Parameters
     ----------
-    gd_folder,
+    gd_directory,
     dynamics_identifier,
     temporalFileName,
     cumulative,
@@ -56,6 +59,7 @@ def seriesFromTemporalGraph(gd_folder,dynamics_identifier,temporalFileName,cumul
     numberOfstepsInGraph=7,
     parseunix=False
     """
+    #TODO: The time_index = 0 yields an empty graph
     if cumulative:
         temporal_edges = np.loadtxt(temporalFileName,delimiter=" ")
         if parseunix:
@@ -76,7 +80,7 @@ def seriesFromTemporalGraph(gd_folder,dynamics_identifier,temporalFileName,cumul
                 print "Total Day Difference: ",(maxday - minday).days
                 dayfrequency = pd.date_range(start=minday,end=maxday , freq="{0}MS".format(numberOfstepsInGraph))
             for time_index, current_day in enumerate(dayfrequency):
-                graph_file_name  = gd_folder+"{0}_gGD_{1}_.gd".format(dynamics_identifier,time_index)
+                graph_file_name  = gd_directory+"{0}_gGD_{1}_.gd".format(dynamics_identifier,time_index)
                 current_edges = np.take(temporal_edges,np.where(days < current_day)[0],axis=0)[:,[0,1]]
                 np.savetxt(graph_file_name,current_edges)
         else: #not need to analyse unixtime
@@ -84,9 +88,33 @@ def seriesFromTemporalGraph(gd_folder,dynamics_identifier,temporalFileName,cumul
             minDay = int(min(days))
             maxDay = int(max(days))
             for time_index, current_day in enumerate(range(minDay,maxDay,stepsInGraph)):
-                graph_file_name  = gd_folder+"{0}_gGD_{1}_.gd".format(dynamics_identifier,time_index)
+                graph_file_name  = gd_directory+"{0}_gGD_{1}_.gd".format(dynamics_identifier,time_index)
                 current_edges = np.take(temporal_edges,np.where(days < current_day)[0],axis=0)[:,[0,1]]
                 np.savetxt(graph_file_name,current_edges)
+        #HERE WE CREATE A DYNAMICS_PARAMETERS FILE FOR THE NEW gd_directory
+        DYNAMICS_PARAMETERS = {}
+        if not parseunix:
+            DYNAMICS_PARAMETERS["number_of_steps"] = len(days)
+        else:
+            DYNAMICS_PARAMETERS["number_of_steps"] = len(dayfrequency)
+            DYNAMICS_PARAMETERS["initial_date"] = min(dayfrequency)
+            DYNAMICS_PARAMETERS["datetime_timeseries"] = True
+        
+        dynamics_identifier = gd_directory.split("/")
+        dynamics_identifier = dynamics_identifier[-2].split("_")[0]
+        simulation_directory = "/".join(gd_directory.split("/")[:-2])+"/"
+        
+        DYNAMICS_PARAMETERS["number_of_steps_in_memory"] = 1
+        DYNAMICS_PARAMETERS["simulations_directory"] = simulation_directory
+        DYNAMICS_PARAMETERS["dynamics_identifier"] = dynamics_identifier
+        DYNAMICS_PARAMETERS["graph_class"] = "VanillaGraph"
+        DYNAMICS_PARAMETERS["verbose"] = False
+        DYNAMICS_PARAMETERS["DynamicsClassParameters"] = {"DefinedFromTemporalGraph":True}
+        DYNAMICS_PARAMETERS["macrostates"] = {None:None}
+        
+        json.dump(DYNAMICS_PARAMETERS,
+          open(gd_directory+"DYNAMICS_PARAMETERS","w"))
+        
     else:
         print "Window Snapshot not Implemented"
         raise Exception

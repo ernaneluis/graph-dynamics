@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 from graph_dynamics.dynamics import GenerativeDynamics
 from graph_dynamics.utils import graph_paths_visualization
-from graph_dynamics.dynamics import GraphPathsHandlers
+from graph_dynamics.dynamics import GraphsFormatsHandlers
 
 matplotlib.rcParams['ps.useafm'] = True
 matplotlib.rcParams['text.usetex'] = True
@@ -55,8 +55,8 @@ class Test(unittest.TestCase):
                                                  timeSeriesOfNodes)
         
         graph_paths = dynamics.generate_graphs_paths(10)
-        #static_graph = GraphPathsHandlers.staticGraphInducedBySeries(graph_paths)
-        #temporal_graph = GraphPathsHandlers.temporalGraphFromSeries(graph_paths)
+        #static_graph = GraphsFormatsHandlers.staticGraphInducedBySeries(graph_paths)
+        #temporal_graph = GraphsFormatsHandlers.temporalGraphFromSeries(graph_paths)
         graph_paths_visualization.plotGraphPaths(graph_paths, "forest_fire")
         
 if __name__ == '__main__':

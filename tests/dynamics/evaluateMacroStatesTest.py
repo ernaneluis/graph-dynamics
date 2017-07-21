@@ -34,17 +34,28 @@ class Test(unittest.TestCase):
                  "undirected":True,
                  "output":"../../data/emb/karate.emb"},)
          
-        gd_dynamics = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/cit-HepPh_gd/"
+
         
-        macrostates_names = [("pagerank",()),
-                             ("node2vec_macrostates",(nargs,))]
+        macrostates_names = [("pagerank",())]
         
         #macrostates_names = [("basic_stats",())]
         #macrostates_names = []
-        macrostates_run_ideintifier = "node2vecPageRankMacro"
+        #gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/cit-HepPh_gd/"
+        gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/palladynamic2embeddings_gd/"
+        macrostates_run_ideintifier = "pageRankMacro"
+        Macrostates.evaluate_vanilla_macrostates(gd_directory, 
+                                                 macrostates_names, 
+                                                 macrostates_run_ideintifier)    
         
-        Macrostates.evaluate_vanilla_macrostates(gd_dynamics, macrostates_names, macrostates_run_ideintifier)    
+    def windowTimeSeriesTest(self):
+        
+        gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/palladynamic2embeddings_gd/"
+        macrostates_run_ideintifier = "newnodes" 
+        macrostates_names  = [("new_nodes",())]
+        window = 1
+        rolling = True
+        Macrostates.evaluate_vanilla_macrostates_window(gd_directory, macrostates_names, macrostates_run_ideintifier, window, rolling)
         
 if __name__ == '__main__':
-    import sys;sys.argv = ['','Test.evaluateMacrostatesTest']
+    import sys;sys.argv = ['','Test.evaluateMacrostatesTest','Test.windowTimeSeriesTest']
     unittest.main()

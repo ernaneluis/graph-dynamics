@@ -59,7 +59,7 @@ class Test(unittest.TestCase):
         #Defines Dynamics ###################################################### 
         self.phi = 1.
         self.rho = 0.
-        number_of_steps = 100
+        number_of_steps = 20
         number_of_steps_in_memory = 1
     
         simulations_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/"

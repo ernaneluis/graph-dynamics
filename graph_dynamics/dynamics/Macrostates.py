@@ -17,6 +17,9 @@ from graph_dynamics.utils import gd_files_handler
 from graph_dynamics.networks.datatypes import VanillaGraph
 
 
+from graph_dynamics.utils.timeseries_utils import createWindows
+
+
 def degree_distribution(Graph,*parameters):
     """
     Parameters:
@@ -78,27 +81,43 @@ def node2vec_macrostates(Graph,*nargs):
     return json_embeddings
 
 
-def evaluate_vanilla_macrostates(gd_dynamics,macrostates_names,macrostates_run_ideintifier):
+def new_nodes(GRAPH_LIST,*param):
+    """
+    Parameters
+    ----------
+    GRAPH_LIST: list of Graoh objects
+    
+    Return
+    ------
+    """
+    nodes_1 = set(GRAPH_LIST[1].get_networkx().nodes())
+    nodes_0 = set(GRAPH_LIST[0].get_networkx().nodes())
+    newNodes = nodes_1.difference(nodes_0)
+    number_of_new = len(newNodes)
+    return {"new_nodes":list(newNodes),"number_of_new_nodes":number_of_new}
+
+
+def evaluate_vanilla_macrostates(gd_directory,macrostates_names,macrostates_run_ideintifier):
     """
     This function evaluates macrostates in gd directories with no states
     
     Parameters
     ----------
-    gd_dynamics: gd directory name of dynamics
+    gd_directory: gd directory name of dynamics
     macrostates_names: list 
                     [(macro-string1,macro_parameters1),...,(macro-string_M,macro_parameters_M)]
     """
-    ALL_TIME_INDEXES,DYNAMICS_PARAMETERS,macroNumbers = gd_files_handler.gd_folder_stats(gd_dynamics)
-    dynamics_foldername = gd_dynamics 
+    ALL_TIME_INDEXES,DYNAMICS_PARAMETERS,macroNumbers = gd_files_handler.gd_folder_stats(gd_directory)
+    #check if dynamics parameters are complete
     dynamics_identifier = DYNAMICS_PARAMETERS["dynamics_identifier"]
     #TO DO: parallelize calls to macrostates
     for time_index in ALL_TIME_INDEXES: 
-        graph_filename = dynamics_foldername+"{0}_gGD_{1}_.gd".format(dynamics_identifier,time_index)
+        graph_filename = "{0}_gGD_{1}_.gd".format(dynamics_identifier,time_index)
         try:
             print "Evaluating Time {0} for {1}".format(time_index,macrostates_run_ideintifier)
-            networkx_graph = nx.read_edgelist(gd_dynamics+graph_filename)
+            networkx_graph = nx.read_edgelist(gd_directory+graph_filename)
             Vanilla =  VanillaGraph(dynamics_identifier,{"None":None},networkx_graph)
-            macrostate_filename = gd_dynamics+"{0}_mGD_{1}_{2}_.gd".format(dynamics_identifier,
+            macrostate_filename = gd_directory+"{0}_mGD_{1}_{2}_.gd".format(dynamics_identifier,
                                                                    macrostates_run_ideintifier,                    
                                                                    time_index)
             macrostate_json = {}
@@ -111,6 +130,70 @@ def evaluate_vanilla_macrostates(gd_dynamics,macrostates_names,macrostates_run_i
                 json.dump(macrostate_json, outfile)
         except:
             print "Problem with time index {0}".format(time_index)
+
+def get_vanilla_graph(gd_directory,dynamics_identifier,time_index):
+    """
+    """
+    graph_filename = "{0}_gGD_{1}_.gd".format(dynamics_identifier,time_index)
+    networkx_graph = nx.read_edgelist(gd_directory+graph_filename)
+    Vanilla =  VanillaGraph(dynamics_identifier,{"None":None},networkx_graph)
+    return Vanilla
+
+def ouput_macrostate_json(gd_directory,dynamics_identifier,macrostates_names,macrostates_run_ideintifier,time_index,GRAPHS_IN_WINDOW):
+    """
+    """
+    macrostate_filename = gd_directory+"{0}_mGD_{1}_{2}_.gd".format(dynamics_identifier,
+                                                                    macrostates_run_ideintifier,                    
+                                                                    time_index)
+    macrostate_json = {}
+    for macrostate_function in macrostates_names:
+        macrostate_function_name = macrostate_function[0]
+        macrostate_function_parameters = macrostate_function[1]
+        macrostate_json[macrostate_function_name] = macrostate_function_dictionary[macrostate_function_name](GRAPHS_IN_WINDOW,*macrostate_function_parameters)
+    
+    with open(macrostate_filename,"w") as outfile:
+        json.dump(macrostate_json, outfile)
+        
+def evaluate_vanilla_macrostates_window(gd_directory,macrostates_names,macrostates_run_ideintifier,window=2,rolling=False):
+    """
+    This function evaluates macrostates in gd directories with no states
+    
+    Parameters
+    ----------
+    gd_directory: gd directory name of dynamics
+    macrostates_names: list 
+                    [(macro-string1,macro_parameters1),...,(macro-string_M,macro_parameters_M)]
+    macrostates_run_identifier: string
+        identifier fot the file for all the macrostates given in the list
+    window: int
+        is the number of graphs requiered for the calculation of the macrostate
+    """
+    ALL_TIME_INDEXES,DYNAMICS_PARAMETERS,macroNumbers = gd_files_handler.gd_folder_stats(gd_directory)
+    
+    #check if dynamics parameters are complete
+    WINDOWS = createWindows(ALL_TIME_INDEXES, window, rolling) 
+    dynamics_identifier = DYNAMICS_PARAMETERS["dynamics_identifier"]
+    if rolling:
+        GRAPHS_IN_WINDOW = []
+        for time_index in WINDOWS[0]:
+            GRAPHS_IN_WINDOW.append(get_vanilla_graph(gd_directory,dynamics_identifier,time_index))
+        ouput_macrostate_json(gd_directory,dynamics_identifier,macrostates_names,macrostates_run_ideintifier,time_index,GRAPHS_IN_WINDOW)
+        
+    #TO DO: parallelize calls to macrostates
+    for window in WINDOWS[1:]:
+        print "Evaluating Time {0} for {1}".format(time_index,macrostates_run_ideintifier)
+        try:
+            if rolling:
+                GRAPHS_IN_WINDOW.pop(0)
+                time_index = window[-1]
+                GRAPHS_IN_WINDOW.append(get_vanilla_graph(gd_directory,dynamics_identifier,time_index))
+            else:
+                GRAPHS_IN_WINDOW = []
+                for time_index in window:
+                    GRAPHS_IN_WINDOW.append(get_vanilla_graph(gd_directory,dynamics_identifier,time_index))
+            ouput_macrostate_json(gd_directory,dynamics_identifier,macrostates_names,macrostates_run_ideintifier,time_index,GRAPHS_IN_WINDOW)
+        except:
+            print "Problem with time index {0}".format(time_index)
             
 #========================================================================================================================
 # THE FOLLOWING DICTIONARY HOLDS ALL MACROSTATES WHICH CAN BE CALLED BY THE EVOLUTION FUNCTION OF GRAPH DYNAMICS 
@@ -119,4 +202,5 @@ def evaluate_vanilla_macrostates(gd_dynamics,macrostates_names,macrostates_run_i
 macrostate_function_dictionary = {"degree_distribution":degree_distribution,
                                   "node2vec_macrostates":node2vec_macrostates,
                                   "basic_stats":basic_stats,
-                                  "pagerank":networkx_pagerank}
+                                  "pagerank":networkx_pagerank,
+                                  "new_nodes":new_nodes}

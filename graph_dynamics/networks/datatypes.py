@@ -25,10 +25,28 @@ matplotlib.rcParams['pdf.use14corefonts'] = True
 
 class Graph(object):##<------------------
     """
+    This is the main class for the graphs dynamics library
+    it defines the minimum methods required for the abstract
+    handling of the dynamic
     """    
     __metaclass__ = ABCMeta
 
     def __init__(self,name_string,identifier_string,graph_state):
+        """
+        Abstract constructor
+        
+        Parameters
+        ----------
+        name_string: string
+            this is the name of the class defined
+        identifier_string: string 
+            this is the name of the particular graph object
+        graph_state: string 
+            this is a json with all the information required to define the graph
+            if the user provides the adjancency matrix and this json, the graph should be completly defined
+            this is required in order to save thesimulations in thime, and be able to recover at any point in
+            time 
+        """
         self.name_string = name_string
         self.identifier_string = identifier_string
         self.graph_state = graph_state
@@ -65,6 +83,7 @@ class VanillaGraph(Graph):
     """
     This graph can be used as a handler in order to
     analyse files, it simply holds a networkx graph
+    the state is an empty json
     """
     def __init__(self,identifier_string,graph_state=None,networkx_graph=None):
         self.name_string = "VanillaGraph"
@@ -172,7 +191,12 @@ class OwnershipGraph(Graph):
 
 class FiniteProcessGraphs(BayesianGraph):
     """
-    This class is a superclass for all types of kernels (positive definite functions).
+    Using the finite approximation from a gamma process
+    a graph is created in the CaronFox sense
+    
+    Parameters
+    ----------
+    
     """
     types_of_network = {1:"Undirected",2:"Directed",3:"Bipartite"}
     # TODO: finite process graphs has to be initiated with json object
@@ -432,4 +456,4 @@ class CryptocurrencyGraphs(FromFileGraph):
 
 #======================================================
 
-graph_class_dictionary = {"CaronFox":CaronFoxGraphs}
+graph_class_dictionary = {"CaronFox":CaronFoxGraphs,"VanillaGraph":VanillaGraph}

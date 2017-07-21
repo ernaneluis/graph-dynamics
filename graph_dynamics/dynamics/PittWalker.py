@@ -37,7 +37,7 @@ def removeEdges(graph):
     
 class PallaDynamics(GraphsDynamics):
     
-    def __init__(self,phi,rho,CaronFoxGraph,gd_dynamical_parameters):
+    def __init__(self,phi,rho,CaronFoxGraph,DYNAMICS_PARAMETERS):
         """
         Here we follow:
         
@@ -46,13 +46,13 @@ class PallaDynamics(GraphsDynamics):
         2016
         
         """
-        self.dynamics_identifier = gd_dynamical_parameters["dynamics_identifier"]
+        self.dynamics_identifier = DYNAMICS_PARAMETERS["dynamics_identifier"]
         
         #DYNAMICAL VARIABLES
         self.phi = phi
         self.rho = rho
         
-        self.gd_dynamical_parameters = gd_dynamical_parameters
+        self.gd_dynamical_parameters = DYNAMICS_PARAMETERS
         self.gd_dynamical_parameters["DynamicsClassParameters"]={"Phi":phi,
                                                          "Rho":rho} 
         

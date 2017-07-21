@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from graph_dynamics.networks import communities
 from graph_dynamics.dynamics import GenerativeDynamicsCommunities
 from graph_dynamics.utils import graph_paths_visualization
-from graph_dynamics.dynamics import GraphPathsHandlers
+from graph_dynamics.dynamics import GraphsFormatsHandlers
 
 matplotlib.rcParams['ps.useafm'] = True
 matplotlib.rcParams['text.usetex'] = True

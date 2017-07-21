@@ -13,7 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 sys.path.append("../")
-from graph_dynamics.dynamics import GraphPathsHandlers
+from graph_dynamics.dynamics import GraphsFormatsHandlers
 
 class Test(unittest.TestCase):
     
@@ -28,7 +28,7 @@ class Test(unittest.TestCase):
         temporalFileName = 'sx-mathoverflow.txt'
         dynamics_identifier = 'sx-mathoverflow'
         gd_folder = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/sx-mathoverflow_gd/"
-        GraphPathsHandlers.seriesFromTemporalGraph(gd_folder, 
+        GraphsFormatsHandlers.seriesFromTemporalGraph(gd_folder, 
                                                    dynamics_identifier, 
                                                    directory+temporalFileName,
                                                    cumulative=True,

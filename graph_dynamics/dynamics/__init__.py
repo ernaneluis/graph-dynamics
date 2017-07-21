@@ -2,6 +2,6 @@ import datatypes
 import FromFilesDynamics
 import GenerativeDynamics
 import GenerativeDynamicsCommunities
-import GraphPathsHandlers
+from graph_dynamics.dynamics import GraphsFormatsHandlers
 import Macrostates
 import PittWalker

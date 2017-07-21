@@ -11,7 +11,7 @@ import networkx as nx
 
 from matplotlib.pyplot import pause
 from matplotlib import pyplot as plt
-from graph_dynamics.dynamics import GraphPathsHandlers
+from graph_dynamics.dynamics import GraphsFormatsHandlers
 
 matplotlib.rcParams['ps.useafm'] = True
 matplotlib.rcParams['text.usetex'] = True
@@ -53,7 +53,7 @@ def plotGraphPaths(ax,graph_series,series_name="graph_series",show=True,plot_dir
     padding = 0.1
     # TODO: obtain the full static "collapsed graph" obtain the positions and plot over time from it
     T = len(graph_series)
-    static_graph = GraphPathsHandlers.staticGraphInducedBySeries(graph_series)
+    static_graph = GraphsFormatsHandlers.staticGraphInducedBySeries(graph_series)
     position = nx.spring_layout(static_graph)
     
     print "Full position for the dynamics ready"
@@ -107,7 +107,7 @@ def plotGraphPathsCommunities(ax,graph_series,community_membership,community_col
     padding = 0.1
     # TODO: obtain the full static "collapsed graph" obtain the positions and plot over time from it
     T = len(graph_series)
-    static_graph = GraphPathsHandlers.staticGraphInducedBySeries(graph_series)
+    static_graph = GraphsFormatsHandlers.staticGraphInducedBySeries(graph_series)
     position = nx.spring_layout(static_graph)
     
     which_community = whichCommunity(community_membership)
