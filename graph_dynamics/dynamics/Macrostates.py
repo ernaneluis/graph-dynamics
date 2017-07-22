@@ -209,20 +209,15 @@ def bigclam(Graph,*nargs):
         Returns
         -------
         json_dict = {
-                    "weights_matrix": matrix: [node_index][community_index],  //Weight for affiliation
-                    "community_cluster": list: [community_index_x, community_index_y, ..., community_index_z] // return which nodes belongs to   cluster index x
-                    "colors":  list: [color_of_community_index_1, color_of_community_index_2, ..., color_of_community_index_n]
+                        "u1" : [u1c2, u1c2, .., u1Cm],
+                        ....
+                        "Un" : [unc2, unc2, .., UnCm]
                     }
     """
 
     args = nargs[0]
     bigClamObj = BigClam(Graph, maxNumberOfIterations=args["max_number_of_iterations"], error=args["error"], beta=args["beta"])
-    out = {
-            "weights_matrix":       json.dumps(bigClamObj.F.tolist()),
-            "community_cluster":    list(bigClamObj.community_cluster),
-            "colors":               list(bigClamObj.values),
-           }
-    return json.dumps(bigClamObj.F.tolist())
+    return dict(zip(range(Graph.get_number_of_nodes()),bigClamObj.F.tolist()))
 #========================================================================================================================
 # THE FOLLOWING DICTIONARY HOLDS ALL MACROSTATES WHICH CAN BE CALLED BY THE EVOLUTION FUNCTION OF GRAPH DYNAMICS
 #========================================================================================================================
