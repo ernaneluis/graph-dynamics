@@ -16,9 +16,9 @@ from graph_dynamics.networks.datatypes import CryptocurrencyGraphs
 
 import matplotlib 
 
-matplotlib.rcParams['ps.useafm'] = True
-matplotlib.rcParams['pdf.use14corefonts'] = True
-matplotlib.rcParams['text.usetex'] = True 
+#matplotlib.rcParams['ps.useafm'] = True
+#matplotlib.rcParams['pdf.use14corefonts'] = True
+#matplotlib.rcParams['text.usetex'] = True 
 
 
 class CryptoCurrencyEcosystemDynamics(GraphsDynamics):

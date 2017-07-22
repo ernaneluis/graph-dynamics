@@ -12,6 +12,7 @@ def snap_to_nx(GS):
         GN.add_edge(EI.GetSrcNId(), EI.GetDstNId())
     return GN
 
+
 def nx_to_snap(GN):
     GS = snap.TNGraph.New();
     for ni in GN.nodes():

@@ -8,9 +8,9 @@ import numpy as np
 from matplotlib import pyplot as plt
 from datatypes import FiniteDimensionalProcess
 
-matplotlib.rcParams['ps.useafm'] = True
-matplotlib.rcParams['pdf.use14corefonts'] = True
-matplotlib.rcParams['text.usetex'] = True
+#matplotlib.rcParams['ps.useafm'] = True
+#matplotlib.rcParams['pdf.use14corefonts'] = True
+#matplotlib.rcParams['text.usetex'] = True
 
 
 class FiniteGeneralizedGamma(FiniteDimensionalProcess):

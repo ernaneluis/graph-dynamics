@@ -19,9 +19,9 @@ from _pyio import __metaclass__
 
 from graph_dynamics.random_measures.process import GammaProcess
 
-matplotlib.rcParams['ps.useafm'] = True
-matplotlib.rcParams['text.usetex'] = True
-matplotlib.rcParams['pdf.use14corefonts'] = True
+#matplotlib.rcParams['ps.useafm'] = True
+#matplotlib.rcParams['text.usetex'] = True
+#matplotlib.rcParams['pdf.use14corefonts'] = True
 
 class Graph(object):##<------------------
     """

@@ -15,9 +15,9 @@ from scipy.stats import gamma as gamma_distribution
 from graph_dynamics.random_measures.datatypes import CompletlyRandomMeasures, PoissonMeasure
 from graph_dynamics.random_measures.normalized_process import ChineseRestaurantProcess, ExtendedChineseRestaurantProcess
 
-matplotlib.rcParams['ps.useafm'] = True
-matplotlib.rcParams['text.usetex'] = True 
-matplotlib.rcParams['pdf.use14corefonts'] = True
+#matplotlib.rcParams['ps.useafm'] = True
+#matplotlib.rcParams['text.usetex'] = True 
+#matplotlib.rcParams['pdf.use14corefonts'] = True
 
 #===============================================================
 #  PROCESS 

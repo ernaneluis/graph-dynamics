@@ -7,7 +7,8 @@ Each macro_file is defined as:
     The basic statistics for the macros provided in a _gd directory
     are provided with the function:
     
-    gd_files_handler.gd_folder_stats
+    import graph_dynamics as gd
+    gd.utils.gd_files_handler.gd_folder_stats(gd_directory)
     
     There are different types of macros
     
@@ -17,18 +18,34 @@ Each macro_file is defined as:
     
 @author: cesar
 '''
-from graph_dynamics.dynamics.datatypes import files_names
-from graph_dynamics.utils import gd_files_handler
-import pandas as pd
-import numpy as np
 import sys
 import json
+import operator
+import numpy as np
+import pandas as pd
+from graph_dynamics.utils import gd_files_handler
+from graph_dynamics.dynamics.datatypes import files_names
 
-def one_node_scalar_macro(gd_directory,
-                          macro_state_identifier,
-                          macrostate_file_indentifier,
-                          macrokey,
-                          time_index):
+
+def get_time_series_index(DYNAMICS_PARAMETERS,macroNumbers,macrostate_file_indentifier):
+    """
+    """
+    min_index = macroNumbers[macrostate_file_indentifier]['min_index']
+    max_index = macroNumbers[macrostate_file_indentifier]['max_index']
+    #TODO: logic related to datetime objects 
+    #obtain index from DYNAMICS PARAMETERS 
+    if DYNAMICS_PARAMETERS['datetime_timeseries']:
+        initial_date =  DYNAMICS_PARAMETERS['initial_date']
+        #dayfrequency = pd.date_range(start=minday,end=maxday , freq="{0}D".format(numberOfstepsInGraph))
+        #dayfrequency = pd.date_range(start=minday,end=maxday , freq="{0}MS".format(numberOfstepsInGraph)
+        pd.date_range(start=initial_date,size=len(max_index - min_index))
+    else:
+        return range(min_index,max_index + 1), min_index, max_index 
+        
+def time_index_macro(gd_directory,
+                     macro_state_identifier,
+                     macrostate_file_indentifier,
+                     time_index):
     """
     """
     ALL_TIME_INDEXES,DYNAMICS_PARAMETERS,macroNumbers = gd_files_handler.gd_folder_stats(gd_directory,False)
@@ -37,7 +54,6 @@ def one_node_scalar_macro(gd_directory,
                                                                                               macrostate_file_indentifier)
     macrostates = json.load(open(dynamics_foldername+macrostate_filename,"r"))[macro_state_identifier]
     return macrostates
-
 
 def TS_dict_macro(gd_directory,
                   macro_state_identifier,
@@ -76,8 +92,38 @@ def TS_dict_macro(gd_directory,
                 
     return pd.DataFrame(macro_timeseries)
 
+def TS_per_node_scalar_macro(gd_directory,macrostate_file_indentifier,macro_state_identifier,nodes=None,selectTop=5):
+    """
+    """
+    ALL_TIME_INDEXES,DYNAMICS_PARAMETERS,macroNumbers = gd_files_handler.gd_folder_stats(gd_directory,False)
+    time_index, min_index, max_index = get_time_series_index(DYNAMICS_PARAMETERS,macroNumbers,macrostate_file_indentifier)
+    try:
+        TS = np.zeros((len(time_index),len(nodes)))
+    except:
+        TS = np.zeros((len(time_index),selectTop))
+        
+    ALL_TIME_INDEXES.sort()    
+    for j,file_index in enumerate(range(min_index,max_index+1)):        
+        dynamics_foldername, graph_filename,graphstate_filename,macrostate_filename = files_names(DYNAMICS_PARAMETERS, 
+                                                                                                  file_index, 
+                                                                                                  macrostate_file_indentifier)
+        try:
+            macrostates = json.load(open(dynamics_foldername+macrostate_filename,"r"))[macro_state_identifier]
+            if selectTop !=None:
+                nodes = [a[0] for a in sorted(macrostates.iteritems(),key=operator.itemgetter(1))[::-1][:selectTop]]
+            nodes_values = []
+            for k in nodes:
+                nodes_values.append(macrostates[k])
+        except:
+            print sys.exc_info()
+            print "Macro read error, check file ",macrostate_filename
+        TS[j] = np.array(nodes_values)
+        
+    return  pd.DataFrame(TS,index=time_index)
 
-def TS_of_node_vector_macro():
+
+def TS_per_node_vector_macro(gd_directory,macrostate_file_indentifier,macro_state_identifier,node=0,selectTop=None,dimensions=5):
     """
     """
-    return None
+        
+    return  None

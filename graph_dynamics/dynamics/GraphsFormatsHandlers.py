@@ -11,7 +11,7 @@ import json
 import datetime
 import time
 from graph_dynamics.dynamics.datatypes import DYNAMICS_PARAMETERS_KEYS
-#from samba.dcerpc.atsvc import DAYSOFWEEK_WEDNESDAY
+
 
 def staticGraphInducedBySeries(graph_paths):
     """
@@ -44,7 +44,8 @@ def temporalGraphFromSeries(graph_paths):
         graph_0 = graph_1
     return temporal_graph
 
-def seriesFromTemporalGraph(gd_directory,dynamics_identifier,temporalFileName,cumulative,stepsInGraph="months",numberOfstepsInGraph=1,parseunix=False):
+def seriesFromTemporalGraph(gd_directory,dynamics_identifier,temporalFileName,cumulative,
+                            stepsInGraph="months",numberOfstepsInGraph=1,parseunix=False):
     """
     From a temporal graph, creates snapshots which replicates
     the dynamics.Dynamics.evolve output, this should create a

@@ -13,9 +13,9 @@ from scipy.integrate import quadrature
 from abc import ABCMeta, abstractmethod
 from graph_dynamics.utils import functions
 
-matplotlib.rcParams['ps.useafm'] = True
-matplotlib.rcParams['text.usetex'] = True
-matplotlib.rcParams['pdf.use14corefonts'] = True
+#matplotlib.rcParams['ps.useafm'] = True
+#matplotlib.rcParams['text.usetex'] = True
+#matplotlib.rcParams['pdf.use14corefonts'] = True
 
 class CompletlyRandomMeasures(object):
     """

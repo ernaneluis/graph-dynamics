@@ -18,9 +18,9 @@ from graph_dynamics.dynamics import GenerativeDynamics
 from graph_dynamics.utils import graph_paths_visualization
 from graph_dynamics.dynamics import GraphsFormatsHandlers
 
-matplotlib.rcParams['ps.useafm'] = True
-matplotlib.rcParams['text.usetex'] = True
-matplotlib.rcParams['pdf.use14corefonts'] = True
+#matplotlib.rcParams['ps.useafm'] = True
+#matplotlib.rcParams['text.usetex'] = True
+#matplotlib.rcParams['pdf.use14corefonts'] = True
 
 class Test(unittest.TestCase):
     

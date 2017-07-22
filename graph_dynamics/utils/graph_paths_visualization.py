@@ -13,9 +13,9 @@ from matplotlib.pyplot import pause
 from matplotlib import pyplot as plt
 from graph_dynamics.dynamics import GraphsFormatsHandlers
 
-matplotlib.rcParams['ps.useafm'] = True
-matplotlib.rcParams['text.usetex'] = True
-matplotlib.rcParams['pdf.use14corefonts'] = True
+#matplotlib.rcParams['ps.useafm'] = True
+#matplotlib.rcParams['text.usetex'] = True
+#matplotlib.rcParams['pdf.use14corefonts'] = True
 
 matplotlib.style.use('seaborn-talk')
 colors = []

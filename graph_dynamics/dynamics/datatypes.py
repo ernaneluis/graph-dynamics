@@ -28,7 +28,7 @@ def files_names(DYNAMICS_PARAMETERS,time_index,macrostate_file_indentifier=None)
             strings with the files names for a time step in a  _gd directory 
     """ 
     dynamics_identifier = DYNAMICS_PARAMETERS["dynamics_identifier"]
-    dynamics_foldername =  DYNAMICS_PARAMETERS["simulations_directory"] + dynamics_identifier + "_gd/"
+    gd_directory =  DYNAMICS_PARAMETERS["simulations_directory"] + dynamics_identifier + "_gd/"
     graph_filename = "{0}_gGD_{1}_.gd".format(dynamics_identifier,time_index)
     graphstate_filename = "{0}_sGD_{1}_.gd".format(dynamics_identifier,time_index)
     
@@ -37,7 +37,7 @@ def files_names(DYNAMICS_PARAMETERS,time_index,macrostate_file_indentifier=None)
                                                                                macrostate_file_indentifier,                    
                                                                                time_index)
         
-    return  dynamics_foldername,graph_filename,graphstate_filename,macrostate_filename
+    return  gd_directory,graph_filename,graphstate_filename,macrostate_filename
 
 class GraphsDynamics(object):
     """
