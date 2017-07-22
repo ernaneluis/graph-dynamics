@@ -15,7 +15,7 @@ import networkx as nx
 from graph_dynamics.embeddings import node2vec
 from graph_dynamics.utils import gd_files_handler
 from graph_dynamics.networks.datatypes import VanillaGraph
-
+from graph_dynamics.communities.bigclam import BigClam
 
 from graph_dynamics.utils.timeseries_utils import createWindows
 
@@ -200,12 +200,33 @@ def evaluate_vanilla_macrostates_window(gd_directory,macrostates_names,macrostat
         except:
             print "Problem with time index {0}".format(time_index)
 
+def bigclam(Graph,*nargs):
+    """
+        Parameters
+        ----------
+            Graph:
+
+        Returns
+        -------
+        json_dict = {
+                        "u1" : [u1c2, u1c2, .., u1Cm],
+                        ....
+                        "Un" : [unc2, unc2, .., UnCm]
+                    }
+    """
+
+    args = nargs[0]
+    bigClamObj = BigClam(Graph, maxNumberOfIterations=args["max_number_of_iterations"], error=args["error"], beta=args["beta"])
+    return dict(zip(range(Graph.get_number_of_nodes()),bigClamObj.F.tolist()))
 #========================================================================================================================
 # THE FOLLOWING DICTIONARY HOLDS ALL MACROSTATES WHICH CAN BE CALLED BY THE EVOLUTION FUNCTION OF GRAPH DYNAMICS
 #========================================================================================================================
 
-macrostate_function_dictionary = {"degree_distribution":degree_distribution,
+macrostate_function_dictionary = {
+                                  "degree_distribution":degree_distribution,
                                   "node2vec_macrostates":node2vec_macrostates,
                                   "basic_stats":basic_stats,
                                   "pagerank":networkx_pagerank,
-                                  "new_nodes":new_nodes}
+                                  "new_nodes":new_nodes,
+                                  "bigclam":bigclam
+                                  }

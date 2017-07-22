@@ -7,14 +7,17 @@ class BigClam():
 
     def __init__(self, Graph, maxNumberOfIterations, error, beta):
         self.G      = Graph
-        self.numberOfNodes     = self.G.number_of_nodes()
-        self.numberOfEdges     = self.G.number_of_edges()
-        self.e                 = (2*self.numberOfEdges)/float((self.numberOfNodes*(self.numberOfNodes-1))) #background edge Probability
-        self.threshold         = np.sqrt(-np.log(1-self.e))  # calculating the threshold value using background edge probability as input
+        self.numberOfNodes       = self.G.get_number_of_nodes()
+        self.numberOfEdges       = self.G.get_number_of_edges()
+        self.e                   = (2*self.numberOfEdges)/float((self.numberOfNodes*(self.numberOfNodes-1))) #background edge Probability
+        self.threshold           = np.sqrt(-np.log(1-self.e))  # calculating the threshold value using background edge probability as input
+        self.nodes               = self.G.get_networkx().nodes()
+
 
         self.initial_communities = self.init_communities()
         self.numberOfCommunities = len(self.initial_communities)
         self.F                   = self.init_f()
+
 
 
         # F data model
@@ -23,7 +26,7 @@ class BigClam():
         # 1.step Learning F
         # iteratively update Fu for each u and stop the iteration if the likelihood does not increase (increase less than 0.001%) after we update Fu for all u
         for it in range(maxNumberOfIterations):
-            for u, node in enumerate(self.G.nodes()):
+            for u, node in enumerate(self.nodes):
                 # u = index of the node
                 # oldFu   = self.F[u][:]
                 deltaL  = self.gradient(u)
@@ -52,9 +55,9 @@ class BigClam():
     def init_f(self):
         f = np.zeros((self.numberOfNodes, self.numberOfCommunities))
 
-        for idx, u in enumerate(self.G.nodes()):
+        for idx, u in enumerate(self.nodes):
             for idy, k in enumerate(self.initial_communities):
-                if (u in k):
+                if (u in set(k)):
                     f[idx][idy] = 1
         return f
 
@@ -65,28 +68,33 @@ class BigClam():
         # old method
         # self.F = np.random.random( ( len(self.G.nodes()) , numberOfCommunities) )
         init_communities = []
-        for u in self.G.nodes():
-            neighborhood    = nx.ego_graph(self.G, u, radius=1, center=True, undirected=True)
-            nodes           = neighborhood.nodes()
-            init_communities.append(nodes)
+        for u in self.nodes:
+            neighborhood        = nx.ego_graph(self.G.get_networkx(), u, radius=1, center=True, undirected=True)
+            neighborhood_nodes  = neighborhood.nodes()
+            init_communities.append(neighborhood_nodes)
 
         # remove duplicated neighborhood communities
         return [x for n, x in enumerate(init_communities) if x not in init_communities[:n]]
 
     # DeltaL
     def gradient(self, u):
-        # see equasion between (3) and (4) at the paper
+        # see equation between (3) and (4) from the paper
         fv_sum                  = self.F.sum(axis=0)
         fu                      = self.F[u][:]
         numberOfCommunities     = self.F.shape[1]
         fv_sum_neighbors_exp    = np.zeros(numberOfCommunities)
         fv_sum_neighbors        = np.zeros(numberOfCommunities)
 
-        node = self.G.nodes()[u]
-        neighbors = self.G.neighbors(node)
+        node        = self.nodes[u]
+        neighbors   = self.G.get_networkx().neighbors(node)
         for v, node in enumerate(neighbors):
             fv                       = self.F[v][:]
-            exp                      = np.exp(-np.dot(fu, fv)) / (1. - np.exp(-np.dot(fu, fv)))
+            upper = np.exp(-np.dot(fu, fv))
+            lower = (1. - np.exp(-np.dot(fu, fv)))
+            # TODO: division by zero, is this ok?
+            if(lower == 0.0):
+                lower = 0.1
+            exp                      = upper / lower
             fv_sum_neighbors_exp    += fv * exp
             fv_sum_neighbors        += fv
 
@@ -121,13 +129,14 @@ class BigClam():
         for set_of_belonging_nodes in community_cluster:
             nodes_with_community.extend(set_of_belonging_nodes)
 
-        set_of_all_nodes            = set(self.G.nodes())
+        set_of_all_nodes            = set(self.nodes)
         set_of_nodes_with_community = set(nodes_with_community)
         difference                  = set_of_all_nodes.difference(set_of_nodes_with_community)
 
         alone_community = list( difference )
+        alone_community_indices = [i for i, a in enumerate(alone_community)]
         # add the alone_community to the cluster
-        community_cluster.append(alone_community)
+        community_cluster.append(alone_community_indices)
 
         # remove duplicated communities
         return [x for n, x in enumerate(community_cluster) if x not in community_cluster[:n]]
@@ -148,9 +157,9 @@ class BigClam():
         valuePerCommunity[N-1] = 1.0
 
         values = []
-        for n in self.G.nodes():
+        for n in self.nodes:
             for idx, q in enumerate(Q):
-                if(n in q):
+                if(n in set(q)):
                     values.append(valuePerCommunity[idx])
                     break
 
