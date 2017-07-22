@@ -222,7 +222,7 @@ def bigclam(Graph,*nargs):
             "community_cluster":    list(bigClamObj.community_cluster),
             "colors":               list(bigClamObj.values),
            }
-    return out
+    return json.dumps(bigClamObj.F.tolist())
 #========================================================================================================================
 # THE FOLLOWING DICTIONARY HOLDS ALL MACROSTATES WHICH CAN BE CALLED BY THE EVOLUTION FUNCTION OF GRAPH DYNAMICS
 #========================================================================================================================
