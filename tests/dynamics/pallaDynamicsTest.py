@@ -57,21 +57,21 @@ class Test(unittest.TestCase):
         self.CaronFoxGraph = CaronFoxGraphs(self.graph_identifier,G)
         
         #Defines Dynamics ###################################################### 
-        self.phi = 1.
+        self.phi = 0.2
         self.rho = 0.
-        number_of_steps = 20
-        number_of_steps_in_memory = 1
+        number_of_steps = 30
+        number_of_steps_in_memory = 10
     
         simulations_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/"
         #gd_directory = "/home/cesar/Desktop/Simulations/"
-        gd_dynamical_parameters = {"number_of_steps":number_of_steps,
-                                   "number_of_steps_in_memory":number_of_steps_in_memory,
-                                   "simulations_directory":simulations_directory,
-                                   "dynamics_identifier":"palladynamic2embeddings",
-                                   "graph_class":"CaronFox",
-                                   "verbose":True,
-                                   "datetime_timeseries":False,
-                                   "initial_date":1}
+        DYNAMICS_PARAMETERS = {"number_of_steps":number_of_steps,
+                                "number_of_steps_in_memory":number_of_steps_in_memory,
+                                "simulations_directory":simulations_directory,
+                                "dynamics_identifier":"palladynamic3",
+                                "graph_class":"CaronFox",
+                                "verbose":True,
+                                "datetime_timeseries":False,
+                                "initial_date":1}
 
         #Macro States ========================================================================
         nargs = {"input":"../../data/graph/karate.edgelist",
@@ -88,14 +88,14 @@ class Test(unittest.TestCase):
                  "undirected":True,
                  "output":"../../data/emb/karate.emb"}
         
-        gd_dynamical_parameters["macrostates"] =  [("basic_stats",())]
+        DYNAMICS_PARAMETERS["macrostates"] =  [("basic_stats",())]
                                                    #("pagerank",()),
                                                    #("node2vec_macrostates",(nargs,))]
         
         Palla = PittWalker.PallaDynamics(self.phi,
                                          self.rho,
                                          self.CaronFoxGraph,
-                                         gd_dynamical_parameters)
+                                         DYNAMICS_PARAMETERS)
         
         # generate dynamics
         Palla.evolve(number_of_steps,self.CaronFoxGraph)

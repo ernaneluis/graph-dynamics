@@ -22,6 +22,14 @@ DYNAMICS_PARAMETERS_KEYS = ["number_of_steps","number_of_steps_in_memory","simul
    
 def files_names(DYNAMICS_PARAMETERS,time_index,macrostate_file_indentifier=None):
     """
+    Parameters
+    ----------
+    DYNAMICS_PARAMETERS: json iwth dynamical information
+     
+    time_index: int 
+    
+    macrostate_file_indentifier: string 
+    
     Returns
     -------
     gd_directory,graph_filename,graphstate_filename,macrostate_filename
@@ -129,35 +137,41 @@ class GraphsDynamics(object):
         """
         DYNAMICS_PARAMETERS = self.get_dynamics_state()
         steps_in_memory = DYNAMICS_PARAMETERS["number_of_steps_in_memory"]
-        macrostates_names = DYNAMICS_PARAMETERS["macrostates"]        
+        number_of_steps = DYNAMICS_PARAMETERS["number_of_steps"]
+        macrostates_names = DYNAMICS_PARAMETERS["macrostates"]
+              
         #==================================================
         # CHECK ALL FILES
         #==================================================
         ALL_DYNAMIC_FILES_NAME, GRAPH_FILES, STATE_FILES, ALL_TIME_INDEXES, latest_index = self.handle_files()
+        self.latest_index = latest_index
+        if self.latest_index + N + 1 >= number_of_steps:
+            N = number_of_steps
+        else:
+            N = self.latest_index + N 
         #==================================================
         # DEFINE INITIAL GRAPH FROM LATEST STATE
         #==================================================        
         if len(GRAPH_FILES) > 0:
-            initial_graph = self.get_graph(latest_index)
+            initial_graph = self.get_graph(self.latest_index)
         if initial_graph == None:
             print "Wrong graph initialization in evolve function"
             raise Exception
-        
         print "#{0} STEPS EVOLUTION STARTED FOR {1}".format(N,self.dynamics_identifier)
-        print "#STARTING EVOLUTION AT STEP {0}".format(latest_index)
-        
-        if  latest_index <  N:
-            N = N - latest_index
+        print "#STARTING EVOLUTION AT STEP {0}".format(self.latest_index)
+        print initial_graph.get_networkx().number_of_nodes()
+        if  self.latest_index <  N:
+            N = N - self.latest_index
             if N < steps_in_memory:
-                if latest_index == 0:
+                if self.latest_index == 0:
                     GRAPHS_IN_MEMORY = self.generate_graphs_paths(initial_graph,N)
                 else:
-                    GRAPHS_IN_MEMORY = self.generate_graphs_paths(initial_graph,N)[1:]
+                    GRAPHS_IN_MEMORY = self.generate_graphs_paths(initial_graph,N+1)[1:] #CHECK
                 #FOR ALL GRAPHS IN MEMORY EVALUATE THE MACROSTATES AND OUTPUT
                 for graph_object in GRAPHS_IN_MEMORY:
-                    self.output_graph_state(graph_object,latest_index)
-                    self.calculate_output_macrostates(graph_object,latest_index,macrostates_names)
-                    latest_index += 1
+                    self.output_graph_state(graph_object,self.latest_index)
+                    self.calculate_output_macrostates(graph_object,self.latest_index,macrostates_names)
+                    self.latest_index += 1
             else:
                 if (N % steps_in_memory) != 0:
                     steps = np.concatenate([np.repeat(steps_in_memory,N / steps_in_memory),np.array([N % steps_in_memory])])
@@ -165,17 +179,28 @@ class GraphsDynamics(object):
                     steps = np.repeat(steps_in_memory,N / steps_in_memory)
                     
                 for i_number_of_steps in steps:
-                    if latest_index == 0:
+                    if self.latest_index == 0:
                         GRAPHS_IN_MEMORY = self.generate_graphs_paths(initial_graph,i_number_of_steps)
                     else:
                         GRAPHS_IN_MEMORY = self.generate_graphs_paths(initial_graph,i_number_of_steps+1)[1:]
                     #FOR ALL GRAPHS IN MEMORY EVALUATE THE MACROSTATES AND OUTPUT
                     for  graph_object in GRAPHS_IN_MEMORY:
-                        self.output_graph_state(graph_object,latest_index)
-                        self.calculate_output_macrostates(graph_object,latest_index,macrostates_names)
-                        latest_index += 1
-                        
-                initial_graph = copy.deepcopy(GRAPHS_IN_MEMORY[-1])
+                        self.output_graph_state(graph_object,self.latest_index)
+                        self.calculate_output_macrostates(graph_object,self.latest_index,macrostates_names)
+                        self.latest_index += 1
+                    
+                    print "All graph in memory"
+                    for graph in GRAPHS_IN_MEMORY:
+                        print graph.get_networkx().number_of_nodes()
+                    
+                    print "last guy"    
+                    latest_graph_state = GRAPHS_IN_MEMORY[-1].get_graph_state()
+                    latest_graph = GRAPHS_IN_MEMORY[-1].get_networkx()
+                    initial_graph = graph_class_dictionary[DYNAMICS_PARAMETERS["graph_class"]](graph_state=latest_graph_state,
+                                                                                              networkx_graph=latest_graph)
+                    print initial_graph.get_networkx().number_of_nodes()
+                    #initial_graph = copy.deepcopy(GRAPHS_IN_MEMORY[-1])
+                    #
         else:
             print "#EVOLUTION READY"
     
@@ -183,8 +208,15 @@ class GraphsDynamics(object):
         """
         """
         ALL_DYNAMIC_FILES_NAME, GRAPH_FILES, STATE_FILES, ALL_TIME_INDEXES, latest_index = self.handle_files()
+        GRAPHS_OBJECTS = []
+        if index_f in ALL_TIME_INDEXES:
+            for time_index in range(index_0,index_f):
+                GRAPHS_OBJECTS.append(self.get_graph(time_index))
+        else:
+            print "No graph found"
+            return Exception
         
-        return None
+        return GRAPHS_OBJECTS
         
     def handle_files(self):
         """
@@ -262,5 +294,7 @@ class GraphsDynamics(object):
         latest_graph_state = json.load(open(graphstate_filename,"r"))
         latest_graph = nx.read_edgelist(graph_filename)
         
-        graph_object = graph_class_dictionary[gd_dynamical_parameters["graph_class"]](graph_state=latest_graph_state,networkx_graph=latest_graph)
+        graph_object = graph_class_dictionary[gd_dynamical_parameters["graph_class"]](graph_state=latest_graph_state,
+                                                                                      networkx_graph=latest_graph)
+        
         return graph_object 

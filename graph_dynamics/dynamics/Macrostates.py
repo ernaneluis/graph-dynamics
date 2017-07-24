@@ -108,9 +108,10 @@ def evaluate_vanilla_macrostates(gd_directory,macrostates_names,macrostates_run_
                     [(macro-string1,macro_parameters1),...,(macro-string_M,macro_parameters_M)]
     """
     ALL_TIME_INDEXES,DYNAMICS_PARAMETERS,macroNumbers = gd_files_handler.gd_folder_stats(gd_directory)
-    #check if dynamics parameters are complete
+    ALL_TIME_INDEXES.sort()
+    #TODO: check if dynamics parameters are complete
     dynamics_identifier = DYNAMICS_PARAMETERS["dynamics_identifier"]
-    #TO DO: parallelize calls to macrostates
+    #TODO: parallelize calls to macrostates
     for time_index in ALL_TIME_INDEXES:
         graph_filename = "{0}_gGD_{1}_.gd".format(dynamics_identifier,time_index)
         try:

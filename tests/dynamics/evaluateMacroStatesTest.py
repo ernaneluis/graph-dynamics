@@ -34,15 +34,13 @@ class Test(unittest.TestCase):
                  "undirected":True,
                  "output":"../../data/emb/karate.emb"},)
          
-
-        
-        macrostates_names = [("pagerank",())]
-        
-        #macrostates_names = [("basic_stats",())]
+        #macrostates_names = [("pagerank",())]
+        macrostates_names = [("basic_stats",())]
         #macrostates_names = []
         #gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/cit-HepPh_gd/"
         gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/palladynamic2embeddings_gd/"
-        macrostates_run_ideintifier = "pageRankMacro"
+        gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/ForestFire_gd/"
+        macrostates_run_ideintifier = "basics"
         Macrostates.evaluate_vanilla_macrostates(gd_directory, 
                                                  macrostates_names, 
                                                  macrostates_run_ideintifier)    

@@ -3,21 +3,17 @@ Created on Jun 9, 2017
 
 @author: cesar
 '''
+
+import sys
 import snap
-import math
-import time
-import pylab
+import copy
 import random
 import numpy as np
 import networkx as nx
-from scipy import stats
-from scipy.stats import pareto, norm, bernoulli
-import copy
 
-from graph_dynamics.dynamics.datatypes import GraphsDynamics
-from graph_dynamics.networks.tx_graph import TxGraph
 from graph_dynamics.utils import snap_handlers
 from graph_dynamics.networks.datatypes import VanillaGraph
+from graph_dynamics.dynamics.datatypes import GraphsDynamics
 
 #==========================================================================
 # FOREST FIRE
@@ -28,7 +24,7 @@ class ForestFire(GraphsDynamics):
     This is a wrapper for the snap function Forest Fire
     
     """
-    def __init__(self, initial_graph,forestFireParameters,timeSeriesOfNodes):
+    def __init__(self, initial_graph,forestFireParameters,timeSeriesOfNodes,DYNAMICAL_PARAMETERS):
         """
         initial_graph: networkx graph
         
@@ -59,31 +55,50 @@ class ForestFire(GraphsDynamics):
         self.OrphanPrb = OrphanPrb
         
         type_of_dynamics = "snap_shot"
-        GraphsDynamics.__init__(self, initial_graph, type_of_dynamics, None)
-        self.initial_graph = initial_graph
+        self.dynamics_identifier = "ForestFire"
+        self.timeSeriesOfNodes = timeSeriesOfNodes
         
-        Vanilla =  VanillaGraph(dynamics_identifier,
-                                {"None":None},
-                                initial_graph)
+        DYNAMICAL_PARAMETERS["DynamicsClassParameters"]={"ForestFire":forestFireParameters,
+                                                         "TimeSeriesOfNodes":list(timeSeriesOfNodes)} 
+        
+        
+        self.DYNAMICAL_PARAMETERS = DYNAMICAL_PARAMETERS
+        self.initial_graph = initial_graph
+        self.Vanilla_0 =  VanillaGraph(self.dynamics_identifier,
+                                       {"None":None},
+                                       initial_graph)
 
         self.ff = snap.TFfGGen(BurnExpFireP,StartNNodes,ForwBurnProb,
                                BackBurnProb,DecayProb,Take2AmbasPrb,OrphanPrb)
         
-        self.timeSeriesOfNodes = timeSeriesOfNodes 
-    
-    def generate_graphs_paths(self,number_of_steps,output_type=list):
-        snap_graph = snap_handlers.nx_to_snap(self.initial_graph)
-        graph_series = [snap_handlers.snap_to_nx(snap_graph)]
-        numberOfNodes = graph_series[0].number_of_nodes()
+         
+        GraphsDynamics.__init__(self, DYNAMICAL_PARAMETERS)
         
-        if number_of_steps == len(self.timeSeriesOfNodes):
-            if output_type == list:
-                for j, number_of_new_nodes in enumerate(self.timeSeriesOfNodes):
-                    numberOfNodes += number_of_new_nodes
-                    self.ff.SetGraph(snap_graph)
-                    self.ff.AddNodes(int(numberOfNodes), True)
-                    graph_series.append(snap_handlers.snap_to_nx(snap_graph))
-        else:
+    def generate_graphs_paths(self,initial_graph,T):
+        
+        T = T - 1 
+        print "initital generate paths ",initial_graph.get_networkx().number_of_nodes()
+        initial_graph_nx = initial_graph.get_networkx()
+        str_int = dict(zip(initial_graph_nx.nodes(),map(int,initial_graph_nx.nodes())))
+        initial_graph_nx = nx.relabel_nodes(initial_graph_nx, str_int) 
+        snap_graph = snap_handlers.nx_to_snap(initial_graph_nx)
+        
+        graph_series = [VanillaGraph(self.dynamics_identifier,
+                                     {"None":None},
+                                     snap_handlers.snap_to_nx(snap_graph))]
+        numberOfNodes = graph_series[0].get_networkx().number_of_nodes()
+        
+        try:
+            for i in range(0,int(T)):
+                number_of_new_nodes = self.timeSeriesOfNodes[self.latest_index+i]
+                numberOfNodes += number_of_new_nodes
+                self.ff.SetGraph(snap_graph)
+                self.ff.AddNodes(int(numberOfNodes), True)
+                graph_series.append(VanillaGraph(self.dynamics_identifier,
+                                                 {"None":None},
+                                                 snap_handlers.snap_to_nx(snap_graph)))
+        except:
+            print sys.exc_info()
             print "Number of steps for series not match nodes time series"
             raise Exception
         
@@ -101,11 +116,10 @@ class ForestFire(GraphsDynamics):
         """
         return None
         
-
     def get_dynamics_state(self):
         """
         """
-        return None
+        return self.DYNAMICAL_PARAMETERS
  
 
 #==========================================================================

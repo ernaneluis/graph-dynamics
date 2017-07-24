@@ -5,6 +5,7 @@ Created on Jul 3, 2017
 '''
 
 import sys
+from graph_dynamics.networks.datatypes import VanillaGraph
 sys.path.append("../../")
 
 import json
@@ -25,8 +26,8 @@ from graph_dynamics.dynamics import GraphsFormatsHandlers
 class Test(unittest.TestCase):
     
     def forestFireTest(self):
-        barabasi_graph = nx.barabasi_albert_graph(100,3)
-        number_of_steps = 100
+        initial_graph = nx.barabasi_albert_graph(100,3)
+        number_of_steps = 85
                 
         BurnExpFireP = False
         StartNNodes = 1
@@ -38,26 +39,31 @@ class Test(unittest.TestCase):
 
         forestFireParameters = (BurnExpFireP,StartNNodes,ForwBurnProb,BackBurnProb,DecayProb,Take2AmbasPrb,OrphanPrb) 
         timeSeriesOfNodes = np.ones(number_of_steps)*10
-        number_of_steps_in_memory = 10
+        number_of_steps_in_memory = 5
          
         gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/"
         #gd_directory = "/home/cesar/Desktop/Simulations/"
-        gd_dynamical_parameters = {"number_of_steps":number_of_steps,
-                                   "number_of_steps_in_memory":number_of_steps_in_memory,
-                                   "gd_directory":gd_directory,
-                                   "dynamics_identifier":"forestfire",
-                                   "macrostates":["degree_distribution"],
-                                   "graph_class":"VanillaGraph",
-                                   "verbose":True}
-        
-        dynamics = GenerativeDynamics.ForestFire(barabasi_graph, 
-                                                 forestFireParameters,
-                                                 timeSeriesOfNodes)
-        
-        graph_paths = dynamics.generate_graphs_paths(10)
-        #static_graph = GraphsFormatsHandlers.staticGraphInducedBySeries(graph_paths)
-        #temporal_graph = GraphsFormatsHandlers.temporalGraphFromSeries(graph_paths)
-        graph_paths_visualization.plotGraphPaths(graph_paths, "forest_fire")
+        DYNAMICS_PARAMETERS = {"number_of_steps":number_of_steps,
+                                "number_of_steps_in_memory":number_of_steps_in_memory,
+                                "simulations_directory":gd_directory,
+                                "dynamics_identifier":"ForestFire",
+                                "macrostates":[("degree_distribution",())],
+                                "graph_class":"VanillaGraph",
+                                "datetime_timeseries":False,
+                                "initial_date":1,
+                                "verbose":True}
+        vanilla_graph = VanillaGraph("Vanilla", 
+                                     graph_state={"None":None}, 
+                                     networkx_graph=initial_graph)
+        ForestFireDynamics = GenerativeDynamics.ForestFire(vanilla_graph, 
+                                                           forestFireParameters,
+                                                           timeSeriesOfNodes,
+                                                           DYNAMICS_PARAMETERS)        
+        ForestFireDynamics.evolve(5, vanilla_graph)
+        graph_paths = ForestFireDynamics.get_graph_path_window(0, 39)
+        nx_graph_paths = [g.get_networkx() for g in graph_paths]
+        fig, ax = plt.subplots(1,1,figsize=(24,12))
+        graph_paths_visualization.plotGraphPaths(ax,nx_graph_paths, "forest_fire_{0}")
         
 if __name__ == '__main__':
     import sys;sys.argv = ['','Test.forestFireTest']

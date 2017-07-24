@@ -100,7 +100,7 @@ def gd_folder_stats(gd_directory,vprint=False):
     if vprint:
         print "Number of state files {0}".format(numberOfStates)
         print "Number of Graphs {0}".format(numberOfGraphFiles)
-        print "Macros "
+        print "Macros Files"
         pprint.pprint(macroNumbers)
     
     return ALL_TIME_INDEXES,DYNAMICS_PARAMETERS,macroNumbers

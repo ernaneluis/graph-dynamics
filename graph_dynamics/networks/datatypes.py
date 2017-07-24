@@ -85,10 +85,17 @@ class VanillaGraph(Graph):
     analyse files, it simply holds a networkx graph
     the state is an empty json
     """
-    def __init__(self,identifier_string,graph_state=None,networkx_graph=None):
+    def __init__(self,identifier_string=None,graph_state=None,networkx_graph=None):
         self.name_string = "VanillaGraph"
         self.type_of_network = 1
-        self.identifier_string = identifier_string
+        if identifier_string == None:
+            try:
+                self.identifier_string = graph_state["graph_identifier"]
+            except:
+                self.identifier_string = "Vanilla"
+        else:
+            self.identifier_string = identifier_string
+             
         #initialize with parameters
         if networkx_graph==None:
             self.networkx_graph = nx.barabasi_albert_graph(100, 3)
