@@ -14,7 +14,7 @@ class Test(unittest.TestCase):
     def timeSeriesTest(self):
         #gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/cit-HepPh_gd/"
         gd_directory = "/home/cesar/Desktop/GraphsDynamics/Simulations/palladynamic_gd/"
-        gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/ForestFire_gd/"
+        gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/CommunityForestFire_gd/"
         
         ALL_TIME_INDEXES,DYNAMICS_PARAMETERS,macroNumbers = gd_files_handler.gd_folder_stats(gd_directory,True)
 

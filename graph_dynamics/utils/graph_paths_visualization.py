@@ -111,7 +111,7 @@ def plotGraphPathsCommunities(ax,graph_series,community_membership,community_col
     position = nx.spring_layout(static_graph)
     
     which_community = whichCommunity(community_membership)
-    node_color_list = [community_colors[which_community[node]] for node in static_graph.nodes()]
+    node_color_list = [community_colors[which_community[int(node)]] for node in static_graph.nodes()]
     
     R = np.array(position.values())
     deltaX = abs(max(R[:,0]) - min(R[:,0]))
@@ -133,6 +133,7 @@ def plotGraphPathsCommunities(ax,graph_series,community_membership,community_col
         pylab.ion()
     for i in range(1,T):
         if series_type == "list":
+            plt.title(series_name.format(i))
             nx.draw_networkx(graph_series[i], position,axis=ax,node_color=node_color_list, with_labels=False)
             if show:
                 pause(0.2)

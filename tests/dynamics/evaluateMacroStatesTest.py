@@ -39,7 +39,7 @@ class Test(unittest.TestCase):
         #macrostates_names = []
         #gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/cit-HepPh_gd/"
         gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/palladynamic2embeddings_gd/"
-        gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/ForestFire_gd/"
+        gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/CommunityForestFire_gd/"
         macrostates_run_ideintifier = "basics"
         Macrostates.evaluate_vanilla_macrostates(gd_directory, 
                                                  macrostates_names, 

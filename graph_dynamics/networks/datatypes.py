@@ -193,7 +193,7 @@ class OwnershipGraph(Graph):
         raise NotImplemented()
 
 #==============================================================
-#                           FINITE PROCESS 
+#                    FINITE PROCESS 
 #==============================================================
 
 class FiniteProcessGraphs(BayesianGraph):

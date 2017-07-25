@@ -13,6 +13,7 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
+from graph_dynamics.networks.datatypes import VanillaGraph
 from graph_dynamics.networks import communities
 from graph_dynamics.dynamics import GenerativeDynamicsCommunities
 from graph_dynamics.utils import graph_paths_visualization
@@ -32,6 +33,8 @@ for a in plt.style.library['bmh']['axes.prop_cycle']:
 class Test(unittest.TestCase):
     
     def communitiesForestFireTest(self):
+        number_of_steps = 70
+        number_of_steps_in_memory = 30
         
         forest_fire_communities_parameters = {0:{"BurnExpFireP":False,
                                                  "StartNNodes":1,
@@ -63,19 +66,18 @@ class Test(unittest.TestCase):
                                                  "OrphanPrb": 0.}}
         
         numberOfCommunitiesAndNoise = len(forest_fire_communities_parameters.keys())
-                
-        numberOfSteps = 24
+        
         #back ground evolution
-        timeSeriesCommunity0 = np.ones(numberOfSteps)*2
+        timeSeriesCommunity0 = np.ones(number_of_steps)*2
         timeSeriesCommunity0[0] = 0
         
-        timeSeriesCommunity1 = np.ones(numberOfSteps)*2
+        timeSeriesCommunity1 = np.ones(number_of_steps)*2
         timeSeriesCommunity1[0] = 30
         
-        timeSeriesCommunity2 = np.ones(numberOfSteps)*3
+        timeSeriesCommunity2 = np.ones(number_of_steps)*3
         timeSeriesCommunity2[0] = 30
         
-        timeSeriesCommunity3 = np.ones(numberOfSteps)*4
+        timeSeriesCommunity3 = np.ones(number_of_steps)*4
         timeSeriesCommunity3[0] = 20
         
         timeSeriesOfCommunities = {0:timeSeriesCommunity0,
@@ -87,27 +89,45 @@ class Test(unittest.TestCase):
         numberOfNodesPerCommunities = [timeSeriesOfCommunities[c][0] for c in range(1,numberOfCommunitiesAndNoise)]
         numberOfBridgesPerCommunity = [1,1,1]
         barabasiParameter = 3
-        
         initial_graph, subGraphs,Q,bridgesInCommunity = communities.barabasiAlbertCommunities(numberOfNodesPerCommunities, 
                                                               numberOfBridgesPerCommunity, 
                                                               barabasiParameter)
         initial_communities = {c:subGraphs[c-1].nodes() for c in range(1,numberOfCommunitiesAndNoise)}
         initial_communities[0]=[]
         
-        print "Number of communities and Noise",numberOfCommunitiesAndNoise
-        dynamics = GenerativeDynamicsCommunities.CommunitiesForestFire(initial_graph,
+        
+        simulations_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/"
+        
+        DYNAMICS_PARAMETERS = {"number_of_steps":number_of_steps,
+                                "number_of_steps_in_memory":number_of_steps_in_memory,
+                                "simulations_directory":simulations_directory,
+                                "dynamics_identifier":"CommunityForestFire",
+                                "graph_class":"VanillaGraph",
+                                "verbose":True,
+                                "datetime_timeseries":False,
+                                "initial_date":1}
+        DYNAMICS_PARAMETERS["macrostates"] =  [("basic_stats",())]
+        vanilla_graph = VanillaGraph("Vanilla", 
+                             graph_state={"None":None}, 
+                             networkx_graph=initial_graph)
+        dynamics = GenerativeDynamicsCommunities.CommunitiesForestFire(vanilla_graph,
                                                                        initial_communities,
                                                                        forest_fire_communities_parameters,
-                                                                       timeSeriesOfCommunities)
-
-        graph_series, relabeling, initial_relabeling = dynamics.generate_graphs_paths(numberOfSteps)
-        community_colors =  {c:colors[i] for i,c in enumerate(timeSeriesOfCommunities.keys())}
+                                                                       timeSeriesOfCommunities,
+                                                                       DYNAMICS_PARAMETERS)
+        dynamics.evolve(70,vanilla_graph)
+        #graph_paths = dynamics.get_graph_path_window(0, 50)
+        #nx_graph_paths = [g.get_networkx() for g in graph_paths]
+        #nx_graph_series = [g.get_networkx() for g in GRAPH_SERIES]
         
-        fig, ax = plt.subplots(1,1,figsize=(24,12))
-        graph_paths_visualization.plotGraphPathsCommunities(ax,graph_series[0],
-                                                            dynamics.full_membership,
-                                                            community_colors, 
-                                                            series_name="community_ff")
+        #COLORING AND PLOT
+        #community_colors =  {c:colors[i] for i,c in enumerate(timeSeriesOfCommunities.keys())}
+        #fig, ax = plt.subplots(1,1,figsize=(24,12))
+        #graph_paths_visualization.plotGraphPathsCommunities(ax,
+        #                                                    nx_graph_paths,
+        #                                                    dynamics.full_membership,
+        #                                                    community_colors, 
+        #                                                    series_name="community_ff_{0}")
         
 if __name__ == '__main__':
     import sys;sys.argv = ['','Test.communitiesForestFireTest']

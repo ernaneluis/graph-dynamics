@@ -160,6 +160,7 @@ class GraphsDynamics(object):
         print "#{0} STEPS EVOLUTION STARTED FOR {1}".format(N,self.dynamics_identifier)
         print "#STARTING EVOLUTION AT STEP {0}".format(self.latest_index)
         print initial_graph.get_networkx().number_of_nodes()
+        
         if  self.latest_index <  N:
             N = N - self.latest_index
             if N < steps_in_memory:

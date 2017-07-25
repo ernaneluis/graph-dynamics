@@ -4,6 +4,7 @@ Created on Jun 13, 2017
 @author: cesar
 '''
 import sys
+import copy
 import random
 import numpy as np
 import networkx as nx
@@ -13,6 +14,57 @@ from graph_dynamics.networks.datatypes import Graph
 from tag2hierarchy.hierarchy import treeHandlers
 
 
+class CommunityGraph(Graph):
+    """
+    This graph can be used as a handler in order to
+    analyse files, it simply holds a networkx graph
+    the state is an empty json
+    """
+    def __init__(self,identifier_string=None,initial_comunities=None,graph_state=None,networkx_graph=None):
+        self.name_string = "CommunityGraph"
+        self.type_of_network = 1
+        if identifier_string == None:
+            try:
+                self.identifier_string = graph_state["graph_identifier"]
+            except:
+                self.identifier_string = "Vanilla"
+        else:
+            self.identifier_string = identifier_string
+             
+        #initialize with parameters
+        if networkx_graph==None:
+            self.networkx_graph = nx.barabasi_albert_graph(100, 3)
+            self.graph_state = {"None":None}
+        #initialize with json object
+        else:
+            self.graph_state = copy.copy(graph_state)
+            self.networkx_graph = networkx_graph
+            
+        Graph.__init__(self,self.name_string,self.identifier_string,self.graph_state)
+
+    def get_graph_state(self):
+        """
+        This function should return a json object with all 
+        parameters required to initialize such a graph 
+        """
+        return self.graph_state
+            
+    def get_networkx(self):
+        return self.networkx_graph
+          
+    def get_adjancency_matrix(self):
+        return nx.adjacency_matrix(self.networkx_graph)
+
+    def get_edge_list(self):
+        return self.networkx_graph.edge
+     
+    def get_number_of_edges(self):
+        return self.networkx_graph.number_of_edges()
+     
+    def get_number_of_nodes(self):
+        return self.networkx_graph.number_of_nodes()     
+    
+    
 class CommunityTodeschiniCaronGraph(Graph):
     def __init__(self,
                  identifier_string,

@@ -63,7 +63,6 @@ class ForestFire(GraphsDynamics):
         
         
         self.DYNAMICAL_PARAMETERS = DYNAMICAL_PARAMETERS
-        self.initial_graph = initial_graph
         self.Vanilla_0 =  VanillaGraph(self.dynamics_identifier,
                                        {"None":None},
                                        initial_graph)
@@ -75,7 +74,6 @@ class ForestFire(GraphsDynamics):
         GraphsDynamics.__init__(self, DYNAMICAL_PARAMETERS)
         
     def generate_graphs_paths(self,initial_graph,T):
-        
         T = T - 1 
         print "initital generate paths ",initial_graph.get_networkx().number_of_nodes()
         initial_graph_nx = initial_graph.get_networkx()

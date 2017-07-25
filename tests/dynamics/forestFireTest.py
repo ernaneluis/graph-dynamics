@@ -5,7 +5,7 @@ Created on Jul 3, 2017
 '''
 
 import sys
-from graph_dynamics.networks.datatypes import VanillaGraph
+
 sys.path.append("../../")
 
 import json
@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 from graph_dynamics.dynamics import GenerativeDynamics
 from graph_dynamics.utils import graph_paths_visualization
 from graph_dynamics.dynamics import GraphsFormatsHandlers
+from graph_dynamics.networks.datatypes import VanillaGraph
 
 #matplotlib.rcParams['ps.useafm'] = True
 #matplotlib.rcParams['text.usetex'] = True
@@ -59,11 +60,11 @@ class Test(unittest.TestCase):
                                                            forestFireParameters,
                                                            timeSeriesOfNodes,
                                                            DYNAMICS_PARAMETERS)        
-        ForestFireDynamics.evolve(5, vanilla_graph)
-        graph_paths = ForestFireDynamics.get_graph_path_window(0, 39)
-        nx_graph_paths = [g.get_networkx() for g in graph_paths]
-        fig, ax = plt.subplots(1,1,figsize=(24,12))
-        graph_paths_visualization.plotGraphPaths(ax,nx_graph_paths, "forest_fire_{0}")
+        ForestFireDynamics.evolve(30, vanilla_graph)
+        graph_paths = ForestFireDynamics.get_graph_path_window(0, 20)
+        #nx_graph_paths = [g.get_networkx() for g in graph_paths]
+        #fig, ax = plt.subplots(1,1,figsize=(24,12))
+        #graph_paths_visualization.plotGraphPaths(ax,nx_graph_paths, "forest_fire_{0}")
         
 if __name__ == '__main__':
     import sys;sys.argv = ['','Test.forestFireTest']
