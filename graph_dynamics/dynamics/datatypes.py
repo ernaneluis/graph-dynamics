@@ -13,11 +13,13 @@ import networkx as nx
 from matplotlib import pyplot as plt
 from abc import ABCMeta, abstractmethod
 from graph_dynamics.dynamics import Macrostates
-from graph_dynamics.networks import datatypes 
+from graph_dynamics.networks import datatypes, communities
 from time import sleep
 
 #HERE WE CONCATENATE ALL AVAILABLE GRAPH CLASSES
-graph_class_dictionary = datatypes.graph_class_dictionary
+graph_class_dictionary = dict(datatypes.graph_class_dictionary)
+graph_class_dictionary.update(communities.graph_class_dictionary)
+
 DYNAMICS_PARAMETERS_KEYS = ["number_of_steps","number_of_steps_in_memory","simulations_directory","dynamics_identifier","graph_class","verbose","datetime_timeseries","initial_date","DynamicsClassParameters","macrostates"]
    
 def files_names(DYNAMICS_PARAMETERS,time_index,macrostate_file_indentifier=None):
@@ -200,8 +202,7 @@ class GraphsDynamics(object):
                     initial_graph = graph_class_dictionary[DYNAMICS_PARAMETERS["graph_class"]](graph_state=latest_graph_state,
                                                                                               networkx_graph=latest_graph)
                     print initial_graph.get_networkx().number_of_nodes()
-                    #initial_graph = copy.deepcopy(GRAPHS_IN_MEMORY[-1])
-                    #
+                    
         else:
             print "#EVOLUTION READY"
     

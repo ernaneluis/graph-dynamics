@@ -47,7 +47,7 @@ class Test(unittest.TestCase):
         DYNAMICS_PARAMETERS = {"number_of_steps":number_of_steps,
                                 "number_of_steps_in_memory":number_of_steps_in_memory,
                                 "simulations_directory":gd_directory,
-                                "dynamics_identifier":"ForestFire",
+                                "dynamics_identifier":"ForestFireK",
                                 "macrostates":[("degree_distribution",())],
                                 "graph_class":"VanillaGraph",
                                 "datetime_timeseries":False,
@@ -60,11 +60,11 @@ class Test(unittest.TestCase):
                                                            forestFireParameters,
                                                            timeSeriesOfNodes,
                                                            DYNAMICS_PARAMETERS)        
-        ForestFireDynamics.evolve(30, vanilla_graph)
+        ForestFireDynamics.evolve(40, vanilla_graph)
         graph_paths = ForestFireDynamics.get_graph_path_window(0, 20)
-        #nx_graph_paths = [g.get_networkx() for g in graph_paths]
-        #fig, ax = plt.subplots(1,1,figsize=(24,12))
-        #graph_paths_visualization.plotGraphPaths(ax,nx_graph_paths, "forest_fire_{0}")
+        nx_graph_paths = [g.get_networkx() for g in graph_paths]
+        fig, ax = plt.subplots(1,1,figsize=(24,12))
+        graph_paths_visualization.plotGraphPaths(ax,nx_graph_paths, "forest_fire_{0}")
         
 if __name__ == '__main__':
     import sys;sys.argv = ['','Test.forestFireTest']

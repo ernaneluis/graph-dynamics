@@ -47,6 +47,12 @@ def time_index_macro(gd_directory,
                      macrostate_file_indentifier,
                      time_index):
     """
+    Simply returns the macrostate by reading the file and selecting the json defined
+    
+    macro_state_identifier: string
+                    key of json which holds the desired macrostate
+    macrostate_file_indentifier: string
+                    file name
     """
     ALL_TIME_INDEXES,DYNAMICS_PARAMETERS,macroNumbers = gd_files_handler.gd_folder_stats(gd_directory,False)
     dynamics_foldername, graph_filename,graphstate_filename,macrostate_filename = files_names(DYNAMICS_PARAMETERS, 
@@ -125,5 +131,4 @@ def TS_per_node_scalar_macro(gd_directory,macrostate_file_indentifier,macro_stat
 def TS_per_node_vector_macro(gd_directory,macrostate_file_indentifier,macro_state_identifier,node=0,selectTop=None,dimensions=5):
     """
     """
-        
     return  None

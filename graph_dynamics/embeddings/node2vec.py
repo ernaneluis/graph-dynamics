@@ -176,22 +176,7 @@ def alias_draw(J, q):
     else:
         return J[kk]
     
-    
-def read_graph(args):
-    '''
-    Reads the input network in networkx.
-    '''
-    if args["weighted"]:
-        G = nx.read_edgelist(args["input"], nodetype=int, data=(('weight',float),), create_using=nx.DiGraph())
-    else:
-        G = nx.read_edgelist(args["input"], nodetype=int, create_using=nx.DiGraph())
-        for edge in G.edges():
-            G[edge[0]][edge[1]]['weight'] = 1
 
-    if not args["directed"]:
-        G = G.to_undirected()
-
-    return G
 
 def learn_embeddings(walks,args):
     '''
@@ -204,5 +189,5 @@ def learn_embeddings(walks,args):
                      sg=1, 
                      workers=args["workers"], 
                      iter=args["iter"])
-    model.wv.save_word2vec_format(args["output"])
+    
     return model.wv 
