@@ -62,8 +62,8 @@ class Test(unittest.TestCase):
                                                  "OrphanPrb": 0.},
                                               3:{"BurnExpFireP":False,
                                                  "StartNNodes":1,
-                                                 "ForwBurnProb":0.2,
-                                                 "BackBurnProb":0.32,
+                                                 "ForwBurnProb":0.5,
+                                                 "BackBurnProb":0.52,
                                                  "DecayProb":1.0,
                                                  "Take2AmbasPrb":0.,
                                                  "OrphanPrb": 0.}}
@@ -74,10 +74,10 @@ class Test(unittest.TestCase):
         timeSeriesCommunity0 = np.ones(number_of_steps)
         timeSeriesCommunity0[0] = 0
         
-        timeSeriesCommunity1 = np.ones(number_of_steps)*1
+        timeSeriesCommunity1 = np.ones(number_of_steps)*0
         timeSeriesCommunity1[0] = 10
         
-        timeSeriesCommunity2 = np.ones(number_of_steps)*1
+        timeSeriesCommunity2 = np.ones(number_of_steps)*0
         timeSeriesCommunity2[0] = 10
         
         timeSeriesCommunity3 = np.ones(number_of_steps)*1
@@ -126,19 +126,19 @@ class Test(unittest.TestCase):
                                                                               timeSeriesOfCommunities,
                                                                               DYNAMICS_PARAMETERS)
         
-        dynamics_object.evolve(10,community_graph)
-        #graph_paths = dynamics_object.get_graph_path_window(1, 10)
-        #nx_graph_paths = [g.get_networkx() for g in graph_paths]
-        
-        #nx_graph_series = [g.get_networkx() for g in GRAPH_SERIES]
+        dynamics_object.evolve(50,community_graph)
+        graph_paths = dynamics_object.get_graph_path_window(1, 50)
+        nx_graph_paths = [g.get_networkx() for g in graph_paths]
+        fullMembership = communities.get_full_membership_from_states(graph_paths)
+
         #COLORING AND PLOT
-        #community_colors =  {c:colors[i] for i,c in enumerate(timeSeriesOfCommunities.keys())}
-        #fig, ax = plt.subplots(1,1,figsize=(24,12))
-        #graph_paths_visualization.plotGraphPathsCommunities(ax,
-        #                                                    nx_graph_paths,
-        #                                                    dynamics_object.full_membership,
-        #                                                    community_colors, 
-        #                                                    series_name="community_ff_{0}")
+        community_colors =  {c:colors[i] for i,c in enumerate(timeSeriesOfCommunities.keys())}
+        fig, ax = plt.subplots(1,1,figsize=(24,12))
+        graph_paths_visualization.plotGraphPathsCommunities(ax,
+                                                            nx_graph_paths,
+                                                            fullMembership,
+                                                            community_colors, 
+                                                            series_name="community_ff_{0}")
         
 if __name__ == '__main__':
     import sys;sys.argv = ['','Test.communitiesForestFireTest']

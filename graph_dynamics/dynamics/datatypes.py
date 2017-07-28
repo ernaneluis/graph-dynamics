@@ -215,7 +215,7 @@ class GraphsDynamics(object):
         """
         ALL_DYNAMIC_FILES_NAME, GRAPH_FILES, STATE_FILES, ALL_TIME_INDEXES, latest_index = self.handle_files()
         GRAPHS_OBJECTS = []
-        if index_f in ALL_TIME_INDEXES:
+        if index_f-1 in ALL_TIME_INDEXES:
             for time_index in range(index_0,index_f):
                 GRAPHS_OBJECTS.append(self.get_graph(time_index))
         else:

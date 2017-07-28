@@ -19,9 +19,17 @@ def get_full_membership_from_states(graph_paths):
     """
     ALL_STATES = []
     for g in graph_paths:
-        ALL_STATES.get_states(g.get_state())
-    all_communities = ALL_STATES[0]
+        ALL_STATES.append(g.get_graph_state()["communities"])
+    all_communities = {}
+    for c,n  in ALL_STATES[0].iteritems():
+        all_communities[c] = set(n)
     
+    for state_t in ALL_STATES[1:]:
+        for c,n_l in state_t.iteritems():
+            for n in n_l:
+                all_communities[c].add(n)
+    full_membership = {int(c):list(n) for c,n in all_communities.iteritems()}
+    return full_membership
     
 class CommunityGraph(Graph):
     """
