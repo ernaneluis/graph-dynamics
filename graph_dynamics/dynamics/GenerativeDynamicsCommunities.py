@@ -17,6 +17,7 @@ import copy
 from graph_dynamics.utils import snap_handlers
 from graph_dynamics.networks.tx_graph import TxGraph
 from graph_dynamics.networks.datatypes import VanillaGraph
+from graph_dynamics.networks.communities import CommunityGraph
 from graph_dynamics.dynamics.datatypes import GraphsDynamics
 
 def forestParamTuple(paramDict):
@@ -111,76 +112,94 @@ class CommunitiesForestFire(GraphsDynamics):
         
         """
         T = T -1
-        #time series full 
-        fullTimeSeriesStack = np.array([self.timeSeriesOfCommunities[c] for c in range(0,self.numberOfCommunitiesAndNoise)])
-        fullTimeSeriesStackCum = fullTimeSeriesStack.cumsum(axis=1)
-
-        fullTimeSeries = fullTimeSeriesStack.sum(axis=0)
-        cumFullTimeSeries = fullTimeSeries.cumsum()
-        #################################################################
-        #here we guarantee that the nodes are integers to comply with snaps formats
-        initial_graph_nx = initial_graph.get_networkx()
-        str_int = dict(zip(initial_graph_nx.nodes(),map(int,initial_graph_nx.nodes())))
-        initial_graph_nx = nx.relabel_nodes(initial_graph_nx, str_int)
         
-        #here we select the subgraphs according to community relabeling
-        snap_graphs = {0:snap_handlers.nx_to_snap(initial_graph_nx)} # full graph
-        graph_series = {}
-        initial_relabeling = {c:dict(zip(range(len(self.initial_communities[c])),self.initial_communities[c])) \
-                              for c in range(1,self.numberOfCommunitiesAndNoise)}
-        # full graph
-        graph_series[0] = [snap_handlers.snap_to_nx(snap_graphs[0])]
-        for c in range(1,self.numberOfCommunitiesAndNoise):
-            snap_graphs[c] = snap_handlers.nx_to_snap(communityGraphForEvolution(initial_graph_nx,
-                                                                                 self.initial_communities[c])) 
-            graph_series[c] = [snap_handlers.snap_to_nx(snap_graphs[c])]
-        relabeling = self.communityRelabelingForForestFire(T)
-                
-        #HERE WE EVOLVE THE COMMUNITIES SEPARATLY
-        for c in range(1,self.numberOfCommunitiesAndNoise):
-            numberOfNodes = self.timeSeriesOfCommunities[c][0]
-            for i in range(0,T):
-                number_of_new_nodes = self.timeSeriesOfCommunities[c][self.latest_index+i]
-                numberOfNodes += number_of_new_nodes
-                self.forestFireModels[c].SetGraph(snap_graphs[c])
-                self.forestFireModels[c].AddNodes(int(numberOfNodes), True) #HERE IS THE EVOLUTION <<----------
-                new_networkx_graph = snap_handlers.snap_to_nx(snap_graphs[c])
-                graph_series[c].append(new_networkx_graph)
-        
-        #HERE WE EVOLVE THE FULL GRAPH
-
-        #after checking for consistency, we start the time series loop
-        for time in range(0,T):
-            number_of_new_nodes = self.timeSeriesOfCommunities[0][self.latest_index+time]
-            full_nx_graph  = snap_handlers.snap_to_nx(snap_graphs[0])
-            # update the edges from the communities
-            for c in range(1,self.numberOfCommunitiesAndNoise):
-                new_community_graph = graph_series[c][time]
-                
-                relabeled_graph = nx.relabel_nodes(new_community_graph,relabeling[c][time-1])
-                relabeled_graph = nx.relabel_nodes(relabeled_graph,initial_relabeling[c])
-                full_nx_graph.add_edges_from(relabeled_graph.edges())
-                
-            numberOfNodes = cumFullTimeSeries[time+1] 
-                            
-            snap_graphs[0] = snap_handlers.nx_to_snap(full_nx_graph)
-            numberOfNodes += number_of_new_nodes
-            self.forestFireModels[0].SetGraph(snap_graphs[0])
-            self.forestFireModels[0].AddNodes(int(numberOfNodes), True)
+        if T != 0:
+            initial_communities = initial_graph.communities
+            print self.latest_index
+            #time series full 
+            fullTimeSeriesStack = np.array([self.timeSeriesOfCommunities[c] for c in range(0,self.numberOfCommunitiesAndNoise)])
+            fullTimeSeriesStackCum = fullTimeSeriesStack.cumsum(axis=1)
+    
+            fullTimeSeries = fullTimeSeriesStack.sum(axis=0)
+            cumFullTimeSeries = fullTimeSeries.cumsum()
+            print cumFullTimeSeries
+            #################################################################
+            #here we guarantee that the nodes are integers to comply with snaps formats
+            initial_graph_nx = initial_graph.get_networkx()
+            str_int = dict(zip(initial_graph_nx.nodes(),map(int,initial_graph_nx.nodes())))
+            initial_graph_nx = nx.relabel_nodes(initial_graph_nx, str_int)
             
-            graph_series[0].append(snap_handlers.snap_to_nx(snap_graphs[0]))
-
-
-        self.full_membership = aggregateRelabelingForFullCommunityMembership(graph_series[0][-1],
-                                                                             initial_relabeling,
-                                                                             relabeling)
-        self.relabeling = relabeling
-        self.initial_relabeling = initial_relabeling
-        GRAPH_SERIES = []
-        for initial_graph_nx in graph_series[0]:
-            GRAPH_SERIES.append(VanillaGraph(self.dynamics_identifier,
-                                              {"None":None},
-                                              initial_graph_nx))    
+            #here we select the subgraphs according to community relabeling
+            snap_graphs = {0:snap_handlers.nx_to_snap(initial_graph_nx)} # full graph
+            graph_series = {}
+            initial_relabeling = {c:dict(zip(range(len(initial_communities[c])),initial_communities[c])) \
+                                  for c in range(1,self.numberOfCommunitiesAndNoise)}
+            
+            # here we initialize the graph series
+            graph_series[0] = [snap_handlers.snap_to_nx(snap_graphs[0])]
+            for c in range(1,self.numberOfCommunitiesAndNoise):
+                snap_graphs[c] = snap_handlers.nx_to_snap(communityGraphForEvolution(initial_graph_nx,
+                                                                                     initial_communities[c])) 
+                graph_series[c] = [snap_handlers.snap_to_nx(snap_graphs[c])]
+            
+            self.latest_index             
+            #HERE WE EVOLVE THE COMMUNITIES SEPARATLY
+            for c in range(1,self.numberOfCommunitiesAndNoise):
+                numberOfNodes = fullTimeSeriesStackCum[c][self.latest_index-1]
+                #numberOfNodes = self.timeSeriesOfCommunities[c][0]#????
+                for i in range(0,T):
+                    number_of_new_nodes = self.timeSeriesOfCommunities[c][self.latest_index+i]
+                    numberOfNodes += number_of_new_nodes
+                    self.forestFireModels[c].SetGraph(snap_graphs[c])
+                    self.forestFireModels[c].AddNodes(int(numberOfNodes), True) #HERE IS THE EVOLUTION <<----------
+                    new_networkx_graph = snap_handlers.snap_to_nx(snap_graphs[c])
+                    graph_series[c].append(new_networkx_graph)
+            
+            relabeling = self.communityRelabelingForForestFire(T)
+            #HERE WE EVOLVE THE FULL GRAPH
+    
+            #after checking for consistency, we start the time series loop
+            for time in range(0,T):
+                number_of_new_nodes = self.timeSeriesOfCommunities[0][self.latest_index+time]
+                #community zero is background community
+                full_nx_graph  = snap_handlers.snap_to_nx(snap_graphs[0])
+                # update the edges from the communities
+                for c in range(1,self.numberOfCommunitiesAndNoise):
+                    new_community_graph = graph_series[c][time+1]
+                    relabeled_graph = nx.relabel_nodes(new_community_graph,relabeling[c][time])
+                    relabeled_graph = nx.relabel_nodes(relabeled_graph,initial_relabeling[c])
+                    full_nx_graph.add_edges_from(relabeled_graph.edges())
+                
+                try:    
+                    numberOfNodes = cumFullTimeSeries[self.latest_index+time] 
+                                
+                    new_full_snap_graph = snap_handlers.nx_to_snap(full_nx_graph)
+                    #numberOfNodes += number_of_new_nodes
+                    self.forestFireModels[0].SetGraph(new_full_snap_graph)
+                    self.forestFireModels[0].AddNodes(int(numberOfNodes), True)
+                    new_nx_graph = snap_handlers.snap_to_nx(new_full_snap_graph)
+                    graph_series[0].append(new_nx_graph)
+                except:
+                    #TODO: LAST INDEX PROBLEM
+                    pass
+    
+    
+            self.full_membership = aggregateRelabelingForFullCommunityMembership(graph_series[0][-1],
+                                                                                 initial_relabeling,
+                                                                                 relabeling)
+            
+            local_membership_series = self.full_membership_to_time_membership(graph_series,self.full_membership)
+            
+            self.relabeling = relabeling
+            self.initial_relabeling = initial_relabeling
+            GRAPH_SERIES = []
+            for graph_nx,local_memberships  in zip(graph_series[0],local_membership_series):
+                    GRAPH_SERIES.append(CommunityGraph(self.dynamics_identifier,
+                                                       initial_comunities=local_memberships,
+                                                       networkx_graph=graph_nx))
+        else:
+            GRAPH_SERIES = [initial_graph]
+                                                               
         return  GRAPH_SERIES  
     
     def set_graph_path(self):
@@ -200,30 +219,48 @@ class CommunitiesForestFire(GraphsDynamics):
         """
         return self.DYNAMICAL_PARAMETERS
  
+    def full_membership_to_time_membership(self,graph_series,full_membership):
+        """
+        generate a local membership per graph in order to initialize the graph states 
+        
+        graph_series: list of networkx graphs
+        full_membership: dictionary with communities memberships
+        """
+        local_membership_series = []
+        for graph in graph_series[0]:
+            local_membership = {}
+            for community,membership in full_membership.iteritems():
+                local_membership[community] = list(set(membership).intersection(set(graph.nodes())))
+            local_membership_series.append(local_membership)
+        return local_membership_series
     
     #==============================================
     # UTILS FOR THE CLASS
     #==============================================
     def communityRelabelingForForestFire(self,numberOfSteps):
         """
-        This function provides the dictionary for relabeling the nodes during the dynamics of the commmunity forest fire
+        This function provides the dictionary for relabeling the nodes during the dynamics of the community forest fire
         
         Returns:
             relabeling
         """
+        self.latest_index
         fullTimeSeriesStack = np.array([self.timeSeriesOfCommunities[c] for c in range(0,self.numberOfCommunitiesAndNoise)])
         fullTimeSeriesStackCum = fullTimeSeriesStack.cumsum(axis=1)
     
         fullTimeSeries = fullTimeSeriesStack.sum(axis=0)
         cumFullTimeSeries = fullTimeSeries.cumsum()
-    
+        
+        #if self.latest_index == 0:
         relabeling = {c:[] for c in range(1,self.numberOfCommunitiesAndNoise)}
-        for time in range(1,numberOfSteps):
-
-            lower_border = int(cumFullTimeSeries[time-1])
+        #else:
+        #    relabeling = {c:[{}] for c in range(1,self.numberOfCommunitiesAndNoise)}
+            
+        for time in range(self.latest_index,self.latest_index+numberOfSteps):
+            lower_border = int(cumFullTimeSeries[time - 1])
             for c in range(1,self.numberOfCommunitiesAndNoise):
                 #take new node created in the individual dynamics
-                newNodesInCommnity = range(int(fullTimeSeriesStackCum[c][time-1]),int(fullTimeSeriesStackCum[c][time])) 
+                newNodesInCommnity = range(int(fullTimeSeriesStackCum[c][time-1]),int(fullTimeSeriesStackCum[c][time]))
                 numberOfNewNodes = int(fullTimeSeriesStack[c][time])
 
                 upper_border = lower_border + numberOfNewNodes

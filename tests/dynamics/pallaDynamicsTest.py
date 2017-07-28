@@ -67,7 +67,7 @@ class Test(unittest.TestCase):
         DYNAMICS_PARAMETERS = {"number_of_steps":number_of_steps,
                                 "number_of_steps_in_memory":number_of_steps_in_memory,
                                 "simulations_directory":simulations_directory,
-                                "dynamics_identifier":"palladynamic3",
+                                "dynamics_identifier":"palladynamic4",
                                 "graph_class":"CaronFox",
                                 "verbose":True,
                                 "datetime_timeseries":False,
@@ -75,7 +75,7 @@ class Test(unittest.TestCase):
 
         #Macro States ========================================================================
         nargs = {"input":"../../data/graph/karate.edgelist",
-                "dimensions":128,
+                "dimensions":2,
                  "directed":False,
                  "p":0.001,
                  "q":2,
@@ -88,9 +88,8 @@ class Test(unittest.TestCase):
                  "undirected":True,
                  "output":"../../data/emb/karate.emb"}
         
-        DYNAMICS_PARAMETERS["macrostates"] =  [("basic_stats",())]
-                                                   #("pagerank",()),
-                                                   #("node2vec_macrostates",(nargs,))]
+        DYNAMICS_PARAMETERS["macrostates"] =  [("basic_stats",()),
+                                               ("node2vec_macrostates",(nargs,))]
         
         Palla = PittWalker.PallaDynamics(self.phi,
                                          self.rho,

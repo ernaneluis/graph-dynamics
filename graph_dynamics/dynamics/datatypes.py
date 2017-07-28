@@ -99,9 +99,13 @@ class GraphsDynamics(object):
                   open(self.gd_directory+"DYNAMICS_PARAMETERS","w"))
         
     @abstractmethod
-    def generate_graphs_paths(self,initial_graph,N):
+    def generate_graphs_paths(self,initial_graph,number_of_steps):
         """
-        Simulation (Prediction)   
+        Simulation (Prediction)
+        
+        This function should return a list of graphs GRAPHS_LIST where
+        GRAPH_LIST[0] = INITIAL GRAPH
+        len(GRAPH_LIST) = number_of_steps
         """
         raise NotImplemented()
     
@@ -156,12 +160,12 @@ class GraphsDynamics(object):
         #==================================================        
         if len(GRAPH_FILES) > 0:
             initial_graph = self.get_graph(self.latest_index)
-        if initial_graph == None:
+        elif initial_graph == None:
             print "Wrong graph initialization in evolve function"
             raise Exception
         print "#{0} STEPS EVOLUTION STARTED FOR {1}".format(N,self.dynamics_identifier)
         print "#STARTING EVOLUTION AT STEP {0}".format(self.latest_index)
-        print initial_graph.get_networkx().number_of_nodes()
+        print "Number of initial nodes: ",initial_graph.get_networkx().number_of_nodes()
         
         if  self.latest_index <  N:
             N = N - self.latest_index

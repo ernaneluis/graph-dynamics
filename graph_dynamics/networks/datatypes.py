@@ -19,6 +19,7 @@ from _pyio import __metaclass__
 
 from graph_dynamics.random_measures.process import GammaProcess
 
+
 #matplotlib.rcParams['ps.useafm'] = True
 #matplotlib.rcParams['text.usetex'] = True
 #matplotlib.rcParams['pdf.use14corefonts'] = True
@@ -129,16 +130,11 @@ class VanillaGraph(Graph):
     def get_number_of_nodes(self):
         return self.networkx_graph.number_of_nodes()     
     
-class CommunityGraphs(Graph):
-    __metaclass__ = ABCMeta
+#=====================================================
+# COMMUNITY
+#=====================================================
 
-    def __init__(self,name_string,identifier_string):
-        self.name_string = name_string
-        self.identifier_string = identifier_string
-        
-    @abstractmethod        
-    def get_nodes(self):
-        raise NotImplemented()
+ 
     
 #==============================================================
 #                           BAYESIAN CLASS 

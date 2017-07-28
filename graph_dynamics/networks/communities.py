@@ -4,6 +4,7 @@ Created on Jun 13, 2017
 @author: cesar
 '''
 import sys
+sys.path.append("../")
 import copy
 import random
 import numpy as np
@@ -13,7 +14,15 @@ from graph_dynamics.networks.datatypes import Graph
 
 from tag2hierarchy.hierarchy import treeHandlers
 
-
+def get_full_membership_from_states(graph_paths):
+    """
+    """
+    ALL_STATES = []
+    for g in graph_paths:
+        ALL_STATES.get_states(g.get_state())
+    all_communities = ALL_STATES[0]
+    
+    
 class CommunityGraph(Graph):
     """
     This graph can be used as a handler in order to
@@ -23,22 +32,20 @@ class CommunityGraph(Graph):
     def __init__(self,identifier_string=None,initial_comunities=None,graph_state=None,networkx_graph=None):
         self.name_string = "CommunityGraph"
         self.type_of_network = 1
+        self.networkx_graph = networkx_graph
         if identifier_string == None:
-            try:
-                self.identifier_string = graph_state["graph_identifier"]
-            except:
-                self.identifier_string = "Vanilla"
+            self.identifier_string = "CommunityGraph"
         else:
             self.identifier_string = identifier_string
-             
-        #initialize with parameters
-        if networkx_graph==None:
-            self.networkx_graph = nx.barabasi_albert_graph(100, 3)
-            self.graph_state = {"None":None}
+        
+        if initial_comunities != None:#
+            self.graph_state = {}
+            self.graph_state["communities"] = initial_comunities
         #initialize with json object
         else:
             self.graph_state = copy.copy(graph_state)
             self.networkx_graph = networkx_graph
+            self.communities = graph_state["communities"]
             
         Graph.__init__(self,self.name_string,self.identifier_string,self.graph_state)
 
@@ -62,7 +69,7 @@ class CommunityGraph(Graph):
         return self.networkx_graph.number_of_edges()
      
     def get_number_of_nodes(self):
-        return self.networkx_graph.number_of_nodes()     
+        return self.networkx_graph.number_of_nodes()    
     
     
 class CommunityTodeschiniCaronGraph(Graph):
@@ -299,3 +306,5 @@ def barabasiAlbertCommunities(numberOfNodesPerCommunities,numberOfBridgesPerComm
         Q += e[i,i] - (e[i,:].sum())**2
     
     return (fullGraph,subGraphs,Q,bridgesInCommunity)
+
+graph_class_dictionary = {"CommunityGraph":CommunityGraph}
