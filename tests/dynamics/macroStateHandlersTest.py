@@ -14,12 +14,12 @@ class Test(unittest.TestCase):
     def timeSeriesTest(self):
         #gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/cit-HepPh_gd/"
         #gd_directory = "/home/cesar/Desktop/GraphsDynamics/Simulations/palladynamic_gd/"
-        gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/CommunityForestFire_gd/"
+        gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/CommunityForestFire3_gd/"
         
         ALL_TIME_INDEXES,DYNAMICS_PARAMETERS,macroNumbers = gd_files_handler.gd_folder_stats(gd_directory,True)
 
         
-        macrostate_file_indentifier = "CommunityForestFire-macros"
+        macrostate_file_indentifier = "CommunityForestFire3-macros"
         macro_state_identifier = "basic_stats"
         
         macro_keys = {"number_of_nodes":"scalar"}

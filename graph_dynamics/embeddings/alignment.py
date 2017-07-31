@@ -36,7 +36,8 @@ def embedings_in_order(new_nodes_per_time,
                        gd_directory,
                        macrostate_file_indentifier):
     """
-    This function works only for aggregated networks were nodes are not deleted over time
+    This function works only for aggregated networks were nodes are not deleted over time, 
+    it obtains who are the new nodes every time, it ,,
     
     
     new_nodes_per_time: list of new nodes per time

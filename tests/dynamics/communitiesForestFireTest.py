@@ -36,7 +36,7 @@ for a in plt.style.library['bmh']['axes.prop_cycle']:
 class Test(unittest.TestCase):
     
     def communitiesForestFireTest(self):                                                                                                
-        number_of_steps = 100
+        number_of_steps = 40
         number_of_steps_in_memory = 1
                                                                                                                                                                        
         forest_fire_communities_parameters = {0:{"BurnExpFireP":False,
@@ -104,7 +104,7 @@ class Test(unittest.TestCase):
         DYNAMICS_PARAMETERS = {"number_of_steps":number_of_steps,
                                 "number_of_steps_in_memory":number_of_steps_in_memory,
                                 "simulations_directory":simulations_directory,
-                                "dynamics_identifier":"CommunityForestFire",
+                                "dynamics_identifier":"CommunityForestFire3",
                                 "graph_class":"CommunityGraph",
                                 "verbose":True,
                                 "datetime_timeseries":False,
@@ -112,9 +112,6 @@ class Test(unittest.TestCase):
         
         DYNAMICS_PARAMETERS["macrostates"] =  [("basic_stats",())]
         
-        vanilla_graph = VanillaGraph("Vanilla", 
-                                     graph_state={"None":None}, 
-                                     networkx_graph=initial_graph)
         
         community_graph = CommunityGraph(identifier_string="Communities",
                                          initial_comunities=initial_communities,
@@ -126,8 +123,8 @@ class Test(unittest.TestCase):
                                                                               timeSeriesOfCommunities,
                                                                               DYNAMICS_PARAMETERS)
         
-        dynamics_object.evolve(50,community_graph)
-        graph_paths = dynamics_object.get_graph_path_window(1, 50)
+        #dynamics_object.evolve(40,community_graph)
+        graph_paths = dynamics_object.get_graph_path_window(1, 70)
         nx_graph_paths = [g.get_networkx() for g in graph_paths]
         fullMembership = communities.get_full_membership_from_states(graph_paths)
 

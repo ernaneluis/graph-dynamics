@@ -12,6 +12,8 @@ import sys
 import json
 import numpy as np
 import networkx as nx
+
+import multiprocessing
 from graph_dynamics.embeddings import node2vec
 from graph_dynamics.utils import gd_files_handler
 from graph_dynamics.networks.datatypes import VanillaGraph
