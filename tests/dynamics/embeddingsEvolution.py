@@ -35,7 +35,7 @@ class Test(unittest.TestCase):
     
     def embeddingsEvolutionTest(self):                                                                                                
         
-        gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/CommunityForestFire3_gd/"
+        gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/CommunityForestFire4_gd/"
         ALL_TIME_INDEXES,DYNAMICS_PARAMETERS,macroNumbers = gd_files_handler.gd_folder_stats(gd_directory,True)
         number_of_steps = 100
         
@@ -57,9 +57,9 @@ class Test(unittest.TestCase):
             plt.xlim(-3.,3.)
             plt.ylim(-3.,3.)
             node_embedding = MacrostatesHandlers.time_index_macro(gd_directory,
-                                         "node2vec_macrostates",
-                                         "aligned-node2vec",
-                                         i)
+                                                                  "node2vec_macrostates",
+                                                                  "aligned-node2vec",
+                                                                  i)
             
             w = np.array(node_embedding.values())
             w_new = np.array([node_embedding[new_node] for new_node in new_nodes_per_time[i]])
