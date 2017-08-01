@@ -99,6 +99,92 @@ def new_nodes(GRAPH_LIST,*param):
     return {"new_nodes":list(newNodes),"number_of_new_nodes":number_of_new}
 
 
+def evaluate_vanilla_macrostates_parallel(gd_directory,macrostates_names,macrostates_run_ideintifier,number_of_workers=3):
+    """
+    This function evaluates macrostates in gd directories with no states
+
+    Parameters
+    ----------
+    gd_directory: gd directory name of dynamics
+    macrostates_names: list
+                    [(macro-string1,macro_parameters1),...,(macro-string_M,macro_parameters_M)]
+    """
+    ALL_TIME_INDEXES,DYNAMICS_PARAMETERS,macroNumbers = gd_files_handler.gd_folder_stats(gd_directory)
+    ALL_TIME_INDEXES.sort()
+    #TODO: check if dynamics parameters are complete
+    dynamics_identifier = DYNAMICS_PARAMETERS["dynamics_identifier"]
+    #TODO: parallelize calls to macrostates
+    
+    N = len(ALL_TIME_INDEXES)
+    if (N % number_of_workers) != 0:
+        steps = np.concatenate([np.repeat(number_of_workers,N / number_of_workers),np.array([N % number_of_workers])])
+    else:
+        steps = np.repeat(number_of_workers,N / number_of_workers)
+            
+    
+    current_index = 0
+    for step in steps:
+        #============================================
+        #COLLECT GRAPHS FOR PARALLEL WORKERS
+        #============================================
+        VANILLA_GRAPHS = []
+        for time_index in range(current_index,current_index+step): 
+            graph_filename = "{0}_gGD_{1}_.gd".format(dynamics_identifier,time_index)
+            try:
+                print "Evaluating Time {0} for {1}".format(time_index,macrostates_run_ideintifier)
+                #print graph_filename
+                networkx_graph = nx.read_edgelist(gd_directory+graph_filename)
+                Vanilla =  VanillaGraph(dynamics_identifier,{"None":None},networkx_graph)
+                VANILLA_GRAPHS.append((Vanilla,time_index))
+            except:
+                print sys.exc_info()
+                print "Problem with time index {0}".format(time_index)
+                print "Graph ",graph_filename
+        #===========================================
+        # PARALLELIZATION 
+        #===========================================
+
+        jobs = []
+        for worker_index in range(number_of_workers):
+            try:
+                print "THIS NAME: ",VANILLA_GRAPHS[worker_index][0]
+                p = multiprocessing.Process(target=macro_state_process, args=(gd_directory,
+                                                                          macrostates_names,
+                                                                          VANILLA_GRAPHS[worker_index][0],
+                                                                          dynamics_identifier,
+                                                                          macrostates_run_ideintifier,
+                                                                          VANILLA_GRAPHS[worker_index][1]))
+                jobs.append(p)
+                p.start()
+            except:
+                pass
+            
+        current_index += number_of_workers
+        
+def macro_state_process(gd_directory,
+                        macrostates_names,
+                        Vanilla,
+                        dynamics_identifier,
+                        macrostates_run_ideintifier,
+                        time_index):
+    """
+    """
+    macrostate_filename = gd_directory+"{0}_mGD_{1}_{2}_.gd".format(dynamics_identifier,
+                                                                    macrostates_run_ideintifier,
+                                                                    time_index)
+                
+    macrostate_json = {}
+    for macrostate_function in macrostates_names:
+        macrostate_function_name = macrostate_function[0]
+        macrostate_function_parameters = macrostate_function[1]
+        macrostate_json[macrostate_function_name] = macrostate_function_dictionary[macrostate_function_name](Vanilla,*macrostate_function_parameters)
+        
+    #print macrostate_filename
+    with open(macrostate_filename,"w") as outfile:
+        json.dump(macrostate_json, outfile)
+
+
+
 def evaluate_vanilla_macrostates(gd_directory,macrostates_names,macrostates_run_ideintifier):
     """
     This function evaluates macrostates in gd directories with no states
@@ -138,7 +224,7 @@ def evaluate_vanilla_macrostates(gd_directory,macrostates_names,macrostates_run_
             print sys.exc_info()
             print "Problem with time index {0}".format(time_index)
             print "Graph ",graph_filename
-
+            
 def get_vanilla_graph(gd_directory,dynamics_identifier,time_index):
     """
     """
