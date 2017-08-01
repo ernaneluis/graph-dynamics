@@ -15,6 +15,7 @@ import networkx as nx
 
 import multiprocessing
 from graph_dynamics.embeddings import node2vec
+from graph_dynamics.embeddings import deep_walk
 from graph_dynamics.utils import gd_files_handler
 from graph_dynamics.networks.datatypes import VanillaGraph
 from graph_dynamics.communities.bigclam import BigClam
@@ -99,6 +100,39 @@ def new_nodes(GRAPH_LIST,*param):
     return {"new_nodes":list(newNodes),"number_of_new_nodes":number_of_new}
 
 
+
+def deepwalk_online(GRAPH_LIST, *nargs):
+    """
+    Parameters
+    ----------
+    GRAPH_LIST: list of Graoh objects
+
+    Return
+    ------
+    """
+    args = nargs[0]
+    model = args['model']
+
+
+    nex_G = GRAPH_LIST[1].get_networkx()
+    pre_G = GRAPH_LIST[0].get_networkx()
+
+    new_nodes = set(nex_G.nodes()).difference(pre_G.nodes())
+
+    walks = deep_walk.walks(nex_G, number_of_walks=args['number_of_walks'], walk_length=args['walk_length'], start_nodes=new_nodes)
+    walks = [map(str, walk) for walk in walks]
+
+    # is_update = True
+    # if not model.wv.vocab:
+    #     is_update = False
+
+    model.build_vocab([map(str, new_nodes)], update=True)
+    model.train(walks, total_examples=model.corpus_count, epochs=model.iter)
+
+    json_embeddings = dict(zip(model.wv.index2word,[e.tolist() for e in model.wv.syn0]))
+    return json_embeddings
+
+
 def evaluate_vanilla_macrostates_parallel(gd_directory,macrostates_names,macrostates_run_ideintifier,number_of_workers=3):
     """
     This function evaluates macrostates in gd directories with no states
@@ -114,21 +148,21 @@ def evaluate_vanilla_macrostates_parallel(gd_directory,macrostates_names,macrost
     #TODO: check if dynamics parameters are complete
     dynamics_identifier = DYNAMICS_PARAMETERS["dynamics_identifier"]
     #TODO: parallelize calls to macrostates
-    
+
     N = len(ALL_TIME_INDEXES)
     if (N % number_of_workers) != 0:
         steps = np.concatenate([np.repeat(number_of_workers,N / number_of_workers),np.array([N % number_of_workers])])
     else:
         steps = np.repeat(number_of_workers,N / number_of_workers)
-            
-    
+
+
     current_index = 0
     for step in steps:
         #============================================
         #COLLECT GRAPHS FOR PARALLEL WORKERS
         #============================================
         VANILLA_GRAPHS = []
-        for time_index in range(current_index,current_index+step): 
+        for time_index in range(current_index,current_index+step):
             graph_filename = "{0}_gGD_{1}_.gd".format(dynamics_identifier,time_index)
             try:
                 print "Evaluating Time {0} for {1}".format(time_index,macrostates_run_ideintifier)
@@ -141,7 +175,7 @@ def evaluate_vanilla_macrostates_parallel(gd_directory,macrostates_names,macrost
                 print "Problem with time index {0}".format(time_index)
                 print "Graph ",graph_filename
         #===========================================
-        # PARALLELIZATION 
+        # PARALLELIZATION
         #===========================================
 
         jobs = []
@@ -158,9 +192,9 @@ def evaluate_vanilla_macrostates_parallel(gd_directory,macrostates_names,macrost
                 p.start()
             except:
                 pass
-            
+
         current_index += number_of_workers
-        
+
 def macro_state_process(gd_directory,
                         macrostates_names,
                         Vanilla,
@@ -172,13 +206,13 @@ def macro_state_process(gd_directory,
     macrostate_filename = gd_directory+"{0}_mGD_{1}_{2}_.gd".format(dynamics_identifier,
                                                                     macrostates_run_ideintifier,
                                                                     time_index)
-                
+
     macrostate_json = {}
     for macrostate_function in macrostates_names:
         macrostate_function_name = macrostate_function[0]
         macrostate_function_parameters = macrostate_function[1]
         macrostate_json[macrostate_function_name] = macrostate_function_dictionary[macrostate_function_name](Vanilla,*macrostate_function_parameters)
-        
+
     #print macrostate_filename
     with open(macrostate_filename,"w") as outfile:
         json.dump(macrostate_json, outfile)
@@ -224,7 +258,7 @@ def evaluate_vanilla_macrostates(gd_directory,macrostates_names,macrostates_run_
             print sys.exc_info()
             print "Problem with time index {0}".format(time_index)
             print "Graph ",graph_filename
-            
+
 def get_vanilla_graph(gd_directory,dynamics_identifier,time_index):
     """
     """
@@ -317,5 +351,6 @@ macrostate_function_dictionary = {
                                   "basic_stats":basic_stats,
                                   "pagerank":networkx_pagerank,
                                   "new_nodes":new_nodes,
-                                  "bigclam":bigclam
+                                  "bigclam":bigclam,
+                                  "deepwalk_online": deepwalk_online
                                   }
