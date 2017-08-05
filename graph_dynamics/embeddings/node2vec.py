@@ -1,11 +1,11 @@
 '''
-Reference implementation of node2vec. 
+Reference implementation of node2vec.
 
 Author: Aditya Grover
 
 For more details, refer to the paper:
 node2vec: Scalable Feature Learning for Networks
-Aditya Grover and Jure Leskovec 
+Aditya Grover and Jure Leskovec
 Knowledge Discovery and Data Mining (KDD), 2016
 '''
 
@@ -42,7 +42,7 @@ class Graph():
                     walk.append(cur_nbrs[alias_draw(alias_nodes[cur][0], alias_nodes[cur][1])])
                 else:
                     prev = walk[-2]
-                    next = cur_nbrs[alias_draw(alias_edges[(prev, cur)][0], 
+                    next = cur_nbrs[alias_draw(alias_edges[(prev, cur)][0],
                         alias_edges[(prev, cur)][1])]
                     walk.append(next)
             else:
@@ -50,13 +50,16 @@ class Graph():
 
         return walk
 
-    def simulate_walks(self, num_walks, walk_length):
+    def simulate_walks(self, num_walks, walk_length, nodes=[]):
         '''
         Repeatedly simulate random walks from each node.
         '''
         G = self.G
         walks = []
-        nodes = list(G.nodes())
+
+        if not nodes:
+            nodes = list(G.nodes())
+            
         print 'Walk iteration:'
         for walk_iter in range(num_walks):
             print str(walk_iter+1), '/', str(num_walks)
@@ -91,7 +94,7 @@ class Graph():
                     unnormalized_probs.append(G[dst][dst_nbr]['weight']/q)
                 except:
                     unnormalized_probs.append(1./q)
-                    
+
         norm_const = sum(unnormalized_probs)
         normalized_probs =  [float(u_prob)/norm_const for u_prob in unnormalized_probs]
 
@@ -110,7 +113,7 @@ class Graph():
                 unnormalized_probs = [G[node][nbr]['weight'] for nbr in sorted(G.neighbors(node))]
             except:
                 unnormalized_probs = [1 for nbr in sorted(G.neighbors(node))]
-                
+
             norm_const = sum(unnormalized_probs)
             normalized_probs =  [float(u_prob)/norm_const for u_prob in unnormalized_probs]
             alias_nodes[node] = alias_setup(normalized_probs)
@@ -175,7 +178,7 @@ def alias_draw(J, q):
         return kk
     else:
         return J[kk]
-    
+
 
 
 def learn_embeddings(walks,args):
@@ -183,11 +186,11 @@ def learn_embeddings(walks,args):
     Learn embeddings by optimizing the Skipgram objective using SGD.
     '''
     walks = [map(str, walk) for walk in walks]
-    model = Word2Vec(walks, size=args["dimensions"], 
-                     window=args["window_size"], 
-                     min_count=0, 
-                     sg=1, 
-                     workers=args["workers"], 
+    model = Word2Vec(walks, size=args["dimensions"],
+                     window=args["window_size"],
+                     min_count=0,
+                     sg=1,
+                     workers=args["workers"],
                      iter=args["iter"])
-    
-    return model.wv 
+
+    return model.wv

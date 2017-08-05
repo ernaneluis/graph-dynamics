@@ -83,6 +83,39 @@ def node2vec_macrostates(Graph,*nargs):
     json_embeddings = dict(zip(embeddings.index2word,[e.tolist() for e in embeddings.syn0]))
     return json_embeddings
 
+def node2vec_online_macrostates(GRAPH_LIST,*nargs):
+    """
+    Parameters
+    ----------
+    GRAPH_LIST: list of Graoh objects
+
+    Return
+    ------
+    """
+    args = nargs[0]
+    model = args['model']
+
+    nex_G = GRAPH_LIST[1].get_networkx()
+    pre_G = GRAPH_LIST[0].get_networkx()
+
+    new_nodes = set(nex_G.nodes()).difference(pre_G.nodes())
+    new_nodes = list(new_nodes)
+    
+    G = node2vec.Graph(nex_G,
+                       args["directed"],
+                       args["p"],
+                       args["q"])
+
+    G.preprocess_transition_probs()
+    walks = G.simulate_walks(args["num_walks"],
+                             args["walk_length"],
+                             nodes=new_nodes)
+
+    model.build_vocab([map(str, new_nodes)], update=True)
+    model.train(walks, total_examples=model.corpus_count, epochs=model.iter)
+
+    json_embeddings = dict(zip(model.wv.index2word,[e.tolist() for e in model.wv.syn0]))
+    return json_embeddings
 
 def new_nodes(GRAPH_LIST,*param):
     """
@@ -352,5 +385,6 @@ macrostate_function_dictionary = {
                                   "pagerank":networkx_pagerank,
                                   "new_nodes":new_nodes,
                                   "bigclam":bigclam,
-                                  "deepwalk_online": deepwalk_online
+                                  "deepwalk_online": deepwalk_online,
+                                  "node2vec_online_macrostates": node2vec_online_macrostates
                                   }
