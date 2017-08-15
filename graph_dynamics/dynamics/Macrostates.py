@@ -46,6 +46,38 @@ def basic_stats(Graph,*parameters):
     return {"number_of_nodes":Graph.get_networkx().number_of_nodes(),
             "number_of_edges":Graph.get_networkx().number_of_edges()}
 
+
+def advanced_stats(Graph,*parameters):
+    """
+    Parameters
+    ----------
+        Graph:
+
+    Returns
+    -------
+    json_dict = {
+                "degree_of_distribution":dict:
+                "clustering_coefficient":dict: Compute the clustering coefficient for nodes.
+                "triangles":             dict: Number of triangles keyed by node label.
+                "degree_centrality":     dict: Compute the degree centrality for nodes.
+                }
+
+    https://networkx.readthedocs.io/en/stable/tutorial/tutorial.html#graph-attributes
+    https://networkx.readthedocs.io/en/stable/reference/generated/networkx.algorithms.cluster.clustering.html#networkx.algorithms.cluster.clustering
+    https://networkx.readthedocs.io/en/stable/reference/generated/networkx.algorithms.cluster.triangles.html#networkx.algorithms.cluster.triangles
+    https://networkx.readthedocs.io/en/stable/reference/generated/networkx.algorithms.centrality.degree_centrality.html#networkx.algorithms.centrality.degree_centrality
+
+    """
+
+
+    return {
+            "degree_of_distribution":nx.degree(Graph.get_networkx()),
+            "clustering_coefficient":nx.clustering(Graph.get_networkx()),
+            "triangles":             nx.triangles(Graph.get_networkx()),
+            "degree_centrality":     nx.degree_centrality(Graph.get_networkx()),
+            }
+
+
 def networkx_pagerank(Graph,*parameters):
     """
     Parameters
@@ -386,5 +418,6 @@ macrostate_function_dictionary = {
                                   "new_nodes":new_nodes,
                                   "bigclam":bigclam,
                                   "deepwalk_online": deepwalk_online,
-                                  "node2vec_online_macrostates": node2vec_online_macrostates
+                                  "node2vec_online_macrostates": node2vec_online_macrostates,
+                                  "advanced_stats": advanced_stats
                                   }

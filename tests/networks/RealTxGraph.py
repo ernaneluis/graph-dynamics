@@ -6,7 +6,7 @@ Created on July 20, 2017
 import operator
 import unittest
 from itertools import groupby
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import networkx as nx
 import pymongo
 from pymongo import MongoClient
@@ -15,9 +15,15 @@ import psycopg2
 import psycopg2.extras
 from graph_dynamics.communities.bigclam import BigClam
 from datetime import datetime, timedelta
-import time
-import json
-from networkx.readwrite import json_graph
+import numpy as np
+import pandas as pd
+from graph_dynamics.dynamics import MacrostatesHandlers
+from graph_dynamics.utils import gd_files_handler
+from graph_dynamics.dynamics import Macrostates
+
+from graph_dynamics.utils import graph_paths_visualization
+from graph_dynamics.dynamics import FromFilesDynamics
+from matplotlib import pyplot as plt
 class Test(unittest.TestCase):
 
 
@@ -98,7 +104,11 @@ class Test(unittest.TestCase):
     def get_graph(self):
 
         graph_series = self.get_graph_series('2017-05-20 16:55:48', '2017-05-24 16:55:48', "day")
-        print "cool"
+
+        gd_directory = "/Users/ernaneluis/Developer/graph-dynamics/simulations/tx_gd/"
+
+        self.save(graph_series, gd_directory)
+
         self.visualize(graph_series)
 
     def get_graph_series(self, date_start, date_end, type):
@@ -156,13 +166,17 @@ class Test(unittest.TestCase):
         return graphs
 
 
-    def save(self, G, fname):
-        data = json_graph.node_link_data(G)
-        json.dump(data, open(fname, 'w'), indent=2)
+    def save(self, graph_series, path, name):
+        # data = json_graph.node_link_data(G)
+        # json.dump(data, open(path, 'w'), indent=2)
+        # path/to/folder/{name} _gGD_{id}_.gd
+        for idx, G in enumerate(graph_series):
+            fname = path + name +"_gGD_" + str(idx) + "_.gd"
+            nx.write_edgelist(G, fname, data=True)
 
-    def load(self, fname):
-        data = json.load(open(fname))
-        return json_graph.node_link_graph(data)
+    # def load(self, path):
+    #     data = json.load(open(fname))
+    #     return json_graph.node_link_graph(data)
 
         # loaded_graph = self.load("/Users/ernaneluis/Developer/graph-dynamics/simulations/tx/4.graph")
         # nx.draw(loaded_graph)
@@ -219,13 +233,90 @@ class Test(unittest.TestCase):
 
         print(len(graphs))
 
+    def apply_macro(self):
+
+        gd_directory = "/Users/ernaneluis/Developer/graph-dynamics/simulations/tx_gd/"
+
+        #
+        ALL_TIME_INDEXES, DYNAMICS_PARAMETERS, macroNumbers = gd_files_handler.gd_folder_stats(gd_directory, True)
+        #
+        macrostates_run_ideintifier = "tx_macro"
+
+
+
+        bigclam_nargs = {
+                    "max_number_of_iterations": 100,
+                    "error": 0.001,
+                    "beta": 0.001
+                }
+
+
+        macrostates_names =  [
+                                ("basic_stats", ()),
+                                ("advanced_stats", ()),
+                                ("bigclam", (bigclam_nargs,))
+                             ]
+
+        Macrostates.evaluate_vanilla_macrostates(gd_directory, macrostates_names,macrostates_run_ideintifier)
+
+        macro_state_identifier  = "basic_stats"
+        macro_keys              = {"number_of_nodes": "scalar", "number_of_edges":"scalar"}
+
+        df = MacrostatesHandlers.TS_dict_macro(gd_directory, macro_state_identifier,macrostates_run_ideintifier,macro_keys)
+        # # print df
+        # df.plot(kind="bar")
+        # plt.show()
 
 
 
 
+        dict = MacrostatesHandlers.time_index_macro(gd_directory,
+                                                   macro_state_identifier="bigclam",
+                                                   macrostate_file_indentifier= "tx_macro",
+                                                   time_index=3)
+
+        n = len(dict)
+        m = len(dict["0"])
+        matrix = np.zeros( (n,m) )
+
+        for idx, key in enumerate(dict):
+            matrix[int(key)]=dict[key]
+
+        # fig, ax = plt.subplots()
+
+        # plt.matshow(matrix)
+        # ax.set_xticklabels(range(m))
+
+        # plt.show()
+
+        for i in range(5):
+                plt.matshow(matrix)
+                fig = plt.gcf()
+                plt.clim()  # clamp the color limits
+                plt.colorbar()
+                plt.pause(1)
+
+        # print df2.to_string(na_rep='-')
+
+        # df2 = MacrostatesHandlers.TS_dict_macro(gd_directory,
+        #                                        macro_state_identifier="bigclam",
+        #                                        macrostate_file_indentifier= "tx_macro",
+        #                                        macro_keys= {"0": "list"})
+        # # # print df
+        # df2.plot()
+        # plt.show()
+
+
+        # x = np.random.randn(1000)
+        # y = np.random.randn(1000) + 5
+        #
+        # # normal distribution center at x=0 and y=5
+        # plt.hist2d(x, y, bins=40)
+        # plt.show()
+# http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.plot.html
 
 if __name__ == '__main__':
     import sys;
 
-    sys.argv = ['', 'Test.get_graph']
+    sys.argv = ['', 'Test.apply_macro']
     unittest.main()

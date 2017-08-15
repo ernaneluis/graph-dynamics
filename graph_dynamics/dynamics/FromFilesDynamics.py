@@ -37,7 +37,7 @@ class CryptoCurrencyEcosystemDynamics(GraphsDynamics):
         
         if len(self.time_indexes) != len(range(self.min_index,self.max_index)):
             print "#====================================================================="
-            print "#             WARNING !!!!!!!!!                                       "  
+            print "#             WARNING !!!!!!!!!                                       "
             print "#   File Dynamic incomplete                                           "
             print "#   Check file convention  no data in filename string                 "
             print "#                                                                     "
