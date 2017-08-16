@@ -24,6 +24,9 @@ from graph_dynamics.dynamics import Macrostates
 from graph_dynamics.utils import graph_paths_visualization
 from graph_dynamics.dynamics import FromFilesDynamics
 from matplotlib import pyplot as plt
+from matplotlib.lines import Line2D
+import random
+
 class Test(unittest.TestCase):
 
 
@@ -93,14 +96,6 @@ class Test(unittest.TestCase):
 
         conn.close()
 
-    def visualize(self, graph_series):
-        for idx, graph in enumerate(graph_series):
-            nx.draw(graph)
-            plt.pause(3)
-            plt.clf()
-        plt.show()
-
-
     def get_graph(self):
 
         graph_series = self.get_graph_series('2017-05-20 16:55:48', '2017-05-24 16:55:48', "day")
@@ -164,7 +159,6 @@ class Test(unittest.TestCase):
         print("TOTAL GRAPHS:" + str(len(graphs)) )
         conn.close()
         return graphs
-
 
     def save(self, graph_series, path, name):
         # data = json_graph.node_link_data(G)
@@ -233,6 +227,108 @@ class Test(unittest.TestCase):
 
         print(len(graphs))
 
+
+    ############### VISUALIZE FUNCTIONS ###############
+
+    def visualize(self, graph_series):
+        for idx, graph in enumerate(graph_series):
+            nx.draw(graph)
+            plt.pause(3)
+            plt.clf()
+        plt.show()
+
+    def visualize_bigclam(self, gd_directory, totalIndex):
+        # http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.plot.html
+        matrices = []
+
+        for i in range(totalIndex):
+            dict = MacrostatesHandlers.time_index_macro(gd_directory,
+                                                   macro_state_identifier="bigclam",
+                                                   macrostate_file_indentifier= "tx_macro",
+                                                   time_index=i)
+
+            n       = len(dict)
+            m       = len(dict["0"])
+            matrix  = np.zeros( (n,m) )
+
+            for idx, key in enumerate(dict):
+                matrix[int(key)]=dict[key]
+
+            matrices.append(matrix)
+
+
+        for id, matrix in enumerate(matrices):
+                plt.matshow(matrix)
+                fig = plt.gcf()
+                plt.clim()  # clamp the color limits
+                plt.colorbar()
+                plt.pause(1)
+
+        plt.show()
+
+    def visualize_degree(self, gd_directory, totalIndex, macro_state_identifier):
+
+        lists = []
+
+        for i in range(totalIndex):
+            dict = MacrostatesHandlers.time_index_macro(gd_directory,
+                                                        macro_state_identifier=macro_state_identifier,
+                                                        macrostate_file_indentifier="tx_macro",
+                                                        time_index=i)
+            lists.append(dict)
+
+        data = {}
+
+        for idx, dict in enumerate(lists):
+            for idy, key in enumerate(dict):
+                if data.has_key(key):
+                    data[key].append(dict[key])
+                else:
+                    data[key] = [dict[key]]
+
+        max_len = max ( [len(data[key]) for id, key in enumerate(data)])
+
+        for id, key in enumerate(data):
+            y = data[key]
+            #  only show the nodes that appears in all graphs
+            if len(y) == max_len:
+                y = y + [0] * (totalIndex - len(y)) # fill it with zeros
+                x = range(totalIndex)
+                plt.bar(x, y)
+
+        plt.xlabel('Time')
+        plt.ylabel('Degree')
+        plt.show()
+
+    def visualize_basic_stats(self, gd_directory):
+
+        macrostates_run_ideintifier = "tx_macro"
+        macro_state_identifier      = "basic_stats"
+        macro_keys                  = {"number_of_nodes": "scalar", "number_of_edges": "scalar"}
+
+        df = MacrostatesHandlers.TS_dict_macro(gd_directory, macro_state_identifier, macrostates_run_ideintifier, macro_keys)
+        # # print df
+        df.plot(kind="bar")
+        plt.show()
+
+    def visualize_advanced_stats(self, gd_directory, stats=None):
+
+        macrostates_run_ideintifier = "tx_macro"
+        macro_state_identifier      = "advanced_stats"
+        macro_keys                  = {}
+
+        if stats == None:
+            macro_keys = {"max_degree_nodes": "scalar", "total_triangles": "scalar"}
+        else:
+            macro_keys[stats] = "scalar"
+
+
+        df = MacrostatesHandlers.TS_dict_macro(gd_directory, macro_state_identifier, macrostates_run_ideintifier, macro_keys)
+        # # print df
+        ax = df.plot(kind="bar")
+        ax.set_xlabel("Time")
+        plt.show()
+
     def apply_macro(self):
 
         gd_directory = "/Users/ernaneluis/Developer/graph-dynamics/simulations/tx_gd/"
@@ -240,9 +336,9 @@ class Test(unittest.TestCase):
         #
         ALL_TIME_INDEXES, DYNAMICS_PARAMETERS, macroNumbers = gd_files_handler.gd_folder_stats(gd_directory, True)
         #
+
+
         macrostates_run_ideintifier = "tx_macro"
-
-
 
         bigclam_nargs = {
                     "max_number_of_iterations": 100,
@@ -254,66 +350,22 @@ class Test(unittest.TestCase):
         macrostates_names =  [
                                 ("basic_stats", ()),
                                 ("advanced_stats", ()),
+                                ("degree_centrality", ()),
+                                ("degree_nodes", ()),
                                 ("bigclam", (bigclam_nargs,))
                              ]
-
+        # compute macros
         Macrostates.evaluate_vanilla_macrostates(gd_directory, macrostates_names,macrostates_run_ideintifier)
 
-        macro_state_identifier  = "basic_stats"
-        macro_keys              = {"number_of_nodes": "scalar", "number_of_edges":"scalar"}
+        self.visualize_advanced_stats(gd_directory)
+        self.visualize_basic_stats(gd_directory)
+        self.visualize_degree(gd_directory, 5, "degree_centrality")
+        self.visualize_degree(gd_directory, 5, "degree_nodes")
 
-        df = MacrostatesHandlers.TS_dict_macro(gd_directory, macro_state_identifier,macrostates_run_ideintifier,macro_keys)
-        # # print df
-        # df.plot(kind="bar")
-        # plt.show()
-
+        self.visualize_bigclam(gd_directory, 5)
 
 
 
-        dict = MacrostatesHandlers.time_index_macro(gd_directory,
-                                                   macro_state_identifier="bigclam",
-                                                   macrostate_file_indentifier= "tx_macro",
-                                                   time_index=3)
-
-        n = len(dict)
-        m = len(dict["0"])
-        matrix = np.zeros( (n,m) )
-
-        for idx, key in enumerate(dict):
-            matrix[int(key)]=dict[key]
-
-        # fig, ax = plt.subplots()
-
-        # plt.matshow(matrix)
-        # ax.set_xticklabels(range(m))
-
-        # plt.show()
-
-        for i in range(5):
-                plt.matshow(matrix)
-                fig = plt.gcf()
-                plt.clim()  # clamp the color limits
-                plt.colorbar()
-                plt.pause(1)
-
-        # print df2.to_string(na_rep='-')
-
-        # df2 = MacrostatesHandlers.TS_dict_macro(gd_directory,
-        #                                        macro_state_identifier="bigclam",
-        #                                        macrostate_file_indentifier= "tx_macro",
-        #                                        macro_keys= {"0": "list"})
-        # # # print df
-        # df2.plot()
-        # plt.show()
-
-
-        # x = np.random.randn(1000)
-        # y = np.random.randn(1000) + 5
-        #
-        # # normal distribution center at x=0 and y=5
-        # plt.hist2d(x, y, bins=40)
-        # plt.show()
-# http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.plot.html
 
 if __name__ == '__main__':
     import sys;

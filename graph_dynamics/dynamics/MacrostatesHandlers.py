@@ -47,7 +47,7 @@ def time_index_macro(gd_directory,
                      macrostate_file_indentifier,
                      time_index):
     """
-    Simply returns the macrostate by reading the file and selecting the json defined
+    Simply returns the macrostate by reading the file and selecting the json defined by the time_index: it selects one state/time of the time series
     
     macro_state_identifier: string
                     key of json which holds the desired macrostate

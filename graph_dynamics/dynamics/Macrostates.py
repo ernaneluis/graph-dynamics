@@ -23,11 +23,17 @@ from graph_dynamics.communities.bigclam import BigClam
 from graph_dynamics.utils.timeseries_utils import createWindows
 
 
-def degree_distribution(Graph,*parameters):
+def degree_nodes(Graph,*parameters):
     """
     Parameters:
     ----------
         Graph: graph object
+
+     The node degree is the number of edges adjacent to that node.
+    Returns
+    -------
+    nd : dictionary, A dictionary with nodes as keys and degree as values
+
     """
     return Graph.get_networkx().degree()
 
@@ -67,16 +73,36 @@ def advanced_stats(Graph,*parameters):
     https://networkx.readthedocs.io/en/stable/reference/generated/networkx.algorithms.cluster.triangles.html#networkx.algorithms.cluster.triangles
     https://networkx.readthedocs.io/en/stable/reference/generated/networkx.algorithms.centrality.degree_centrality.html#networkx.algorithms.centrality.degree_centrality
 
+
+
+
+     "clustering_coefficient":nx.clustering(Graph.get_networkx()),
     """
 
 
+
     return {
-            "degree_of_distribution":nx.degree(Graph.get_networkx()),
-            "clustering_coefficient":nx.clustering(Graph.get_networkx()),
-            "triangles":             nx.triangles(Graph.get_networkx()),
-            "degree_centrality":     nx.degree_centrality(Graph.get_networkx()),
+            "max_degree_nodes":      max( nx.degree(Graph.get_networkx()).values() ),
+            "total_triangles":             sum(sorted(nx.triangles(Graph.get_networkx()).values(), reverse=True)),
             }
 
+def degree_centrality(Graph,*parameters):
+    """
+    Parameters
+    ----------
+        Graph:
+
+    Returns
+    -------
+     "degree_centrality":     dict: Compute the degree centrality for nodes.
+
+    https://networkx.readthedocs.io/en/stable/reference/generated/networkx.algorithms.centrality.degree_centrality.html#networkx.algorithms.centrality.degree_centrality
+
+    """
+
+    # return dict(zip(range(Graph.get_number_of_nodes()), bigClamObj.F.tolist()))
+
+    return nx.degree_centrality(Graph.get_networkx())
 
 def networkx_pagerank(Graph,*parameters):
     """
@@ -411,7 +437,7 @@ def bigclam(Graph,*nargs):
 #========================================================================================================================
 
 macrostate_function_dictionary = {
-                                  "degree_distribution":degree_distribution,
+                                  "degree_nodes":degree_nodes,
                                   "node2vec_macrostates":node2vec_macrostates,
                                   "basic_stats":basic_stats,
                                   "pagerank":networkx_pagerank,
@@ -419,5 +445,6 @@ macrostate_function_dictionary = {
                                   "bigclam":bigclam,
                                   "deepwalk_online": deepwalk_online,
                                   "node2vec_online_macrostates": node2vec_online_macrostates,
-                                  "advanced_stats": advanced_stats
+                                  "advanced_stats": advanced_stats,
+                                  "degree_centrality":degree_centrality
                                   }
