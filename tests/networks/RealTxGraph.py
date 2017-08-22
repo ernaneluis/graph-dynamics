@@ -26,6 +26,13 @@ from graph_dynamics.dynamics import FromFilesDynamics
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 import random
+from graph_dynamics.dynamics import GraphsFormatsHandlers
+import os
+import itertools
+import operator
+from collections import Counter
+import snap
+import subprocess
 
 class Test(unittest.TestCase):
 
@@ -98,13 +105,13 @@ class Test(unittest.TestCase):
 
     def get_graph(self):
 
-        graph_series = self.get_graph_series('2017-05-20 16:55:48', '2017-05-24 16:55:48', "day")
+        graph_series = self.get_graph_series('2017-05-20 16:55:48', '2017-06-06 16:55:48', "day")
 
         gd_directory = "/Users/ernaneluis/Developer/graph-dynamics/simulations/tx_gd/"
 
-        self.save(graph_series, gd_directory)
+        self.save(graph_series, gd_directory, "tx")
 
-        self.visualize(graph_series)
+        # self.visualize(graph_series)
 
     def get_graph_series(self, date_start, date_end, type):
         # https://www.postgresql.org/docs/8.1/static/functions-formatting.html
@@ -161,20 +168,24 @@ class Test(unittest.TestCase):
         return graphs
 
     def save(self, graph_series, path, name):
-        # data = json_graph.node_link_data(G)
-        # json.dump(data, open(path, 'w'), indent=2)
         # path/to/folder/{name} _gGD_{id}_.gd
         for idx, G in enumerate(graph_series):
             fname = path + name +"_gGD_" + str(idx) + "_.gd"
             nx.write_edgelist(G, fname, data=True)
 
-    # def load(self, path):
-    #     data = json.load(open(fname))
-    #     return json_graph.node_link_graph(data)
+    def load(self, path, name):
 
-        # loaded_graph = self.load("/Users/ernaneluis/Developer/graph-dynamics/simulations/tx/4.graph")
-        # nx.draw(loaded_graph)
-        # plt.show()
+        time_indexes = map(int,[filename.split("_")[2] for filename in os.listdir(path) if "_gGD_" in filename])
+        min_index = min(time_indexes)
+        max_index = max(time_indexes)
+
+        graphs = []
+        for idx in range(max_index+1):
+            fname = path + name + "_gGD_" + str(idx) + "_.gd"
+            G = nx.read_edgelist(fname, data=True)
+            graphs.append(G)
+
+        return graphs
 
     def get_graph_series_mongo(self):
 
@@ -227,6 +238,34 @@ class Test(unittest.TestCase):
 
         print(len(graphs))
 
+    def most_common(self, L):
+        # get an iterable of (item, iterable) pairs
+        groups = itertools.groupby(sorted(L))
+
+        def _auxfun((item, iterable)):
+            return len(list(iterable)), -L.index(item)
+
+        return max(groups, key=_auxfun)
+
+    def get_persistent_nodes(self, series_graph):
+
+        lst = []
+        for idx, G in enumerate(series_graph):
+            lst = lst + G.nodes()
+
+        # persistent = self.most_common(lst)
+
+        part1 = lst[:len(lst) / 2]
+        part2 = lst[len(lst) / 2:]
+        inter = set(part1).intersection(part2)
+
+        # co = Counter(lst)
+        # for idx, key in enumerate(co):
+        #     value = co[key]
+        #     if value > 3:
+        #         print key
+
+        return list(inter)
 
     ############### VISUALIZE FUNCTIONS ###############
 
@@ -255,6 +294,49 @@ class Test(unittest.TestCase):
                 matrix[int(key)]=dict[key]
 
             matrices.append(matrix)
+
+
+        for id, matrix in enumerate(matrices):
+                plt.matshow(matrix)
+                fig = plt.gcf()
+                plt.clim()  # clamp the color limits
+                plt.colorbar()
+                plt.pause(1)
+
+        plt.show()
+
+    def visualize_bigclam2(self, gd_directory, totalIndex, series_graph):
+
+        persistent = self.get_persistent_nodes(series_graph)
+
+        matrices = []
+        # matrices2 = []
+        for i in range(totalIndex):
+            dict = MacrostatesHandlers.time_index_macro(gd_directory,
+                                                   macro_state_identifier="bigclam",
+                                                   macrostate_file_indentifier= "tx_macro",
+                                                   time_index=i)
+
+            n       = len(dict)
+            m       = len(dict["0"])
+            matrix  = np.zeros( (n,m) )
+
+            for idx, key in enumerate(dict):
+                matrix[int(key)]=dict[key]
+
+            G = series_graph[i]
+            nodes = G.nodes()
+            for idx, item in enumerate(persistent):
+                if nodes.index(item):
+                    indx = nodes.index(item)
+                    acitivity = matrix[indx]
+
+
+            column = matrix.reshape(n*m, 1)
+            matrices.append(column)
+            # matrices = np.concatenate((column), axis=0)
+
+        matrices2 = np.concatenate((matrices), axis=0)
 
 
         for id, matrix in enumerate(matrices):
@@ -297,7 +379,7 @@ class Test(unittest.TestCase):
                 plt.bar(x, y)
 
         plt.xlabel('Time')
-        plt.ylabel('Degree')
+        plt.ylabel(macro_state_identifier)
         plt.show()
 
     def visualize_basic_stats(self, gd_directory):
@@ -305,6 +387,17 @@ class Test(unittest.TestCase):
         macrostates_run_ideintifier = "tx_macro"
         macro_state_identifier      = "basic_stats"
         macro_keys                  = {"number_of_nodes": "scalar", "number_of_edges": "scalar"}
+
+        df = MacrostatesHandlers.TS_dict_macro(gd_directory, macro_state_identifier, macrostates_run_ideintifier, macro_keys)
+        # # print df
+        df.plot(kind="bar")
+        plt.show()
+
+    def visualize_new_nodes(self, gd_directory, name):
+
+        macrostates_run_ideintifier = name
+        macro_state_identifier      = "new_nodes"
+        macro_keys                  = {"number_of_new_nodes": "scalar"}
 
         df = MacrostatesHandlers.TS_dict_macro(gd_directory, macro_state_identifier, macrostates_run_ideintifier, macro_keys)
         # # print df
@@ -329,6 +422,60 @@ class Test(unittest.TestCase):
         ax.set_xlabel("Time")
         plt.show()
 
+    def temporalmotif(self):
+        # http://snap.stanford.edu/temporal-motifs/code.html
+        tm_directory = "/Users/ernaneluis/Developer/graph-dynamics/snap-cpp/examples/temporalmotifs/temporalmotifsmain"
+        gd_directory = "/Users/ernaneluis/Developer/graph-dynamics/simulations/tx_gd/"
+        series_graph = self.load(gd_directory, "tx")
+
+        # creating temporal graph file input
+        path = gd_directory + "temporal-graph.txt"
+        file = open(path, "w")
+        for idx, graph in enumerate(series_graph):
+            nodes = list(set(graph.nodes()))
+            for idy, edge in enumerate(graph.edges()):
+                map_to_index_0 = nodes.index(edge[0])
+                map_to_index_1 = nodes.index(edge[1])
+                file.write( str(map_to_index_0)+" "+str(map_to_index_1) + " " + str(idx+1)+"\n")
+        file.close()
+
+
+        output = gd_directory + "temporal-graph-counts.txt"
+        args1 = "-i:"+ path
+        args2 = "-o:" + output
+        args3 = "-delta:300"
+        # calling command of snap in c++
+        subprocess.call([tm_directory, args1, args2, args3])
+        return output
+
+    def visualize_temporalmotif(self):
+        output = self.temporalmotif()
+        print output
+        data = np.genfromtxt(output, dtype=None)
+        # plt.matshow(data, cmap='Blues', interpolation='nearest')
+        # plt.colorbar()
+        # plt.show()
+
+        fig, ax = plt.subplots()
+        min_val = 0
+        max_val = 6
+        diff    = 1
+
+        img = ax.imshow(data,  cmap='Blues', interpolation='nearest')
+
+        for idx, row in enumerate(data.transpose()):
+            for idy, value in enumerate(row):
+                ax.text(idx, idy, value, va='center', ha='center')
+
+        # set tick marks for grid
+        ax.set_xticks(np.arange(min_val - diff / 2, max_val - diff / 2))
+        ax.set_yticks(np.arange(min_val - diff / 2, max_val - diff / 2))
+        ax.set_xticklabels([])
+        ax.set_yticklabels([])
+        plt.colorbar(img)
+        plt.show()
+
+
     def apply_macro(self):
 
         gd_directory = "/Users/ernaneluis/Developer/graph-dynamics/simulations/tx_gd/"
@@ -352,23 +499,42 @@ class Test(unittest.TestCase):
                                 ("advanced_stats", ()),
                                 ("degree_centrality", ()),
                                 ("degree_nodes", ()),
-                                ("bigclam", (bigclam_nargs,))
+            ("new_nodes", ()),
+                                # ("bigclam", (bigclam_nargs,))
                              ]
         # compute macros
-        Macrostates.evaluate_vanilla_macrostates(gd_directory, macrostates_names,macrostates_run_ideintifier)
+        # Macrostates.evaluate_vanilla_macrostates(gd_directory, macrostates_names,macrostates_run_ideintifier)
 
-        self.visualize_advanced_stats(gd_directory)
-        self.visualize_basic_stats(gd_directory)
-        self.visualize_degree(gd_directory, 5, "degree_centrality")
-        self.visualize_degree(gd_directory, 5, "degree_nodes")
+        series_graph = self.load(gd_directory, "tx")
 
-        self.visualize_bigclam(gd_directory, 5)
+        # self.visualize_advanced_stats(gd_directory)
+        # self.visualize_basic_stats(gd_directory)
+        # self.visualize_degree(gd_directory, len(ALL_TIME_INDEXES), "degree_centrality")
+        # self.visualize_degree(gd_directory, len(ALL_TIME_INDEXES), "degree_nodes")
+
+        # self.visualize_bigclam2(gd_directory, 17, series_graph)
 
 
 
+
+
+
+
+        # nx.draw(loaded_graph[3])
+        # plt.show()
+
+
+        # macrostates_names = [("new_nodes", ())]
+        # window = 1
+        # rolling = True
+        # # Macrostates.evaluate_vanilla_macrostates_window(gd_directory, macrostates_names, "newnodes7",1, True)
+        #
+        # # self.visualize_new_nodes(gd_directory, "newnodes7")
+
+        print "a"
 
 if __name__ == '__main__':
     import sys;
 
-    sys.argv = ['', 'Test.apply_macro']
+    sys.argv = ['', 'Test.visualize_temporalmotif']
     unittest.main()
