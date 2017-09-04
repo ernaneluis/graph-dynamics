@@ -13,6 +13,7 @@ import networkx as nx
 from matplotlib import pyplot as plt
 from abc import ABCMeta, abstractmethod
 from graph_dynamics.dynamics import Macrostates
+from graph_dynamics.utils import gd_files_handler
 from graph_dynamics.networks import datatypes, communities
 from time import sleep
 
@@ -49,6 +50,30 @@ def files_names(DYNAMICS_PARAMETERS,time_index,macrostate_file_indentifier=None)
         
     return  gd_directory,graph_filename,graphstate_filename,macrostate_filename
 
+def get_graph_from_dynamics(gd_directory,time_index):
+    """
+    Create a graph object from a given time index
+    
+    It only requires the state and adjacency to be defined there
+    
+    Returns
+    -------
+        graph_object: Graph object (graph_dynamics.networks.datatypes)
+    """
+    ALL_TIME_INDEXES,DYNAMICS_PARAMETERS,macroNumbers = gd_files_handler.gd_folder_stats(gd_directory,False)
+
+    gd_dynamical_parameters = DYNAMICS_PARAMETERS
+    dynamics_identifier = DYNAMICS_PARAMETERS["dynamics_identifier"]
+    graph_filename = gd_directory+"{0}_gGD_{1}_.gd".format(dynamics_identifier,time_index)
+    graphstate_filename = gd_directory+"{0}_sGD_{1}_.gd".format(dynamics_identifier,time_index)
+    
+    latest_graph_state = json.load(open(graphstate_filename,"r"))
+    latest_graph = nx.read_edgelist(graph_filename)
+    
+    graph_object = graph_class_dictionary[gd_dynamical_parameters["graph_class"]](graph_state=latest_graph_state,
+                                                                                  networkx_graph=latest_graph)
+    return graph_object 
+    
 class GraphsDynamics(object):
     """
     This is a class to specify a graph 
