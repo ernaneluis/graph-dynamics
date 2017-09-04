@@ -82,8 +82,8 @@ def advanced_stats(Graph,*parameters):
 
 
     return {
-            "max_degree_nodes":      max( nx.degree(Graph.get_networkx()).values() ),
-            "total_triangles":             sum(sorted(nx.triangles(Graph.get_networkx()).values(), reverse=True)),
+            "max_degree_nodes":max( nx.degree(Graph.get_networkx()).values() ),
+            "total_triangles":sum(sorted(nx.triangles(Graph.get_networkx()).values(), reverse=True)),
             }
 
 def degree_centrality(Graph,*parameters):
@@ -191,7 +191,6 @@ def new_nodes(GRAPH_LIST,*param):
     return {"new_nodes":list(newNodes),"number_of_new_nodes":number_of_new}
 
 
-
 def deepwalk_online(GRAPH_LIST, *nargs):
     """
     Parameters
@@ -246,7 +245,6 @@ def evaluate_vanilla_macrostates_parallel(gd_directory,macrostates_names,macrost
     else:
         steps = np.repeat(number_of_workers,N / number_of_workers)
 
-
     current_index = 0
     for step in steps:
         #============================================
@@ -265,10 +263,10 @@ def evaluate_vanilla_macrostates_parallel(gd_directory,macrostates_names,macrost
                 print sys.exc_info()
                 print "Problem with time index {0}".format(time_index)
                 print "Graph ",graph_filename
+                
         #===========================================
         # PARALLELIZATION
         #===========================================
-
         jobs = []
         for worker_index in range(number_of_workers):
             try:
