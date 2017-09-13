@@ -10,7 +10,7 @@ import numpy as np
 import subprocess
 import matplotlib.pyplot as plt
 import math
-from mpl_toolkits.mplot3d import Axes3D
+
 
 def convert_egdelist2bigclam(gd_directory, name):
 
@@ -25,7 +25,6 @@ def convert_egdelist2bigclam(gd_directory, name):
             map_to_index_0 = nodes.index(edge[0])
             map_to_index_1 = nodes.index(edge[1])
             file.write(str(map_to_index_0) + "\t" + str(map_to_index_1) + "\n")
-
         file.close()
 
     print "done convert"
@@ -118,17 +117,18 @@ def visualization_histogram(series, path):
 
 if __name__ == '__main__':
 
-    exe_directory   = "/Users/ernaneluis/Developer/graph-dynamics/snap-cpp/examples/bigclam/bigclam"
-    path            = "/Users/ernaneluis/Developer/master_thesis/bigclam/old_bitcoin_dataset/graphs/"
-    name            = "bitcoin_bigclam"
-
+    exe_path   = "../../snap-cpp/examples/bigclam/bigclam"#path of excecutable
+    path            = "../../data/bigclam/"
+    name            = "easy"
     # 1.
-    # convert_egdelist2bigclam(path, name)
+    #convert_egdelist2bigclam(path, name)
     # 2.
-    # computeBigClam(exe_directory, path, name)
+    name            = "easy_bigclam"
+    computeBigClam(exe_path, path, name)
+    
     # 3.
-    time_indexes, series = load_bigclam(path, name)
+    #time_indexes, series = load_bigclam(path, name)
     # 4.    # Save Figure
-    visualization_histogram(series, path)
+    #visualization_histogram(series, path)
 
     print "Done"
