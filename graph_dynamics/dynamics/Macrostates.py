@@ -35,6 +35,7 @@ def degree_nodes(Graph,*parameters):
     nd : dictionary, A dictionary with nodes as keys and degree as values
 
     """
+    print "Computing degree_nodes Macro..."
     return Graph.get_networkx().degree()
 
 def basic_stats(Graph,*parameters):
@@ -48,7 +49,7 @@ def basic_stats(Graph,*parameters):
     json_dict = {"number_of_edges":int,
                 "number_of_edges":int}
     """
-
+    print "Computing basic_stats Macro..."
     return {"number_of_nodes":Graph.get_networkx().number_of_nodes(),
             "number_of_edges":Graph.get_networkx().number_of_edges()}
 
@@ -79,7 +80,7 @@ def advanced_stats(Graph,*parameters):
      "clustering_coefficient":nx.clustering(Graph.get_networkx()),
     """
 
-
+    print "Computing advanced_stats Macro..."
 
     return {
             "max_degree_nodes":      max( nx.degree(Graph.get_networkx()).values() ),
@@ -101,7 +102,7 @@ def degree_centrality(Graph,*parameters):
     """
 
     # return dict(zip(range(Graph.get_number_of_nodes()), bigClamObj.F.tolist()))
-
+    print "Computing degree_centrality Macro..."
     return nx.degree_centrality(Graph.get_networkx())
 
 def networkx_pagerank(Graph,*parameters):
@@ -184,6 +185,8 @@ def new_nodes(GRAPH_LIST,*param):
     Return
     ------
     """
+    print "Computing new_nodes Macro..."
+
     nodes_1 = set(GRAPH_LIST[1].get_networkx().nodes())
     nodes_0 = set(GRAPH_LIST[0].get_networkx().nodes())
     newNodes = nodes_1.difference(nodes_0)
@@ -428,10 +431,11 @@ def bigclam(Graph,*nargs):
                         "Un" : [unc2, unc2, .., UnCm]
                     }
     """
-
+    print "Computing bigclam Macro..."
     args = nargs[0]
-    bigClamObj = BigClam(Graph, maxNumberOfIterations=args["max_number_of_iterations"], error=args["error"], beta=args["beta"])
-    return dict(zip(range(Graph.get_number_of_nodes()),bigClamObj.F.tolist()))
+    bigClamObj = BigClam(Graph, numberOfCommunity=args["number_of_community"], maxNumberOfIterations=args["max_number_of_iterations"])
+    # return  { "1JByGBoyCaLcpKdQqKDbJ99vx74owoxUxU": 4.999642500079724,...} = { node_label: Fu1_value, ... }
+    return dict(zip(Graph.get_networkx().nodes(), bigClamObj.F.flatten()))
 #========================================================================================================================
 # THE FOLLOWING DICTIONARY HOLDS ALL MACROSTATES WHICH CAN BE CALLED BY THE EVOLUTION FUNCTION OF GRAPH DYNAMICS
 #========================================================================================================================
