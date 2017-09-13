@@ -1,171 +1,115 @@
 import numpy as np
 import networkx as nx
 
-
+import numpy as np
+import pickle
+import json
+from random import random
 class BigClam():
 
+    """
+    Implementation of the bigClAM algorithm.
+    Throughout the code, we will use tho following variables
+      * F refers to the membership preference matrix. It's in [NUM_PERSONS, NUM_COMMUNITIES]
+       so index (p,c) indicates the preference of person p for community c.
+      * A refers to the adjency matrix, also named friend matrix or edge set. It's in [NUM_PERSONS, NUM_PERSONS]
+        so index (i,j) indicates is 1 when person i and person j are friends.
+    """
 
-    def __init__(self, Graph, maxNumberOfIterations, error, beta):
-        self.G      = Graph
-        self.numberOfNodes       = self.G.get_number_of_nodes()
-        self.numberOfEdges       = self.G.get_number_of_edges()
-        self.e                   = (2*self.numberOfEdges)/float((self.numberOfNodes*(self.numberOfNodes-1))) #background edge Probability
-        self.threshold           = np.sqrt(-np.log(1-self.e))  # calculating the threshold value using background edge probability as input
-        self.nodes               = self.G.get_networkx().nodes()
+    def __init__(self, Graph, numberOfCommunity, maxNumberOfIterations):
 
-
-        self.initial_communities = self.init_communities()
-        self.numberOfCommunities = len(self.initial_communities)
-        self.F                   = self.init_f()
-
-
+        # ////////
+        ##generate data
+        # number of nodes,
+        #  w: assignment probability of a community on the first step,
+        # p: p_i is the probability of an edge when two people share community i
+        # cross: portion of people to assign a second cluster
+        # datagen = Datagen(self.numberOfNodes, [1], [1], .1).gen_assignments().gen_adjacency()
+        # p2c = datagen.person2comm
+        # adj2 = datagen.adj
+        adj = nx.to_numpy_matrix(Graph.get_networkx())
 
         # F data model
         # self.F[u] = [Fuc1, Fuc2, Fuc3, ..., Fuc{NumberOfCommunities}]
 
         # 1.step Learning F
         # iteratively update Fu for each u and stop the iteration if the likelihood does not increase (increase less than 0.001%) after we update Fu for all u
-        for it in range(maxNumberOfIterations):
-            for u, node in enumerate(self.nodes):
-                # u = index of the node
-                # oldFu   = self.F[u][:]
-                deltaL  = self.gradient(u)
-                # calculate new value for Fu
-                newFu   = self.F[u] + deltaL * beta
-                # remove the negative values
-                newFu[np.where(newFu < 0)[0]] = 0
-                # update Fu
-                self.F[u] = newFu
+        self.F = self.train(adj, numberOfCommunity ,maxNumberOfIterations)
+        self.F_argmax = np.argmax(self.F, 1)
 
-                #TODO: stop the iteration if the likelihood does not increase (increase less than 0.001%) after we update Fu for all u
+        # print self.F
+        # data = gen_json(adj, p2c, F_argmax)
 
-                # if(np.isnan(np.sum(newFu))):
-                #    break
-                # print abs(newFu - oldFu)
-                # print "old ",oldFu
-                # print "new ",newFu
+        # # with open('../data/data.json','w') as f:
+        # with open('ui/assets/data.json', 'w') as f:
+        #     json.dump(data, f, indent=4)
+        #
+        # for i, row in enumerate(F):
+        #     print(row)
+        #     print(p2c[i])
 
 
         # 2. step: Find the communities
-        self.community_cluster = self.affiliationToCommunities(self.F)
-        print("Number of Clusters: " + str(len(self.community_cluster)))
-        #3. step: Color then
-        self.values  = self.createNodeColorValuesDifferent(self.community_cluster)
 
-    def init_f(self):
-        f = np.zeros((self.numberOfNodes, self.numberOfCommunities))
+    def sigm(self, x):
+        return np.divide(np.exp(-1. * x), 1. - np.exp(-1. * x))
 
-        for idx, u in enumerate(self.nodes):
-            for idy, k in enumerate(self.initial_communities):
-                if (u in set(k)):
-                    f[idx][idy] = 1
-        return f
+    def log_likelihood(self, F, A):
+        """implements equation 2 of
+        https://cs.stanford.edu/people/jure/pubs/bigclam-wsdm13.pdf"""
+        A_soft = F.dot(F.T)
 
-    def init_communities(self):
-        # Initialization.
-        # To initialize F , we use locally minimal neighborhoods
+        # Next two lines are multiplied with the adjacency matrix, A
+        # A is a {0,1} matrix, so we zero out all elements not contributing to the sum
+        FIRST_PART  = A * np.log(1. - np.exp(-1. * A_soft))
+        sum_edges   = np.sum(FIRST_PART)
+        SECOND_PART = (1 - A) * A_soft
+        sum_nedges  = np.sum(SECOND_PART)
 
-        # old method
-        # self.F = np.random.random( ( len(self.G.nodes()) , numberOfCommunities) )
-        init_communities = []
-        for u in self.nodes:
-            neighborhood        = nx.ego_graph(self.G.get_networkx(), u, radius=1, center=True, undirected=True)
-            neighborhood_nodes  = neighborhood.nodes()
-            init_communities.append(neighborhood_nodes)
+        log_likeli = sum_edges - sum_nedges
+        return log_likeli
 
-        # remove duplicated neighborhood communities
-        return [x for n, x in enumerate(init_communities) if x not in init_communities[:n]]
+    def gradient(self, F, A, i):
+        """Implements equation 3 of
+        https://cs.stanford.edu/people/jure/pubs/bigclam-wsdm13.pdf
 
-    # DeltaL
-    def gradient(self, u):
-        # see equation between (3) and (4) from the paper
-        fv_sum                  = self.F.sum(axis=0)
-        fu                      = self.F[u][:]
-        numberOfCommunities     = self.F.shape[1]
-        fv_sum_neighbors_exp    = np.zeros(numberOfCommunities)
-        fv_sum_neighbors        = np.zeros(numberOfCommunities)
+          * i indicates the row under consideration
 
-        node        = self.nodes[u]
-        neighbors   = self.G.get_networkx().neighbors(node)
-        for v, node in enumerate(neighbors):
-            fv                       = self.F[v][:]
-            upper = np.exp(-np.dot(fu, fv))
-            lower = (1. - np.exp(-np.dot(fu, fv)))
-            # TODO: division by zero, is this ok?
-            if(lower == 0.0):
-                lower = 0.1
-            exp                      = upper / lower
-            fv_sum_neighbors_exp    += fv * exp
-            fv_sum_neighbors        += fv
-
-        fv_sum_not_neighbors = (fv_sum - fu - fv_sum_neighbors)
-        deltaL               = fv_sum_neighbors_exp - fv_sum_not_neighbors
-        return deltaL
-
-    def affiliationToCommunities(self, affiliation):
+        The many forloops in this function can be optimized, but for
+        educational purposes we write them out clearly
         """
-        Determining community affiliations step
-        # After we learn F, we still have to determine whether u belongs to community c or not from the value of Fuc.
+        N, C = F.shape
 
-        """
+        neighbours = np.where(A[i])
+        nneighbours = np.where(1 - A[i])
 
-        affiliationL        = affiliation > self.threshold
-        # save a sets of nodes which belongs to community_cluster[c] community
-        community_cluster                   = [[] for i in range(self.numberOfCommunities)]
-        # community_cluster[c] = [ux, ..., uy]
+        sum_neigh = np.zeros((C,))
+        for nb in neighbours[0]:
+            dotproduct = F[nb].dot(F[i])
+            sum_neigh += F[nb] * self.sigm(dotproduct)
 
+        sum_nneigh = np.zeros((C,))
+        # Speed up this computation using eq.4
+        for nnb in nneighbours[0]:
+            sum_nneigh += F[nnb]
 
-        for i, Fu in enumerate(affiliationL):
-            # get community index where Fuc is higher than threshold
-            for c in np.where(Fu)[0]:
-                community_cluster[c].append(i)
+        grad = sum_neigh - sum_nneigh
+        return grad
 
-        # e-community
-        # To allow for edges between nodes that do not share any community affiliations, we assume an additional community, called the e-community
-        # e is the the background edge probability between a random pair of nodes  works well in practice. For all our experiments we set e = pow(10,-8)
+    def train(self, A, C, iterations=100):
+        # initialize an F
+        N = A.shape[0]
+        F = np.random.rand(N, C)
+        # print "N nodes: " + str(N) + " times: " + str(iterations*N)
+        for n in range(iterations):
+            for person in range(N):
+                grad = self.gradient(F, A, person)
+                F[person] += 0.005 * grad
+                F[person] = np.maximum(0.001, F[person])  # F should be nonnegative
 
-        # store all the nodes which belongs to at least one community
-        nodes_with_community = []
-        for set_of_belonging_nodes in community_cluster:
-            nodes_with_community.extend(set_of_belonging_nodes)
-
-        set_of_all_nodes            = set(self.nodes)
-        set_of_nodes_with_community = set(nodes_with_community)
-        difference                  = set_of_all_nodes.difference(set_of_nodes_with_community)
-
-        alone_community = list( difference )
-        alone_community_indices = [i for i, a in enumerate(alone_community)]
-        # add the alone_community to the cluster
-        community_cluster.append(alone_community_indices)
-
-        # remove duplicated communities
-        return [x for n, x in enumerate(community_cluster) if x not in community_cluster[:n]]
-        # return community_cluster
-
-    def createNodeColorValuesDifferent(self, Q):
-        """
-        Give a different color to each community
-        return: list of node with the its community color
-
-        """
-        N = len(Q)
-        Dv = 1. / N
-        thisValue = 0.
-        valuePerCommunity = [thisValue + i * Dv for i in range(0, N)]
-
-        #  alone community is always green color
-        valuePerCommunity[N-1] = 1.0
-
-        values = []
-        for n in self.nodes:
-            for idx, q in enumerate(Q):
-                if(n in set(q)):
-                    values.append(valuePerCommunity[idx])
-                    break
-
-        return values
-
-
+            # ll = self.log_likelihood(F, A)
+            print("N nodes: " + str(N) + ' step %5i/%5i' % (n, iterations))
+        return F
 # 1. ingredient:
 #       communities arise due to shared group affiliations. we links nodes of the social network to communities that they belong to
 #
@@ -206,3 +150,64 @@ class BigClam():
 
 # ou r gols is the gerneate a model of agents that creates an behaviour of addres which reproduces an epiracal data
 
+
+
+class Datagen():
+    def __init__(self, N, w, p, cross):
+        """
+        Data generator.
+        The social network will have N people. At first, we assign each
+        person a community with probability w_i. Secondly. we assign a second
+        community to a portion (cross) of the community
+        :param N: the total number of nodes in the graph
+        :param w: assignment probability of a community on the first step
+        :param p: p_i is the probability of an edge when two people share community i
+        :param cross: portion of people to assign a second cluster
+        """
+        self.N = N
+        self.w = w
+        self.p = p
+        self.cross = cross
+
+        self.num_comm = len(w)
+        assert self.num_comm == len(p)
+
+    @property
+    def adj(self):
+        return self.A + self.A.T
+
+    def gen_assignments(self):
+        # First step
+        W = len(self.w)
+        initial_comm = np.random.choice(W, p=self.w, size=(self.N,))
+
+        # Second
+        person2comm = []
+        for n, comm in enumerate(initial_comm):
+            all_comm = {comm}
+            if random() < self.cross:
+                all_comm.add(np.random.randint(0, W))
+            person2comm.append(all_comm)
+
+        self.person2comm = person2comm
+        return self
+
+    def gen_adjacency(self):
+        # TODO check if it is upper traingular
+        A = np.zeros((self.N, self.N), dtype=np.int8)
+        for i in range(self.N):
+            for j in range(i + 1, self.N):
+                same_communities = self.person2comm[i].intersection(self.person2comm[j])
+                p_nedge = 1.0
+                at_least_one = False
+                for comm_shared in same_communities:
+                    at_least_one = True
+                    p_nedge *= 1. - self.p[comm_shared]
+                if not at_least_one:
+                    p_nedge = 0.99
+
+                p_edge = 1 - p_nedge
+                if random() < p_edge:
+                    A[i, j] = 1
+        self.A = A
+        return self
