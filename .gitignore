@@ -1,5 +1,4 @@
 simulations/
-snap-cpp/examples/*
 .idea/
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -91,3 +90,6 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+snap-cpp/snap-core/Snap.o
+snap-cpp/examples/
