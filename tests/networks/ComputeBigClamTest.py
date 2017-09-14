@@ -17,7 +17,7 @@ def convert_egdelist2bigclam(gd_directory, name):
     time_indexes, series_graph = load_graph_dynamics(gd_directory, name)
     # creating bitclam graph file input
     for idx, graph in enumerate(series_graph):
-        path = gd_directory + "_" + name + "_" + str(time_indexes[idx]) + ".txt"
+        path = gd_directory  + name + "_bigclam_" + str(time_indexes[idx]) + ".txt"
         file = open(path, "w")
         nodes = list(set(graph.nodes()))
         print path + " egdes: "+ str(len(graph.edges()))
@@ -36,8 +36,8 @@ def computeBigClam(exe_directory, gd_directory, name):
     time_indexes = map(int, [filename.split("_")[2].replace(".txt", "") for filename in os.listdir(gd_directory) if "_bigclam_" in filename])
 
     for idx in time_indexes:
-        input = gd_directory + name  + "_" + str(idx) + ".txt"
-        output = gd_directory + name + "_" + str(idx) + "_"
+        input = gd_directory + name  + "_bigclam_" + str(idx) + ".txt"
+        output = gd_directory + name + "_bigclam_" + str(idx) + "_"
 
         args1 = "-i:" + input
         args2 = "-o:" + output
@@ -121,9 +121,10 @@ if __name__ == '__main__':
     path            = "../../data/bigclam/"
     name            = "easy"
     # 1.
-    #convert_egdelist2bigclam(path, name)
+    # reads gd files and covnert to biglcam input format
+    # convert_egdelist2bigclam(path, name)
     # 2.
-    name            = "easy_bigclam"
+    # name            = "easy_bigclam"
     computeBigClam(exe_path, path, name)
     
     # 3.
