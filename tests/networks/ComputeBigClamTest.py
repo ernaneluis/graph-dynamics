@@ -20,10 +20,15 @@ def convert_egdelist2bigclam(gd_directory, name):
         path = gd_directory  + name + "_bigclam_" + str(time_indexes[idx]) + ".txt"
         file = open(path, "w")
         nodes = list(set(graph.nodes()))
+
+        nodes = sorted(nodes)
+        indexes = range(0, len(nodes))
+        all_nodes = dict(zip(nodes, indexes))
+
         print path + " egdes: "+ str(len(graph.edges()))
         for idy, edge in enumerate(graph.edges()):
-            map_to_index_0 = nodes.index(edge[0])
-            map_to_index_1 = nodes.index(edge[1])
+            map_to_index_0 = all_nodes.get(edge[0])
+            map_to_index_1 = all_nodes.get(edge[1])
             file.write(str(map_to_index_0) + "\t" + str(map_to_index_1) + "\n")
         file.close()
 
@@ -122,9 +127,8 @@ if __name__ == '__main__':
     name            = "easy"
     # 1.
     # reads gd files and covnert to biglcam input format
-    # convert_egdelist2bigclam(path, name)
+    convert_egdelist2bigclam(path, name)
     # 2.
-    # name            = "easy_bigclam"
     computeBigClam(exe_path, path, name)
     
     # 3.
