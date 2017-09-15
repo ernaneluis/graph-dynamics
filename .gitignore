@@ -93,3 +93,5 @@ ENV/
 
 snap-cpp/snap-core/Snap.o
 snap-cpp/examples/
+snap-cpp/cmake-build-debug/
+snap-cpp/CMakeLists.txt

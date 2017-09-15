@@ -18,46 +18,31 @@ class Test(unittest.TestCase):
 
 
 
-    def convert_gd2temporal(self, input_file, output_directory):
-
-        set_times = set()
-        total = 0
-
-        with  open(input_file) as f:
-            for row in f:
-                line = row.replace("\n","").split("\t")
-                set_times.add(line[2])
-                total = total + 1
-
-        all_times = list(set_times)
-        all_times = sorted(all_times)
-
-        indexes = range(0, len(all_times))
-        all_keys = dict(zip(all_times, indexes))
+    def convert2temporalmotif(self, output_directory, name):
 
         # creating temporal graph file input
-        path = output_directory + "lt_temporal-graph.txt"
+        input_file = output_directory + name + ".txt"
+        path = output_directory + name + ".temporalmotif"
         file = open(path, "w")
 
         count = 0
         with  open(input_file) as data:
             for row in data:
                 line = row.replace("\n", "").split("\t")
-                map_to_index_0 = line[0]
-                map_to_index_1 = line[1]
+                map_to_index_0  = line[1]
+                map_to_index_1  = line[2]
+                time_index      = line[3]
 
-                time_index = all_keys.get(line[2])
-
-                file.write(str(map_to_index_0) + " " + str(map_to_index_1) + " " + str(time_index+1) + "\n")
+                file.write(str(map_to_index_0) + " " + str(map_to_index_1) + " " + str(time_index) + "\n")
                 count = count + 1
                 if count % 10000 == 0:
-                    print str(count) + "/" + str(total)
+                    print str(count)
 
         file.close()
         print "Temporal File: " + path
         return path
 
-    def temporal_motif(self, input, output_dir):
+    def temporal_motif(self, directory, name):
         # http://snap.stanford.edu/temporal-motifs/code.html
 
         # with  open(input) as f:
@@ -65,17 +50,21 @@ class Test(unittest.TestCase):
         #         print line
         exe_directory = "/Users/ernaneluis/Developer/graph-dynamics/snap-cpp/examples/temporalmotifs/temporalmotifsmain"
         # file.close()
-
-        output = output_dir + "lt_temporal-graph-counts.txt"
+        input =  directory + name + ".temporalmotif"
+        output = directory + name + ".temporalmotifcount"
         args1 = "-i:" + input
         args2 = "-o:" + output
-        args3 = "-delta:300"
+        args3 = "-delta:3600" # 1 hour in secodns
         # calling command of snap in c++
         subprocess.call([exe_directory, args1, args2])
         return output
 
-    def view(self, input, output_dir):
+    def view(self, directory, name):
+
+        input        = directory + name + ".temporalmotifcount"
+        output_image = directory + name + "_temporalmotif.png"
         print "View: " + input
+
         data = np.genfromtxt(input, dtype=None)
         # plt.matshow(data, cmap='Blues', interpolation='nearest')
         # plt.colorbar()
@@ -90,7 +79,7 @@ class Test(unittest.TestCase):
 
         for idx, row in enumerate(data.transpose()):
             for idy, value in enumerate(row):
-                ax.text(idx, idy, value, va='center', ha='center')
+                ax.text(idx, idy, value, va='center', ha='center', fontsize=10)
 
         # set tick marks for grid
         ax.set_xticks(np.arange(min_val - diff / 2, max_val - diff / 2))
@@ -98,24 +87,23 @@ class Test(unittest.TestCase):
         ax.set_xticklabels([])
         ax.set_yticklabels([])
         plt.colorbar(img)
-        image = output_dir + "temporal_motif.png"
-        plt.savefig(image)
-        print "Image: " + image
+
+        plt.savefig(output_image)
+        print "Image: " + output_image
         plt.show()
 
     def compute(self):
 
-        output_dir       = "/Users/ernaneluis/Developer/master_thesis/bigclam/bitcoin_graphs/"
-        input_file       = "/Users/ernaneluis/Developer/master_thesis/bigclam/bitcoin_graphs/lt_graph.txt"
-        # name            = "bitcoin"
+        dir       = "/Users/ernaneluis/Developer/master_thesis/bigclam/old_bitcoin_dataset/"
+        name      = "txedge"
 
 
         # # # 2.
-        file_path       = self.convert_gd2temporal(input_file, output_dir)
+        # self.convert2temporalmotif(dir, name)
         # # 3.
-        temporal_count  = self.temporal_motif(file_path, output_dir)
+        self.temporal_motif(dir, name)
         # # 4.
-        self.view(temporal_count, output_dir)
+        # self.view(dir, name)
 
         print "done"
 
