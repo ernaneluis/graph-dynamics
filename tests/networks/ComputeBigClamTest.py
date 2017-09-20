@@ -38,7 +38,7 @@ def convert_egdelist2bigclam(gd_directory, name):
 def computeBigClam(exe_directory, gd_directory, name):
     # http://snap.stanford.edu/temporal-motifs/code.html
 
-    time_indexes = map(int, [filename.split("_")[2].replace(".txt", "") for filename in os.listdir(gd_directory) if "_bigclam_" in filename])
+    time_indexes = map(int, [filename.split("_")[3].replace(".txt", "") for filename in os.listdir(gd_directory) if "_bigclam_" in filename])
 
     for idx in time_indexes:
         input = gd_directory + name  + "_bigclam_" + str(idx) + ".txt"
@@ -123,18 +123,18 @@ def visualization_histogram(series, path):
 if __name__ == '__main__':
 
     exe_path   = "../../snap-cpp/examples/bigclam/bigclam"#path of excecutable
-    path            = "../../data/bigclam/"
-    name            = "easy"
+    path            = "/Users/ernaneluis/Developer/master_thesis/bigclam/bitcoin_graphs/"
+    name            = "graph_bigclam"
     # 1.
     # reads gd files and covnert to biglcam input format
-    convert_egdelist2bigclam(path, name)
+    # convert_egdelist2bigclam(path, name)
     # 2.
-    computeBigClam(exe_path, path, name)
+    # computeBigClam(exe_path, path, name)
     
     # 3.
-    #time_indexes, series = load_bigclam(path, name)
+    time_indexes, series = load_bigclam(path, name)
     # 4.    # Save Figure
-    #visualization_histogram(series, path)
+    visualization_histogram(series, path)
 
 
 

@@ -13,6 +13,8 @@ import math
 from mpl_toolkits.mplot3d import Axes3D
 import sys;
 import unittest
+from scipy.interpolate import spline
+from scipy.interpolate import UnivariateSpline
 
 class Test(unittest.TestCase):
 
@@ -92,18 +94,54 @@ class Test(unittest.TestCase):
         print "Image: " + output_image
         plt.show()
 
+    def view_dist(self, directory, name):
+
+        # fig, ax = plt.subplots(1, 1)
+
+        # x  = range(0,36)
+        # x_smooth = np.linspace(0, 36, 200)
+        for idx in range(0,940):
+            name1 = name + "_" + str(idx)
+            input        = directory + name1 + ".temporalmotifcount"
+            output_image = directory + name1 + "_temporalmotif.png"
+
+            if os.path.exists(input):
+
+                data = np.genfromtxt(input, dtype=None)
+                y = data.flatten()
+                if sum(y) > 0:
+                    print "View: " + input
+
+                    p, x = np.histogram(y, bins=10)
+                    x = x[:-1] + (x[1] - x[0]) / 2
+                    f = UnivariateSpline(x, p, s=10)
+                    plt.plot(x, f(x))
+
+                    # plt.hist(y, bins=10 )
+                    # plt.hist(y, histtype='step')
+                    # y = np.log2(y)
+
+                    # y_smooth = spline(x, y, x_smooth)
+                    # ax.bar(x,y)
+                    # ax.plot(x_smooth,y_smooth)
+        # plt.yscale('log', nonposy='clip')
+        # plt.savefig(output_image)
+        print "Image: " + output_image
+        plt.show()
+
     def compute(self):
 
-        dir       = "/Users/ernaneluis/Developer/master_thesis/bigclam/old_bitcoin_dataset/"
-        name      = "txedge"
+        dir       = "/Users/ernaneluis/Developer/master_thesis/bigclam/old_bitcoin_dataset/temporal_day/"
+        name      = "bitcoin_temporal"
 
 
         # # # 2.
         # self.convert2temporalmotif(dir, name)
         # # 3.
-        self.temporal_motif(dir, name)
+        # self.temporal_motif(dir, name)
         # # 4.
-        # self.view(dir, name)
+        self.view_dist(dir, name)
+
 
         print "done"
 
