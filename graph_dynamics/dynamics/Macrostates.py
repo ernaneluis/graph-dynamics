@@ -35,6 +35,7 @@ def degree_nodes(Graph,*parameters):
     nd : dictionary, A dictionary with nodes as keys and degree as values
 
     """
+    print "Computing degree_nodes Macro..."
     return Graph.get_networkx().degree()
 
 def basic_stats(Graph,*parameters):
@@ -48,7 +49,7 @@ def basic_stats(Graph,*parameters):
     json_dict = {"number_of_edges":int,
                 "number_of_edges":int}
     """
-
+    print "Computing basic_stats Macro..."
     return {"number_of_nodes":Graph.get_networkx().number_of_nodes(),
             "number_of_edges":Graph.get_networkx().number_of_edges()}
 
@@ -79,11 +80,11 @@ def advanced_stats(Graph,*parameters):
      "clustering_coefficient":nx.clustering(Graph.get_networkx()),
     """
 
-
+    print "Computing advanced_stats Macro..."
 
     return {
-            "max_degree_nodes":      max( nx.degree(Graph.get_networkx()).values() ),
-            "total_triangles":             sum(sorted(nx.triangles(Graph.get_networkx()).values(), reverse=True)),
+            "max_degree_nodes":max( nx.degree(Graph.get_networkx()).values() ),
+            "total_triangles":sum(sorted(nx.triangles(Graph.get_networkx()).values(), reverse=True)),
             }
 
 def degree_centrality(Graph,*parameters):
@@ -101,7 +102,7 @@ def degree_centrality(Graph,*parameters):
     """
 
     # return dict(zip(range(Graph.get_number_of_nodes()), bigClamObj.F.tolist()))
-
+    print "Computing degree_centrality Macro..."
     return nx.degree_centrality(Graph.get_networkx())
 
 def networkx_pagerank(Graph,*parameters):
@@ -184,12 +185,13 @@ def new_nodes(GRAPH_LIST,*param):
     Return
     ------
     """
+    print "Computing new_nodes Macro..."
+
     nodes_1 = set(GRAPH_LIST[1].get_networkx().nodes())
     nodes_0 = set(GRAPH_LIST[0].get_networkx().nodes())
     newNodes = nodes_1.difference(nodes_0)
     number_of_new = len(newNodes)
     return {"new_nodes":list(newNodes),"number_of_new_nodes":number_of_new}
-
 
 
 def deepwalk_online(GRAPH_LIST, *nargs):
@@ -246,7 +248,6 @@ def evaluate_vanilla_macrostates_parallel(gd_directory,macrostates_names,macrost
     else:
         steps = np.repeat(number_of_workers,N / number_of_workers)
 
-
     current_index = 0
     for step in steps:
         #============================================
@@ -265,10 +266,10 @@ def evaluate_vanilla_macrostates_parallel(gd_directory,macrostates_names,macrost
                 print sys.exc_info()
                 print "Problem with time index {0}".format(time_index)
                 print "Graph ",graph_filename
+                
         #===========================================
         # PARALLELIZATION
         #===========================================
-
         jobs = []
         for worker_index in range(number_of_workers):
             try:
@@ -428,10 +429,11 @@ def bigclam(Graph,*nargs):
                         "Un" : [unc2, unc2, .., UnCm]
                     }
     """
-
+    print "Computing bigclam Macro..."
     args = nargs[0]
-    bigClamObj = BigClam(Graph, maxNumberOfIterations=args["max_number_of_iterations"], error=args["error"], beta=args["beta"])
-    return dict(zip(range(Graph.get_number_of_nodes()),bigClamObj.F.tolist()))
+    bigClamObj = BigClam(Graph, numberOfCommunity=args["number_of_community"], maxNumberOfIterations=args["max_number_of_iterations"])
+    # return  { "1JByGBoyCaLcpKdQqKDbJ99vx74owoxUxU": 4.999642500079724,...} = { node_label: Fu1_value, ... }
+    return dict(zip(Graph.get_networkx().nodes(), bigClamObj.F.flatten()))
 #========================================================================================================================
 # THE FOLLOWING DICTIONARY HOLDS ALL MACROSTATES WHICH CAN BE CALLED BY THE EVOLUTION FUNCTION OF GRAPH DYNAMICS
 #========================================================================================================================

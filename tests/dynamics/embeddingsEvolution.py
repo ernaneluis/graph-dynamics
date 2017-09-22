@@ -35,7 +35,8 @@ class Test(unittest.TestCase):
     
     def embeddingsEvolutionTest(self):                                                                                                
         
-        gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/CommunityForestFire4_gd/"
+        #gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Dynamics/Simulations/CommunityForestFire4_gd/"
+        gd_directory = "/home/cesar/Desktop/Doctorado/Projects/Networks/Embeddings/Communities_gd/"
         ALL_TIME_INDEXES,DYNAMICS_PARAMETERS,macroNumbers = gd_files_handler.gd_folder_stats(gd_directory,True)
         number_of_steps = 100
         
