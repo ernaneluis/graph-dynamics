@@ -125,7 +125,7 @@ class ForestFire(GraphsDynamics):
 #==========================================================================
 
 class PerraDynamics(GraphsDynamics):
-    def __init__(self, initial_graph, number_of_connections):
+    def __init__(self, initial_graph, number_of_connections, DYNAMICAL_PARAMETERS):
         """
           Constructor
 
@@ -136,15 +136,20 @@ class PerraDynamics(GraphsDynamics):
 
         """
 
-        name_string = "GammaProcess"
-        type_of_dynamics = "SnapShot"
-        GraphsDynamics.__init__(self, initial_graph, type_of_dynamics, number_of_connections)
+        DYNAMICAL_PARAMETERS["DynamicsClassParameters"] = {"PerraDynamics": None}
 
         # graph is a type of TxGraph
         self.GRAPH = initial_graph
         self.number_of_connections = number_of_connections
+        self.DYNAMICAL_PARAMETERS = DYNAMICAL_PARAMETERS
 
-    def generate_graphs_paths(self, number_of_steps, output_type):
+
+
+        GraphsDynamics.__init__(self, DYNAMICAL_PARAMETERS)
+
+    # Abstract methods ====================================================
+
+    def generate_graphs_paths(self, initial_graph, number_of_steps):
         """
           Method
 
@@ -160,6 +165,21 @@ class PerraDynamics(GraphsDynamics):
 
         return graph_series
 
+    def set_graph_path(self):
+        """
+        Empirical Data
+        """
+        raise None
+
+    def inference_on_graphs_paths(self, graphs_paths, output_type, dynamical_process=None):
+        """
+        Learning/Training
+        """
+        return None
+
+    def get_dynamics_state(self):
+        return self.DYNAMICAL_PARAMETERS
+
     def evolve_function(self, dynamical_process=None):
         """
         """
@@ -174,10 +194,7 @@ class PerraDynamics(GraphsDynamics):
 
         return copy.deepcopy(self.GRAPH)
 
-    def inference_on_graphs_paths(self, graphs_paths, output_type, dynamical_process=None):
-        """
-        """
-        return None
+    # Class methods ====================================================
 
     def __set_nodes_active(self):
         for n in self.GRAPH.networkx_graph.nodes():
