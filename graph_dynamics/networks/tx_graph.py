@@ -13,7 +13,7 @@ from scipy.stats import pareto, norm, bernoulli
 import math
 import time
 
-from graph_dynamics.networks.perra_graph import PerraGraph
+from graph_dynamics.networks.datatypes import PerraGraph
 
 class TxGraph(PerraGraph):
         

@@ -15,13 +15,9 @@ import pymongo
 from pymongo import MongoClient
 import psycopg2
 import psycopg2.extras
-# from graph_dynamics.communities.bigclam import BigClam
 from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
-from graph_dynamics.dynamics import MacrostatesHandlers
-from graph_dynamics.utils import gd_files_handler
-from graph_dynamics.dynamics import Macrostates
 
 from graph_dynamics.utils import graph_paths_visualization
 from graph_dynamics.dynamics import FromFilesDynamics
@@ -30,6 +26,8 @@ from matplotlib.lines import Line2D
 import random
 from graph_dynamics.dynamics.GenerativeDynamics import PerraDynamics
 from graph_dynamics.networks.datatypes import PerraGraph
+from graph_dynamics.networks.datatypes import ActivityDrivenGraph
+
 import itertools
 import operator
 from collections import Counter
@@ -44,7 +42,7 @@ class Test(unittest.TestCase):
                      "simulations_directory": "/Users/ernaneluis/Developer/graph-dynamics/simulations/",
                      "dynamics_identifier": "perragraph",
                      "macrostates": [("basic_stats", ())],
-                     "graph_class": "PerraGraph",
+                     "graph_class": "ActivityDrivenGraph",
                      "datetime_timeseries": False,
                      "initial_date": 1,
                      "verbose": True,
@@ -54,30 +52,27 @@ class Test(unittest.TestCase):
     def define_initial_graph(self):
 
         #Defines the graph ########################################
-        perra_graph_parameters = { "name_string" : "PerraGraph",
+        graph_parameters =      { "name_string" : "PerraGraph",
                                   "number_of_nodes": 100,
                                    "activity_gamma": 2.8,
                                    "rescaling_factor": 1,
                                    "threshold_min": 0.01,
                                    "delta_t": 1,
-                                   "number_walkers": 10,
                                    "graph_state": {"None":None},
                                    "networkx_graph": None # the initial graph: used for empiral data
-                                   }
+                                 }
 
 
+        graph = ActivityDrivenGraph(identifier_string=graph_parameters["name_string"],
+                           graph_state=graph_parameters["graph_state"],
+                           networkx_graph=graph_parameters["networkx_graph"],
+                           number_of_nodes=graph_parameters["number_of_nodes"],
+                           activity_gamma=graph_parameters["activity_gamma"],
+                           rescaling_factor=graph_parameters["rescaling_factor"],
+                           threshold_min=graph_parameters["threshold_min"],
+                           delta_t=graph_parameters["delta_t"])
 
-        perra_graph = PerraGraph(identifier_string=perra_graph_parameters["name_string"],
-                           graph_state=perra_graph_parameters["graph_state"],
-                           networkx_graph=perra_graph_parameters["networkx_graph"],
-                           number_of_nodes=perra_graph_parameters["number_of_nodes"],
-                           activity_gamma=perra_graph_parameters["activity_gamma"],
-                           rescaling_factor=perra_graph_parameters["rescaling_factor"],
-                           threshold_min=perra_graph_parameters["threshold_min"],
-                           delta_t=perra_graph_parameters["delta_t"],
-                           number_walkers=perra_graph_parameters["number_walkers"])
-
-        return perra_graph
+        return graph
 
     def run_dynamics(self, perra_graph):
 

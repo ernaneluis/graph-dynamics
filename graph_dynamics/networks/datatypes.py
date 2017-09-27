@@ -465,7 +465,7 @@ class CryptocurrencyGraphs(FromFileGraph):
 #                           ACTIVITY DRIVEN GRAPH CLASS
 #==============================================================
 
-class ActivityDrivenGraph(Graph):
+class ActivityDrivenGraph(VanillaGraph):
     def __init__(self, identifier_string, graph_state, networkx_graph, number_of_nodes, activity_gamma, rescaling_factor,
                  threshold_min, delta_t):
         """
@@ -493,45 +493,22 @@ class ActivityDrivenGraph(Graph):
         """
 
         ######################### config variables #########################
+        VanillaGraph.__init__(self,identifier_string,graph_state,networkx_graph)
 
         self.name_string = "PerraGraph"
+        self.hasGraphAmount = False
+        self.activity_potential = self.__calculateActivityPotential(activity_gamma, threshold_min, number_of_nodes)
+        # creating list of nodes with index from 0 de N-1  adding to the graph
+        self.networkx_graph.add_nodes_from(list(xrange(number_of_nodes)))
 
-        if identifier_string == None:
-            try:
-                self.identifier_string = graph_state["graph_identifier"]
-            except:
-                self.identifier_string = self.name_string
-        else:
-            self.identifier_string = identifier_string
-
-        ######################### initializing graph  #########################
-        if networkx_graph == None:
-
-            self.graph_state = {"None": None}
-
-            # creating graph
-            self.networkx_graph = nx.Graph()
-            self.hasGraphAmount = False
-            self.activity_potential = self.__calculateActivityPotential(activity_gamma, threshold_min, number_of_nodes)
-            # creating list of nodes with index from 0 de N-1  adding to the graph
-            self.networkx_graph.add_nodes_from(list(xrange(number_of_nodes)))
-
-            # run over all nodes to set initial attributes
-            for n in self.networkx_graph.nodes():
-                ## what is the purpose of rescaling factor?
-                # ai = xi*n => probability per unit time to create new interactions with other nodes
-                # activity_firing_rate is an probability number than [0,1]
-                self.networkx_graph.node[n]['activity_firing_rate'] = self.activity_potential[n] * rescaling_factor
-                # With probability ai*delta_t each vertex i becomes active and generates m links that are connected to m other randomly selected vertices
-                self.networkx_graph.node[n]['activity_probability'] = self.networkx_graph.node[n][
-                                                                          'activity_firing_rate'] * delta_t
-
-        # initialize with json object
-        else:
-            self.graph_state = copy.copy(graph_state)
-            self.networkx_graph = networkx_graph
-
-        Graph.__init__(self, self.name_string, self.identifier_string, self.graph_state)
+        # run over all nodes to set initial attributes
+        for n in self.networkx_graph.nodes():
+            ## what is the purpose of rescaling factor?
+            # ai = xi*n => probability per unit time to create new interactions with other nodes
+            # activity_firing_rate is an probability number than [0,1]
+            self.networkx_graph.node[n]['activity_firing_rate'] = self.activity_potential[n] * rescaling_factor
+            # With probability ai*delta_t each vertex i becomes active and generates m links that are connected to m other randomly selected vertices
+            self.networkx_graph.node[n]['activity_probability'] = self.networkx_graph.node[n]['activity_firing_rate'] * delta_t
 
     ######################### PRIVATE  METHODS  #########################
 
@@ -542,33 +519,7 @@ class ActivityDrivenGraph(Graph):
         X = X / max(X)  # every one smaller than one
         return np.take(X, np.where(X > threshold_min)[0])  # using the thershold
 
-    ######################### ABSTRACT  METHODS  #########################
-
-    def get_graph_state(self):
-        """
-        This function should return a json object with all
-        parameters required to initialize such a graph
-        """
-        return self.graph_state
-
-    def get_networkx(self):
-        return self.networkx_graph
-
-    def get_adjancency_matrix(self):
-        return nx.adjacency_matrix(self.networkx_graph)
-
-    def get_edge_list(self):
-        return self.networkx_graph.edge
-
-    def get_number_of_edges(self):
-        return self.networkx_graph.number_of_edges()
-
-    def get_number_of_nodes(self):
-        return self.networkx_graph.number_of_nodes()
-
-        ######################### PUBLIC  METHODS  #########################
-
-    ######################### CLASS  METHODS  #########################
+    ######################### PUBLIC  METHODS  #########################
 
     def get_active_nodes(self):
         # return the list of choosed active nodes
