@@ -24,10 +24,8 @@ from graph_dynamics.dynamics import FromFilesDynamics
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 import random
-from graph_dynamics.dynamics.GenerativeDynamics import PerraDynamics
-from graph_dynamics.networks.datatypes import PerraGraph
-from graph_dynamics.networks.datatypes import ActivityDrivenGraph
-
+import graph_dynamics.dynamics.GenerativeDynamics as dynamics
+import graph_dynamics.networks.datatypes  as graph
 import itertools
 import operator
 from collections import Counter
@@ -40,7 +38,7 @@ class Test(unittest.TestCase):
     DYNAMICS_PARAMETERS = {"number_of_steps": 100,
                      "number_of_steps_in_memory": 1,
                      "simulations_directory": "/Users/ernaneluis/Developer/graph-dynamics/simulations/",
-                     "dynamics_identifier": "perragraph",
+                     "dynamics_identifier": "activitydriven",
                      "macrostates": [("basic_stats", ())],
                      "graph_class": "ActivityDrivenGraph",
                      "datetime_timeseries": False,
@@ -48,42 +46,42 @@ class Test(unittest.TestCase):
                      "verbose": True,
                      }
 
+    ad_dynamics_parameters = {"name_string": "ActivityDrivenGraph",
+                        "number_of_nodes": 100,
+                        "activity_gamma": 2.8,
+                        "rescaling_factor": 1,
+                        "threshold_min": 0.01,
+                        "delta_t": 1,
+                        "graph_state": {"None": None},
+                        "networkx_graph": None,  # the initial graph: used for empiral data
+                        "number_of_connections": 10
+                        }
+
 
     def define_initial_graph(self):
 
         #Defines the graph ########################################
-        graph_parameters =      { "name_string" : "PerraGraph",
-                                  "number_of_nodes": 100,
-                                   "activity_gamma": 2.8,
-                                   "rescaling_factor": 1,
-                                   "threshold_min": 0.01,
-                                   "delta_t": 1,
-                                   "graph_state": {"None":None},
-                                   "networkx_graph": None # the initial graph: used for empiral data
-                                 }
 
+        initial_graph = nx.barabasi_albert_graph(ad_dynamics_parameters["number_of_nodes"], 3)
 
-        graph = ActivityDrivenGraph(identifier_string=graph_parameters["name_string"],
-                           graph_state=graph_parameters["graph_state"],
-                           networkx_graph=graph_parameters["networkx_graph"],
-                           number_of_nodes=graph_parameters["number_of_nodes"],
-                           activity_gamma=graph_parameters["activity_gamma"],
-                           rescaling_factor=graph_parameters["rescaling_factor"],
-                           threshold_min=graph_parameters["threshold_min"],
-                           delta_t=graph_parameters["delta_t"])
+        the_graph = graph.ActivityDrivenGraph(graph_state={"None": None},
+                                                 networkx_graph=initial_graph)
 
-        return graph
+        return the_graph
 
-    def run_dynamics(self, perra_graph):
+    def run_dynamics(self, initial_graph):
 
         #Defines Dynamics ######################################################
 
-        perra_dynamics = PerraDynamics(initial_graph=perra_graph, number_of_connections=10, DYNAMICAL_PARAMETERS=self.DYNAMICS_PARAMETERS)
+        dynamics_obj = dynamics.ActivityDrivenDynamics(
+            initial_graph=initial_graph,
+            DYNAMICAL_PARAMETERS=self.DYNAMICS_PARAMETERS,
+            extra_parameters= self.ad_dynamics_parameters)
 
         # run dynamics ========================================================================
 
 
-        perra_dynamics.evolve(N=self.DYNAMICS_PARAMETERS["number_of_steps"],initial_graph=perra_graph)
+        dynamics_obj.evolve(N=self.DYNAMICS_PARAMETERS["number_of_steps"],initial_graph=initial_graph)
 
 
     def apply_macro(self):
@@ -97,13 +95,13 @@ class Test(unittest.TestCase):
 
     def compute(self):
 
-        perra_graph = self.define_initial_graph()
+        ad_graph = self.define_initial_graph()
 
         # nx.draw(perra_graph.get_networkx())
         # plt.show()
 
 
-        self.run_dynamics(perra_graph)
+        self.run_dynamics(ad_graph)
 
 
 

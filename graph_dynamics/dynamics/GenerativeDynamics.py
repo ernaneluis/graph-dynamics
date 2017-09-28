@@ -3,7 +3,7 @@ Created on Jun 9, 2017
 
 @author: cesar
 '''
-
+from scipy.stats import pareto, norm, bernoulli
 import sys
 import snap
 import copy
@@ -121,11 +121,11 @@ class ForestFire(GraphsDynamics):
  
 
 #==========================================================================
-# Perra DYNAMICS
+# Activity Driven DYNAMICS
 #==========================================================================
 
-class PerraDynamics(GraphsDynamics):
-    def __init__(self, initial_graph, number_of_connections, DYNAMICAL_PARAMETERS):
+class ActivityDrivenDynamics(GraphsDynamics):
+    def __init__(self, initial_graph, DYNAMICAL_PARAMETERS, extra_parameters):
         """
           Constructor
 
@@ -136,16 +136,33 @@ class PerraDynamics(GraphsDynamics):
 
         """
 
-        DYNAMICAL_PARAMETERS["DynamicsClassParameters"] = {"PerraDynamics": None}
 
-        # graph is a type of TxGraph
-        self.GRAPH = initial_graph
-        self.number_of_connections = number_of_connections
+        DYNAMICAL_PARAMETERS["DynamicsClassParameters"] = {"ActivityDrivenDynamics": None}
+        # graph is a type of Acitivy Driven or Perra Graph
+        self.initial_graph = initial_graph
+        self.number_of_connections = extra_parameters["number_of_connections"]
         self.DYNAMICAL_PARAMETERS = DYNAMICAL_PARAMETERS
-
-
+        self.extra_parameters = extra_parameters
 
         GraphsDynamics.__init__(self, DYNAMICAL_PARAMETERS)
+        # ==================  set up the initial graph  ====================================================
+
+        self.activity_potential = self.__calculateActivityPotential(extra_parameters["activity_gamma"],
+                                                                    extra_parameters["threshold_min"],
+                                                                    extra_parameters["number_of_nodes"])
+        # creating list of nodes with index from 0 de N-1  adding to the graph
+        self.initial_graph.get_networkx().add_nodes_from(list(xrange(extra_parameters["number_of_nodes"])))
+
+        # run over all nodes to set initial attributes
+        for n in self.initial_graph.get_networkx().nodes():
+            ## what is the purpose of rescaling factor?
+            # ai = xi*n => probability per unit time to create new interactions with other nodes
+            # activity_firing_rate is an probability number than [0,1]
+            self.initial_graph.get_networkx().node[n]['activity_firing_rate'] = self.activity_potential[n] * extra_parameters["rescaling_factor"]
+            # With probability ai*delta_t each vertex i becomes active and generates m links that are connected to m other randomly selected vertices
+            self.initial_graph.get_networkx().node[n]['activity_probability'] = self.initial_graph.get_networkx().node[n]['activity_firing_rate'] * extra_parameters["delta_t"]
+
+
 
     # Abstract methods ====================================================
 
@@ -159,7 +176,7 @@ class PerraDynamics(GraphsDynamics):
             string  output_type:
 
         """
-        graph_series = [self.GRAPH]
+        graph_series = [self.initial_graph]
         for T in range(1, number_of_steps):
             graph_series.append(self.evolve_function(graph_series[T - 1]))
 
@@ -183,106 +200,115 @@ class PerraDynamics(GraphsDynamics):
     def evolve_function(self, dynamical_process=None):
         """
         """
+
         # 0 clear connections
-        self.GRAPH.networkx_graph.remove_edges_from(self.GRAPH.networkx_graph.edges())
+        self.initial_graph.get_networkx().remove_edges_from(self.initial_graph.get_networkx().edges())
         # 1 select nodes to be active
         after_connections = self.__set_nodes_active()
         # 2 make conenctions from activacted nodes
         before_connections = self.__set_connections()
-        # 3 make random walk
-        walked = self.__set_propagate_walker()
 
-        return copy.deepcopy(self.GRAPH)
+        # TODO: perra dynamics will handle the walker case
+        # 3 make random walk
+        # walked = self.__set_propagate_walker()
+
+        return copy.deepcopy(self.initial_graph)
 
     # Class methods ====================================================
 
-    def __set_nodes_active(self):
-        for n in self.GRAPH.networkx_graph.nodes():
-            self.GRAPH.set_node_type(n)
+    def __calculateActivityPotential(self, activity_gamma, threshold_min, number_of_nodes):
+        ## calculating the activity potential following pareto distribution
+        X = pareto.rvs(activity_gamma, loc=threshold_min,size=number_of_nodes)  # get N samples from  pareto distribution
+        X = X / max(X)  # every one smaller than one
+        return np.take(X, np.where(X > threshold_min)[0])  # using the thershold
 
-        return self.GRAPH
+    def __set_nodes_active(self):
+        for n in self.initial_graph.get_networkx().nodes():
+            self.initial_graph.set_node_type(n)
+
+        return self.initial_graph
 
     def __set_connections(self):
         # list of choosed active nodes
-        active_nodes = self.GRAPH.get_active_nodes()
+        active_nodes = self.initial_graph.get_active_nodes()
         # for each selected node make M connections
         for node in active_nodes:
             # select random M nodes to make M connection
-            selected_nodes = [(node, random.randint(0, self.GRAPH.number_of_nodes() - 1)) for e in
+            selected_nodes = [(node, random.randint(0, self.initial_graph.get_number_of_nodes() - 1)) for e in
                               range(self.number_of_connections)]
             # make connections/edges
-            self.GRAPH.networkx_graph.add_edges_from(selected_nodes)
+            self.initial_graph.get_networkx().add_edges_from(selected_nodes)
 
-        return self.GRAPH
+        return self.initial_graph
 
-    def __set_propagate_walker(self):
-        walkers = self.GRAPH.get_walkers()
-        for node in walkers:
-            # look at their neighbors: nodes that the walker is making an connection
-            neighbors_nodes = self.GRAPH.networkx_graph.neighbors(node)
-
-            if len(neighbors_nodes) > 0:
-                # when a walker will not propagate he will stay at the same node
-                neighbors_nodes.append(node)
-
-                selected_neighbor = np.random.choice(neighbors_nodes, size=1, replace=False)
-                selected_neighbor = selected_neighbor[0]
-
-                self.GRAPH.transfer_walker(_from=node, _to=selected_neighbor)
-
-                if node != selected_neighbor:
-                    print("walker  #" + str(node) + " moved to node #" + str(selected_neighbor))
-                else:
-                    print("walker node #" + str(node) + " did not move ")
-            else:
-                print("walker  #" + str(node) + " is trap, cant move because there is no node to go(edge)")
-
-        return self.GRAPH
+    # def __set_propagate_walker(self):
+    #     walkers = self.initial_graph.get_walkers()
+    #     for node in walkers:
+    #         # look at their neighbors: nodes that the walker is making an connection
+    #         neighbors_nodes = self.initial_graph.get_networkx().neighbors(node)
+    #
+    #         if len(neighbors_nodes) > 0:
+    #             # when a walker will not propagate he will stay at the same node
+    #             neighbors_nodes.append(node)
+    #
+    #             selected_neighbor = np.random.choice(neighbors_nodes, size=1, replace=False)
+    #             selected_neighbor = selected_neighbor[0]
+    #
+    #             self.initial_graph.transfer_walker(_from=node, _to=selected_neighbor)
+    #
+    #             if node != selected_neighbor:
+    #                 print("walker  #" + str(node) + " moved to node #" + str(selected_neighbor))
+    #             else:
+    #                 print("walker node #" + str(node) + " did not move ")
+    #         else:
+    #             print("walker  #" + str(node) + " is trap, cant move because there is no node to go(edge)")
+    #
+    #     return self.initial_graph
 
 
 # ==========================================================================
 # BITCOIN DYNAMICS
 # ==========================================================================
 
-class TxDynamics(PerraDynamics):
-    def __init__(self, initial_graph, number_of_connections):
-        """
-          Constructor
-
-          Parameters
-
-            TxGraph initial_graph:            initial state of a TxGraph instance
-            int     number_of_connections:    max number of connections/edges a node can do
-
-        """
-
-        name_string = "GammaProcess"
-        type_of_dynamics = "SnapShot"
-        # GraphsDynamics.__init__(self, initial_graph, type_of_dynamics, number_of_connections)
-
-        # #graph is a type of TxGraph
-        # self.GRAPH = initial_graph
-        # self.number_of_connections = number_of_connections
-
-        PerraDynamics.__init__(self, initial_graph, number_of_connections)
-
-
-
-
-        # def evolve_function(self,dynamical_process=None):
-        #     """
-        #     """
-        #     #0 clear connections
-        #     self.GRAPH.networkx_graph.remove_edges_from(self.GRAPH.networkx_graph.edges())
-        #     #1 select nodes to be active
-        #     after_connections = self.__set_nodes_active()
-        #     #2 make conenctions from activacted nodes
-        #     before_connections = self.__set_connections()
-        #     #3 make random walk
-        #     #if amount were set then graph can do random walk
-        #     walked = self.__set_propagate_walker()
-        #
-        #
-        #     return copy.deepcopy(self.GRAPH)
-        #
+# class TxDynamics(PerraDynamics):
+#     def __init__(self, initial_graph, number_of_connections):
+#         """
+#           Constructor
+#
+#           Parameters
+#
+#             TxGraph initial_graph:            initial state of a TxGraph instance
+#             int     number_of_connections:    max number of connections/edges a node can do
+#
+#         """
+#
+#         name_string = "GammaProcess"
+#         type_of_dynamics = "SnapShot"
+#         # GraphsDynamics.__init__(self, initial_graph, type_of_dynamics, number_of_connections)
+#
+#         # #graph is a type of TxGraph
+#         # self.GRAPH = initial_graph
+#         # self.number_of_connections = number_of_connections
+#
+#         PerraDynamics.__init__(self, initial_graph, number_of_connections)
+#
+#
+#
+#
+#         # def evolve_function(self,dynamical_process=None):
+#         #     """
+#         #     """
+#         #     #0 clear connections
+#         #     self.GRAPH.networkx_graph.remove_edges_from(self.GRAPH.networkx_graph.edges())
+#         #     #1 select nodes to be active
+#         #     after_connections = self.__set_nodes_active()
+#         #     #2 make conenctions from activacted nodes
+#         #     before_connections = self.__set_connections()
+#         #     #3 make random walk
+#         #     #if amount were set then graph can do random walk
+#         #     walked = self.__set_propagate_walker()
+#         #
+#         #
+#         #     return copy.deepcopy(self.GRAPH)
+#         #
 
