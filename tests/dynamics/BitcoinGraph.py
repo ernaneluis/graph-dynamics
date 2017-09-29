@@ -39,12 +39,24 @@ class Test(unittest.TestCase):
                      "number_of_steps_in_memory": 1,
                      "simulations_directory": "/Users/ernaneluis/Developer/graph-dynamics/simulations/",
                      "dynamics_identifier": "activitydriven",
-                     "macrostates": [("basic_stats", ())],
                      "graph_class": "ActivityDrivenGraph",
                      "datetime_timeseries": False,
                      "initial_date": 1,
                      "verbose": True,
                      }
+
+
+    temporalmotif_nargs = {
+        "delta": 10,
+    }
+
+    DYNAMICS_PARAMETERS["macrostates"] = [
+        ("basic_stats", ()),
+        ("advanced_stats", ()),
+        ("degree_centrality", ()),
+        ("degree_nodes", ()),
+        ("temporalmotif", (temporalmotif_nargs,))
+    ]
 
     ad_dynamics_parameters = {"name_string": "ActivityDrivenGraph",
                         "number_of_nodes": 100,
@@ -62,7 +74,7 @@ class Test(unittest.TestCase):
 
         #Defines the graph ########################################
 
-        initial_graph = nx.barabasi_albert_graph(ad_dynamics_parameters["number_of_nodes"], 3)
+        initial_graph = nx.barabasi_albert_graph(self.ad_dynamics_parameters["number_of_nodes"], 3)
 
         the_graph = graph.ActivityDrivenGraph(graph_state={"None": None},
                                                  networkx_graph=initial_graph)

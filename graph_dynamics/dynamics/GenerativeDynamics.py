@@ -143,9 +143,12 @@ class ActivityDrivenDynamics(GraphsDynamics):
         self.number_of_connections = extra_parameters["number_of_connections"]
         self.DYNAMICAL_PARAMETERS = DYNAMICAL_PARAMETERS
         self.extra_parameters = extra_parameters
+        self.time_step = 0
 
         GraphsDynamics.__init__(self, DYNAMICAL_PARAMETERS)
         # ==================  set up the initial graph  ====================================================
+
+        self.initial_graph.get_networkx().add_edges_from(self.initial_graph.get_networkx().edges(), {"time": 0})
 
         self.activity_potential = self.__calculateActivityPotential(extra_parameters["activity_gamma"],
                                                                     extra_parameters["threshold_min"],
@@ -197,22 +200,22 @@ class ActivityDrivenDynamics(GraphsDynamics):
     def get_dynamics_state(self):
         return self.DYNAMICAL_PARAMETERS
 
-    def evolve_function(self, dynamical_process=None):
+    def evolve_function(self, graph_state):
         """
         """
 
         # 0 clear connections
-        self.initial_graph.get_networkx().remove_edges_from(self.initial_graph.get_networkx().edges())
+        graph_state.get_networkx().remove_edges_from(graph_state.get_networkx().edges())
         # 1 select nodes to be active
-        after_connections = self.__set_nodes_active()
+        before_connections = self.__set_nodes_active(graph_state)
         # 2 make conenctions from activacted nodes
-        before_connections = self.__set_connections()
+        graph_after_connections = self.__set_connections(graph_state)
 
         # TODO: perra dynamics will handle the walker case
         # 3 make random walk
         # walked = self.__set_propagate_walker()
 
-        return copy.deepcopy(self.initial_graph)
+        return copy.deepcopy(graph_after_connections)
 
     # Class methods ====================================================
 
@@ -222,24 +225,25 @@ class ActivityDrivenDynamics(GraphsDynamics):
         X = X / max(X)  # every one smaller than one
         return np.take(X, np.where(X > threshold_min)[0])  # using the thershold
 
-    def __set_nodes_active(self):
-        for n in self.initial_graph.get_networkx().nodes():
-            self.initial_graph.set_node_type(n)
+    def __set_nodes_active(self, graph_state):
+        for n in graph_state.get_networkx().nodes():
+            graph_state.set_node_type(n)
 
-        return self.initial_graph
+        return graph_state
 
-    def __set_connections(self):
+    def __set_connections(self, graph_state):
         # list of choosed active nodes
-        active_nodes = self.initial_graph.get_active_nodes()
+        active_nodes = graph_state.get_active_nodes()
         # for each selected node make M connections
         for node in active_nodes:
             # select random M nodes to make M connection
-            selected_nodes = [(node, random.randint(0, self.initial_graph.get_number_of_nodes() - 1)) for e in
+            selected_nodes = [(node, random.randint(0, graph_state.get_number_of_nodes() - 1)) for e in
                               range(self.number_of_connections)]
             # make connections/edges
-            self.initial_graph.get_networkx().add_edges_from(selected_nodes)
+            self.time_step = self.time_step + 1
+            graph_state.get_networkx().add_edges_from(selected_nodes, {"time": self.time_step})
 
-        return self.initial_graph
+        return graph_state
 
     # def __set_propagate_walker(self):
     #     walkers = self.initial_graph.get_walkers()

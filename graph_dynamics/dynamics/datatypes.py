@@ -304,6 +304,7 @@ class GraphsDynamics(object):
         for macrostate_function in macrostates_names:
             macrostate_function_name = macrostate_function[0]
             macrostate_function_parameters = macrostate_function[1]
+            macrostate_function_parameters += (macrostate_filename,)
             macrostate_json[macrostate_function_name] = Macrostates.macrostate_function_dictionary[macrostate_function_name](graph_object,*macrostate_function_parameters)                     
         with open(macrostate_filename,"w") as outfile:
             json.dump(macrostate_json, outfile)
