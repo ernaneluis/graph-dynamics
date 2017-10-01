@@ -15,6 +15,7 @@ from matplotlib import pyplot as plt
 from scipy.integrate import quadrature
 from scipy.stats import poisson, gamma
 from abc import ABCMeta, abstractmethod
+from scipy.stats import pareto, norm, bernoulli
 from _pyio import __metaclass__
 
 from graph_dynamics.random_measures.process import GammaProcess
@@ -459,4 +460,129 @@ class CryptocurrencyGraphs(FromFileGraph):
 
 #======================================================
 
-graph_class_dictionary = {"CaronFox":CaronFoxGraphs,"VanillaGraph":VanillaGraph}
+
+#==============================================================
+#                           ACTIVITY DRIVEN GRAPH CLASS
+#==============================================================
+
+class ActivityDrivenGraph(VanillaGraph):
+    def __init__(self, graph_state, networkx_graph):
+        """
+        Abstract constructor
+
+        Parameters
+        ----------
+        name_string: string
+            this is the name of the class defined
+        identifier_string: string
+            this is the name of the particular graph object
+        graph_state: string
+            this is a json with all the information required to define the graph
+            if the user provides the adjancency matrix and this json, the graph should be completly defined
+            this is required in order to save thesimulations in thime, and be able to recover at any point in
+            time
+
+
+
+        int     number_of_nodes:     to specify number of nodes of the graph
+        float   activity_gamma:    alpha value of pareto distribution formula
+        int     rescaling_factor:  number which scales the activity potential
+        float   threshold_min:     set the min values of the activity potential from the pareto distribution
+        int     delta_t:           time gap
+        """
+
+        ######################### config variables #########################
+        self.name_string = "ActivityDrivenGraph"
+        VanillaGraph.__init__(self,self.name_string,graph_state,networkx_graph)
+
+
+
+    ######################### PUBLIC  METHODS  #########################
+
+    def get_active_nodes(self):
+        # return the list of choosed active nodes
+        return [n for n in self.networkx_graph.nodes() if self.networkx_graph.node[n]['type'] == 1]
+
+    def get_activity_firing_rate(self, node):
+        return self.networkx_graph.node[node]['activity_firing_rate']
+
+    def get_node_type(self, node):
+        return self.networkx_graph.node[node]['type']
+
+    def set_node_type(self, node):
+        ## assign a node attribute nonactive or active
+        # is sample the activity once and do the bernoully sample at each time step
+        activity_firing_rate = self.get_activity_firing_rate(node)
+        if (activity_firing_rate > 1):
+            activity_firing_rate = 1 / activity_firing_rate
+        # set if a node is active or not
+        self.networkx_graph.node[node]['type'] = bernoulli.rvs(activity_firing_rate)
+
+
+#==============================================================
+#                           PERRA GRAPH CLASS: HAS WALKERS
+#==============================================================
+
+class PerraGraph(ActivityDrivenGraph):
+    def __init__(self, identifier_string, graph_state, networkx_graph, number_of_nodes, activity_gamma, rescaling_factor,
+                 threshold_min, delta_t, number_walkers):
+        """
+          Constructor
+
+          Parameters
+
+            int     number_of_nodes:     to specify number of nodes of the graph
+            float   activity_gamma:    alpha value of pareto distribution formula
+            int     rescaling_factor:  number which scales the activity potential
+            float   threshold_min:     set the min values of the activity potential from the pareto distribution
+            int     delta_t:           time gap
+
+        """
+
+        ######################### config variables #########################
+        ActivityDrivenGraph.__init__(self, identifier_string, graph_state, networkx_graph, number_of_nodes, activity_gamma,
+                                     rescaling_factor, threshold_min, delta_t)
+
+        ######################### initializing graph  #########################
+        # run over all nodes to set initial attributes
+        for n in self.get_networkx().nodes():
+            self.get_networkx().node[n]['walker'] = 0
+
+        self.init_walkers(number_walkers)
+
+    # ===============================================
+    # WALKERS FUNCTIONS
+    # ===============================================
+
+    def init_walkers(self, number_walkers):
+        # create W walkers on those nodes
+        self.number_walkers = number_walkers
+        generate_walkers = np.random.choice(self.get_networkx().nodes(), size=number_walkers, replace=False)
+        for node in generate_walkers:
+            self.add_walker(node)
+
+    def transfer_walker(self, _from, _to):
+        self.remove_walker(_from)
+        self.add_walker(_to)
+
+    def add_walker(self, node):
+        self.get_networkx().node[node]['walker'] += 1
+
+    def remove_walker(self, node):
+        self.get_networkx().node[node]['walker'] -= 1
+
+    # return list of nodes which has walkers
+    def get_walkers(self):
+        out = []
+        for node in self.get_networkx().nodes():
+            if self.get_networkx().node[node]['walker'] > 0:
+                out += [node]
+
+        return out
+
+graph_class_dictionary = {
+    "CaronFox":CaronFoxGraphs,
+    "VanillaGraph":VanillaGraph,
+    "PerraGraph": PerraGraph,
+    "ActivityDrivenGraph": ActivityDrivenGraph
+}

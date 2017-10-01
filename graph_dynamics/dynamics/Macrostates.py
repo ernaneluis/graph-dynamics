@@ -19,6 +19,7 @@ from graph_dynamics.embeddings import deep_walk
 from graph_dynamics.utils import gd_files_handler
 from graph_dynamics.networks.datatypes import VanillaGraph
 from graph_dynamics.communities.bigclam import BigClam
+from graph_dynamics.networks.temporalmotif import TemporalMotif
 
 from graph_dynamics.utils.timeseries_utils import createWindows
 
@@ -193,7 +194,6 @@ def new_nodes(GRAPH_LIST,*param):
     number_of_new = len(newNodes)
     return {"new_nodes":list(newNodes),"number_of_new_nodes":number_of_new}
 
-
 def deepwalk_online(GRAPH_LIST, *nargs):
     """
     Parameters
@@ -224,7 +224,6 @@ def deepwalk_online(GRAPH_LIST, *nargs):
 
     json_embeddings = dict(zip(model.wv.index2word,[e.tolist() for e in model.wv.syn0]))
     return json_embeddings
-
 
 def evaluate_vanilla_macrostates_parallel(gd_directory,macrostates_names,macrostates_run_ideintifier,number_of_workers=3):
     """
@@ -434,6 +433,28 @@ def bigclam(Graph,*nargs):
     bigClamObj = BigClam(Graph, numberOfCommunity=args["number_of_community"], maxNumberOfIterations=args["max_number_of_iterations"])
     # return  { "1JByGBoyCaLcpKdQqKDbJ99vx74owoxUxU": 4.999642500079724,...} = { node_label: Fu1_value, ... }
     return dict(zip(Graph.get_networkx().nodes(), bigClamObj.F.flatten()))
+
+
+def temporalmotif(Graph,*nargs):
+    """
+        Parameters
+        ----------
+            Graph:
+
+        Returns
+        -------
+        json_dict = [pattern1, pattern2, .., pattern36],
+
+    """
+    print "Computing temporal motif..."
+    args = nargs[0]
+    macrofile_fullpath = nargs[-1]
+
+    temporal = TemporalMotif(Graph, macrofile_fullpath, args["delta"])
+    return temporal.get_motifdata()
+
+
+
 #========================================================================================================================
 # THE FOLLOWING DICTIONARY HOLDS ALL MACROSTATES WHICH CAN BE CALLED BY THE EVOLUTION FUNCTION OF GRAPH DYNAMICS
 #========================================================================================================================
@@ -448,5 +469,6 @@ macrostate_function_dictionary = {
                                   "deepwalk_online": deepwalk_online,
                                   "node2vec_online_macrostates": node2vec_online_macrostates,
                                   "advanced_stats": advanced_stats,
-                                  "degree_centrality":degree_centrality
+                                  "degree_centrality":degree_centrality,
+                                  "temporalmotif":temporalmotif
                                   }
