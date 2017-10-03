@@ -261,10 +261,11 @@ def evaluate_vanilla_macrostates_parallel(gd_directory,macrostates_names,macrost
                 networkx_graph = nx.read_edgelist(gd_directory+graph_filename)
                 Vanilla =  VanillaGraph(dynamics_identifier,{"None":None},networkx_graph)
                 VANILLA_GRAPHS.append((Vanilla,time_index))
-            except:
+            except Exception as e:
                 print sys.exc_info()
-                print "Problem with time index {0}".format(time_index)
+                print "266 Problem with time index {0}".format(time_index)
                 print "Graph ",graph_filename
+                print str(e)
                 
         #===========================================
         # PARALLELIZATION
@@ -340,15 +341,17 @@ def evaluate_vanilla_macrostates(gd_directory,macrostates_names,macrostates_run_
             for macrostate_function in macrostates_names:
                 macrostate_function_name = macrostate_function[0]
                 macrostate_function_parameters = macrostate_function[1]
+                macrostate_function_parameters += (macrostate_filename,)
                 macrostate_json[macrostate_function_name] = macrostate_function_dictionary[macrostate_function_name](Vanilla,*macrostate_function_parameters)
 
             #print macrostate_filename
             with open(macrostate_filename,"w") as outfile:
                 json.dump(macrostate_json, outfile)
-        except:
+        except Exception as e:
             print sys.exc_info()
-            print "Problem with time index {0}".format(time_index)
+            print "351 Problem with time index {0}".format(time_index)
             print "Graph ",graph_filename
+            print str(e)
 
 def get_vanilla_graph(gd_directory,dynamics_identifier,time_index):
     """
@@ -411,8 +414,9 @@ def evaluate_vanilla_macrostates_window(gd_directory,macrostates_names,macrostat
                 for time_index in window:
                     GRAPHS_IN_WINDOW.append(get_vanilla_graph(gd_directory,dynamics_identifier,time_index))
             ouput_macrostate_json(gd_directory,dynamics_identifier,macrostates_names,macrostates_run_ideintifier,time_index,GRAPHS_IN_WINDOW)
-        except:
-            print "Problem with time index {0}".format(time_index)
+        except Exception as e:
+            print "417 Problem with time index {0}".format(time_index)
+            print str(e)
 
 def bigclam(Graph,*nargs):
     """

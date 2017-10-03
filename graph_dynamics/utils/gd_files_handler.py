@@ -85,8 +85,10 @@ def gd_folder_stats(gd_directory,vprint=False):
     macroStrings = set([macro_file.split("_")[2] for macro_file in MACRO_FILES])
     macroNumbers = {}
     for macrostring in macroStrings:
-        this_macro_files = [filename for filename in ALL_DYNAMIC_FILES_NAME if macrostring in filename]
+
+        this_macro_files = [filename for filename in ALL_DYNAMIC_FILES_NAME if macrostring in filename and ".gd" in filename and "mGD" in filename]
         indexes = [int(macrofile.split("_")[-2]) for macrofile in this_macro_files]
+
         example_macro_json = json.load(open(gd_directory+this_macro_files[-1],"r"))
         macro_keys = example_macro_json.keys()
         macroNumbers[macrostring] = {"size":len(this_macro_files),

@@ -11,7 +11,11 @@ import subprocess
 import matplotlib.pyplot as plt
 import math
 from joblib import Parallel, delayed
+from graph_dynamics.dynamics import Macrostates
 
+
+def getKey(item):
+    return item[2]
 
 def convert_gd2temporal(gd_directory, name, idx):
     # creating temporal graph file input
@@ -32,7 +36,10 @@ def convert_gd2temporal(gd_directory, name, idx):
 
     output_file = open(output_path, "w")
 
-    for idy, edge in enumerate(graph.edges(data = True)):
+    edges = graph.edges(data=True)
+    edges = sorted(edges, key=getKey)
+
+    for idy, edge in enumerate(edges):
 
         map_to_index_0 = all_nodes.get(edge[0])
         map_to_index_1 = all_nodes.get(edge[1])
@@ -64,16 +71,17 @@ def convert_csv2gd(gd_directory, name, idx):
             count_line = count_line + 1
             if count_line > 1:
                 line = row.replace("\n", "").split("\t")
-                map_to_index_0 = line[0]
-                map_to_index_1 = line[1]
-                time           = line[3]
+                if len(line) == 5:
+                    map_to_index_0 = line[0]
+                    map_to_index_1 = line[1]
+                    time           = line[3]
 
-                # if count_line > 64170:
-                #     print row
+                    # if count_line > 64170:
+                    #     print row
 
-                if map_to_index_0 != '':
-                    line = str(map_to_index_0) + "\t" + str(map_to_index_1) + "\t{'time':" + time + "}" + "\n"
-                    file.write(line)
+                    if map_to_index_0 != '' and map_to_index_1 !='':
+                        line = str(map_to_index_0) + "\t" + str(map_to_index_1) + "\t{'time':" + time + "}" + "\n"
+                        file.write(line)
     file.close()
     return output_file
 
@@ -91,6 +99,24 @@ def compute_temporal_motif(exe_directory, gd_directory, name, delta, idx):
     subprocess.call([exe_directory, args1, args2, args3])
 
 
+def compute_macros(gd_directory):
+
+    macrostates_run_ideintifier = "day"
+
+    temporalmotif_nargs = {
+        "delta": 3600,
+    }
+
+    macrostates_names = [
+        ("basic_stats", ()),
+        ("advanced_stats", ()),
+        ("temporalmotif", (temporalmotif_nargs,))
+    ]
+    # compute macros
+    Macrostates.evaluate_vanilla_macrostates(gd_directory, macrostates_names,macrostates_run_ideintifier)
+
+    # Macrostates.evaluate_vanilla_macrostates_parallel(gd_directory, macrostates_names, macrostates_run_ideintifier,4)
+
 def compute(exe_directory, gd_directory, name, delta, idx):
 
     convert_csv2gd(gd_directory, name, idx)
@@ -100,10 +126,12 @@ def compute(exe_directory, gd_directory, name, delta, idx):
     compute_temporal_motif(exe_directory, gd_directory, name, delta, idx)
 
 
+
 if __name__ == '__main__':
 
     exe_path   = "../../snap-cpp/examples/temporalmotifs/temporalmotifsmain" #path of excecutable
-    gd_path    = "/Volumes/Ernane/ErnaneEdges/"
+    # gd_directory    = "/Volumes/Ernane/ErnaneEdges/"
+    gd_directory = "/Volumes/Ernane/day_gd/"
     name       = "day"
     delta      = 3600 # one hour delta
 
@@ -111,9 +139,10 @@ if __name__ == '__main__':
     #     if "csv" in filename:
     #         print filename
     #         a = int(filename.split("_")[1].replace(".csv", ""))
+    #         print a
 
     # 1 read graph dynamics files
-    time_indexes = map(int, [filename.split("_")[1].replace(".csv","") for filename in os.listdir(gd_path) if "csv" in filename])
+    time_indexes = map(int, [filename.split("_")[1].replace(".csv","") for filename in os.listdir(gd_directory) if "csv" in filename])
     time_indexes = sorted(time_indexes)
     # graphs = []
 
@@ -128,11 +157,14 @@ if __name__ == '__main__':
 
     # computeTemporalMotif(exe_path, gd_path, name, delta, 0)
 
-    Parallel(n_jobs=-1) (delayed(compute)(exe_path, gd_path, name, delta, idx ) for idx in time_indexes)
+    # Parallel(n_jobs=4) (delayed(compute)(exe_path, gd_directory, name, delta, idx ) for idx in time_indexes)
 
-
+    #
     # for idx in time_indexes:
-    #     compute(exe_path, gd_path, name, delta, idx)
+    #     compute(exe_path, gd_path, name, delta, idx)\
+
+
+    compute_macros(gd_directory)
 
 
     print "Done"
