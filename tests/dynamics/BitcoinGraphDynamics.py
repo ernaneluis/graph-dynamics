@@ -35,38 +35,38 @@ import subprocess
 from graph_dynamics.communities.bigclam import BigClam
 class Test(unittest.TestCase):
 
-    DYNAMICS_PARAMETERS = {"number_of_steps": 222,
+    DYNAMICS_PARAMETERS = {"number_of_steps": 1,
                      "number_of_steps_in_memory": 1,
-                     "simulations_directory": "/Users/ernaneluis/Developer/graph-dynamics/simulations/",
+                     "simulations_directory": "/Volumes/Ernane/simulations/",
                      "dynamics_identifier": "activitydriven",
                      "graph_class": "ActivityDrivenGraph",
-                     "datetime_timeseries": False,
+                     "datetime_timeseries": True,
                      "initial_date": 1,
                      "verbose": True,
                      }
 
 
     temporalmotif_nargs = {
-        "delta": 10, # deltas as number of connections
+        "delta": 3600, # deltas as 1 day in seconds
     }
 
     DYNAMICS_PARAMETERS["macrostates"] = [
         ("basic_stats", ()),
-        ("advanced_stats", ()),
-        ("degree_centrality", ()),
-        ("degree_nodes", ()),
+        # ("advanced_stats", ()),
+        # ("degree_centrality", ()),
+        # ("degree_nodes", ()),
         ("temporalmotif", (temporalmotif_nargs,))
     ]
 
     ad_dynamics_parameters = {"name_string": "ActivityDrivenGraph",
-                        "number_of_nodes": 1000,
+                        "number_of_nodes": 70000,
                         "activity_gamma": 2, # or 2.8
                         "rescaling_factor": 1,
-                        "threshold_min": 0.01,
+                        "threshold_min": 0.0001,
                         "delta_t": 1,
                         "graph_state": {"None": None},
                         "networkx_graph": None,  # the initial graph: used for empiral data
-                        "number_of_connections": 10
+                        "number_of_connections": 1400 # max number of connection a node can make
                         }
 
 
@@ -74,7 +74,10 @@ class Test(unittest.TestCase):
 
         #Defines the graph ########################################
 
-        initial_graph = nx.barabasi_albert_graph(self.ad_dynamics_parameters["number_of_nodes"], 3)
+        # initial_graph = nx.barabasi_albert_graph(self.ad_dynamics_parameters["number_of_nodes"], 3)
+        # initial_graph.remove_edges_from(initial_graph.nodes())
+        initial_graph  = nx.Graph()
+        initial_graph.add_nodes_from(list(xrange(self.ad_dynamics_parameters["number_of_nodes"])))
 
         the_graph = graph.ActivityDrivenGraph(graph_state={"None": None},
                                                  networkx_graph=initial_graph)

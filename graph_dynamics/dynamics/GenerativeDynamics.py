@@ -10,6 +10,7 @@ import copy
 import random
 import numpy as np
 import networkx as nx
+import time
 
 from graph_dynamics.utils import snap_handlers
 from graph_dynamics.networks.datatypes import VanillaGraph
@@ -153,17 +154,24 @@ class ActivityDrivenDynamics(GraphsDynamics):
         self.activity_potential = self.__calculateActivityPotential(extra_parameters["activity_gamma"],
                                                                     extra_parameters["threshold_min"],
                                                                     extra_parameters["number_of_nodes"])
-        # creating list of nodes with index from 0 de N-1  adding to the graph
-        self.initial_graph.get_networkx().add_nodes_from(list(xrange(extra_parameters["number_of_nodes"])))
+
 
         # run over all nodes to set initial attributes
-        for n in self.initial_graph.get_networkx().nodes():
+        for n, node in enumerate(self.initial_graph.get_networkx().nodes()):
             ## what is the purpose of rescaling factor?
             # ai = xi*n => probability per unit time to create new interactions with other nodes
             # activity_firing_rate is an probability number than [0,1]
             self.initial_graph.get_networkx().node[n]['activity_firing_rate'] = self.activity_potential[n] * extra_parameters["rescaling_factor"]
             # With probability ai*delta_t each vertex i becomes active and generates m links that are connected to m other randomly selected vertices
             self.initial_graph.get_networkx().node[n]['activity_probability'] = self.initial_graph.get_networkx().node[n]['activity_firing_rate'] * extra_parameters["delta_t"]
+
+
+        # if initial graph has no edges, do the first connection step
+        if self.initial_graph.get_number_of_edges() == 0:
+            before_connections = self.__set_nodes_active(self.initial_graph)
+            graph_after_connections = self.__set_connections(before_connections)
+            self.initial_graph = graph_after_connections
+            # self.initial_graph.get_networkx().add_nodes_from(list(xrange(extra_parameters["number_of_nodes"])))
 
 
 
@@ -209,7 +217,7 @@ class ActivityDrivenDynamics(GraphsDynamics):
         # 1 select nodes to be active
         before_connections = self.__set_nodes_active(graph_state)
         # 2 make conenctions from activacted nodes
-        graph_after_connections = self.__set_connections(graph_state)
+        graph_after_connections = self.__set_connections(before_connections)
 
         # TODO: perra dynamics will handle the walker case
         # 3 make random walk
@@ -223,7 +231,8 @@ class ActivityDrivenDynamics(GraphsDynamics):
         ## calculating the activity potential following pareto distribution
         X = pareto.rvs(activity_gamma, loc=threshold_min,size=number_of_nodes)  # get N samples from  pareto distribution
         X = X / max(X)  # every one smaller than one
-        return np.take(X, np.where(X > threshold_min)[0])  # using the thershold
+        # return np.take(X, np.where(X > threshold_min)[0])  # using the thershold
+        return X
 
     def __set_nodes_active(self, graph_state):
         for n in graph_state.get_networkx().nodes():
@@ -232,16 +241,30 @@ class ActivityDrivenDynamics(GraphsDynamics):
         return graph_state
 
     def __set_connections(self, graph_state):
+
+        day_in_seconds = 86400
+        hour_in_seconds = 3600
+
         # list of choosed active nodes
         active_nodes = graph_state.get_active_nodes()
         # for each selected node make M connections
         for node in active_nodes:
+            # 3-tuples (u,v,d) for an edge attribute dict d, or
             # select random M nodes to make M connection
-            selected_nodes = [(node, random.randint(0, graph_state.get_number_of_nodes() - 1)) for e in
-                              range(self.number_of_connections)]
+            selected_nodes = [
+                (node,
+                 random.randint(0, graph_state.get_number_of_nodes() - 1),
+                 {'time': random.randint(int(time.time()), int(time.time()) + day_in_seconds) }
+                 )
+                 for e in range(self.number_of_connections)
+                ]
             # make connections/edges
+
+            # the connections are made as bucket and in our case each time connection step is a day in real life
+            # we must simulate a day of connections by timestamp
+
             self.time_step = self.time_step + 1
-            graph_state.get_networkx().add_edges_from(selected_nodes, {"time": self.time_step})
+            graph_state.get_networkx().add_edges_from(selected_nodes)
 
         return graph_state
 

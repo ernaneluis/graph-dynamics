@@ -3,19 +3,7 @@ Created on July 20, 2017
 
 @author: ernaneluis
 '''
-import os
-# os.system("taskset -p 0xff %d" % os.getpid())
-import dill
-import operator
 import unittest
-from itertools import groupby
-# import matplotlib.pyplot as plt
-import networkx as nx
-import pymongo
-from pymongo import MongoClient
-import psycopg2
-import psycopg2.extras
-from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -24,29 +12,24 @@ from graph_dynamics.utils import gd_files_handler
 from graph_dynamics.dynamics import Macrostates
 import math
 from sklearn.decomposition import PCA
-from mpl_toolkits.mplot3d import Axes3D
-
+import pylab
+from PIL import Image
+from matplotlib.lines import Line2D
 
 class Test(unittest.TestCase):
     # golden standard
     golden_gd_directory = "/Volumes/Ernane/day_gd/"
     golden_macrostate_file_indentifier = "day"
 
-    simulation_gd_directory  = "/Users/ernaneluis/Developer/graph-dynamics/simulations/activitydriven_gd/"
+    simulation_gd_directory  = "/Volumes/Ernane/simulations/activitydriven_gd/"
     simulation_macrostate_file_indentifier = "activitydriven-macros"
 
-    def normalize(self, predictions, targets):
-        if sum(predictions) > 0:
-            predictions_norm = predictions / np.linalg.norm(predictions)
+    def normalize(self, data):
+        if sum(data) > 0:
+            return np.array(data) / np.float(np.array(data).max()) # return data / np.linalg.norm(data)
         else:
-            predictions_norm = predictions
-
-        if sum(targets) > 0:
-            targets_norm = targets / np.linalg.norm(targets)
-        else:
-            targets_norm = targets
-
-        return predictions_norm, targets_norm
+            return data
+        #TODO: check on temporalmotif paper if they count redudency, because if they do only norm by the max
 
     # Root mean square error
     def error1(self, predictions, targets):
@@ -78,13 +61,21 @@ class Test(unittest.TestCase):
             golden_temporalmotif = golden_temporalmotif_by_time[idx]
             simulation_temporalmotif = simulation_temporalmotif_by_time[idx]
 
-            simulation_temporalmotif_norm, golden_temporalmotif_norm = self.normalize(simulation_temporalmotif, golden_temporalmotif)
+            golden_temporalmotif_norm = self.normalize(golden_temporalmotif)
+            simulation_temporalmotif_norm = self.normalize(simulation_temporalmotif)
             error_i = self.error1(simulation_temporalmotif_norm, golden_temporalmotif_norm)
             timeline.append(error_i)
 
 
         return timeline
 
+
+    def normalize_series(self, series):
+        norm_series = []
+        for idx, data in enumerate(series):
+            data_norm = self.normalize(data)
+            norm_series.append(data_norm)
+        return norm_series
 
     def view_multiple_temporalmotif(self, data, labels):
         fig = plt.figure(figsize=(14, 21    ))
@@ -104,11 +95,12 @@ class Test(unittest.TestCase):
 
     def view_temporalmif_by_time(self, data, ax, fig, label):
 
+        data_norm = self.normalize_series(data)
 
         # fig, ax = plt.subplots()
         ax.set_yticks(range(1, 37))
         ax.invert_yaxis()
-        data_t = np.transpose(data)
+        data_t = np.transpose(data_norm)
         heatmap = ax.pcolor(data_t, cmap="tab20c_r")  # https://matplotlib.org/examples/color/colormaps_reference.html
 
         plt.title(label)
@@ -127,69 +119,124 @@ class Test(unittest.TestCase):
         plt.grid(True)
         plt.show()
 
+    def view_multiple_bar(self, data, labels):
 
-    def pca(self, data):
+        fig = plt.figure(figsize=(31, 14))
+        ax = fig.add_subplot(111)
 
-        X = np.array(data)
+        data_norm1 = self.normalize(data[0])
+        data_norm2 = self.normalize(data[1])
 
-        # result = PCA(X)
+        w = 0.4
+        x1 = np.array(range(1,37))
+        x2 = x1 + w
+
+        plt.bar(x1, data_norm1, w, label=labels[0])
+        plt.bar(x2, data_norm2, w, label=labels[1])
 
 
-        pca = PCA(n_components=36)
-        pca.fit(X)
-        X_pca = pca.transform(X)
+        ax.set_xlim(36)
+        ax.set_xticks(range(1, 37))
+        plt.xlabel("Patterns")
 
-        # for X_transformed in X_pca:
-        plt.scatter(X_pca[:, 0], X_pca[:, 1], lw=2)
+        ax.set_yticks(pylab.frange(0,1,0.1))
+        ax.set_ylim(0, 1)
+        plt.ylabel("Value")
 
-        # plt.scatter(pca.components_)
+        path = '/Users/ernaneluis/Developer/master_thesis/temporalmotif_patterns/pattern_1.png'
+
+        for i in range(1,37):
+            path = '/Users/ernaneluis/Developer/master_thesis/temporalmotif_patterns/pattern_'+str(i)+'.png'
+            self.add_logo(fig, path, scale=0.15, x_frac=0.01445*i+0.007, y_frac=0.05)
+
+        plt.subplots_adjust(left=0.035, right=0.98, top=0.95, bottom=0.11, wspace=0, hspace=0)
+        plt.legend()
+        plt.grid(True)
+        fig.savefig(self.simulation_gd_directory + "barplot_simulation_vs_nullmodel.png")
         plt.show()
 
-        # a =pca.explained_variance_ratio_
-        # print(pca.explained_variance_ratio_)
+    def add_logo(self, f, path, x_frac=0.5, y_frac=0.5, scale=1, alpha=1):
+        """
+        Add an image to the figure (not the axes)
+        f: a matplotlib figure instance.
+        path: the string path to the image to add to the figure.
+        x_frac: the fraction of the x dimension of the figure to set the offset to.
+            Must be a float.
+        y_frac: the fraction of the y dimension of the figure to set the offset to.
+            Must be a float.
+        scale: the float scale by which to multiply to the image pixel dimensions.
+        alpha: the alpha to set the inserted image to
 
-        # print(pca.singular_values_)
-        # The components_ array has shape (n_components, n_features) so components_[i, j] is already giving you the (signed) weights of the contribution of feature j to component i
-        # b = pca.components_
+        Set the figure dpi to the same as screen dpi.
 
-        # c= np.abs(pca.components_[0]).argsort()[::-1][:3]
+        Use this like:
+        f = add_logo(f, 'mah_business_logo.png',x_frac=0.5, y_frac=0.5, scale=0.5, alpha=0.15)
+        for setting a watermark. This should put the center of the image in the center of the
+        figure at half it's original size.
+        """
+        assert type(x_frac) == float and type(y_frac) == float, "x_frac and y_frac must be floats."
+        im = Image.open(path)
+        f.set_dpi(96)
+        im.thumbnail((int(im.size[0] * scale), int(im.size[1] * scale)), Image.ANTIALIAS)
+        img_x, img_y = im.size[0], im.size[1]
+        x_offset = int((f.bbox.xmax * x_frac - img_x / 2))
+        y_offset = int((f.bbox.ymax * y_frac - img_y / 2))
+        f.figimage(im, xo=x_offset, yo=y_offset, origin='upper', zorder=10, alpha=alpha)
+        return f
 
-        # x = []
-        # y = []
-        # z = []
-        # for item in result.Y:
-        #     x.append(item[0])
-        #     y.append(item[1])
-        #     z.append(item[2])
-        #
-        # plt.close('all')  # close all latent plotting windows
-        # fig1 = plt.figure()  # Make a plotting figure
-        # ax = Axes3D(fig1)  # use the plotting figure to create a Axis3D object.
-        # pltData = [x, y, z]
-        # ax.scatter(pltData[0], pltData[1], pltData[2], 'bo')  # make a scatter plot of blue dots from the data
-        #
-        # # make simple, bare axis lines through space:
-        # xAxisLine = ((min(pltData[0]), max(pltData[0])), (0, 0),
-        #              (0, 0))  # 2 points make the x-axis line at the data extrema along x-axis
-        # ax.plot(xAxisLine[0], xAxisLine[1], xAxisLine[2], 'r')  # make a red line for the x-axis.
-        # yAxisLine = ((0, 0), (min(pltData[1]), max(pltData[1])),
-        #              (0, 0))  # 2 points make the y-axis line at the data extrema along y-axis
-        # ax.plot(yAxisLine[0], yAxisLine[1], yAxisLine[2], 'r')  # make a red line for the y-axis.
-        # zAxisLine = ((0, 0), (0, 0), (
-        # min(pltData[2]), max(pltData[2])))  # 2 points make the z-axis line at the data extrema along z-axis
-        # ax.plot(zAxisLine[0], zAxisLine[1], zAxisLine[2], 'r')  # make a red line for the z-axis.
-        #
-        # # label the axes
-        # ax.set_xlabel("x-axis label")
-        # ax.set_ylabel("y-axis label")
-        # ax.set_zlabel("y-axis label")
-        # ax.set_title("The title of the plot")
-        # plt.show()  # show the plot
+    def view_patterns_by_time(self, series):
+
+        fig = plt.figure(figsize=(31, 14))
+        ax = fig.add_subplot(111)
+
+        leng= len(series)
+        x = np.array(range(0, leng))
+
+        series_t = np.transpose(series)
+        series_n = self.normalize_series(series_t)
+
+        linestyles = ['_', '-', '--', ':']
+        markers = []
+        for m in Line2D.markers:
+            try:
+                if len(m) == 1 and m != ' ':
+                    markers.append(m)
+            except TypeError:
+                pass
+        styles = markers + [
+            r'$\lambda$',
+            r'$\bowtie$',
+            r'$\circlearrowleft$',
+            r'$\clubsuit$',
+            r'$\checkmark$']
+
+        # marker=styles[idx%4]
+
+        for idx, y in enumerate(series_n):
+            if sum(y) > 0:
+                print sum(y)
+                plt.plot(x, y, label='pattern ' + str(idx+1), )
 
 
+        # ax.set_xlim(leng)
+        # ax.set_xticks(range(1, leng+1))
+        plt.xlabel("Time")
 
+        ax.set_yticks(pylab.frange(0, 1, 0.1))
+        ax.set_ylim(0, 1)
+        plt.ylabel("Value")
 
-        # return pca
+        path = '/Users/ernaneluis/Developer/master_thesis/temporalmotif_patterns/pattern_1.png'
+
+        for i in range(1, 37):
+            path = '/Users/ernaneluis/Developer/master_thesis/temporalmotif_patterns/pattern_' + str(i) + '.png'
+            # self.add_logo(fig, path, scale=0.15, x_frac=0.01445 * i + 0.007, y_frac=0.05)
+
+        plt.subplots_adjust(left=0.035, right=0.98, top=0.95, bottom=0.11, wspace=0, hspace=0)
+        plt.legend()
+        plt.grid(True)
+        fig.savefig(self.simulation_gd_directory + "temporalmotif_by_time_bitcoin.png")
+        plt.show()
 
 
     def compute(self):
@@ -199,7 +246,7 @@ class Test(unittest.TestCase):
         golden_temporalmotif_by_time = self.temporalmotif_by_time(ALL_TIME_INDEXES, self.golden_gd_directory, self.golden_macrostate_file_indentifier)
         #
 
-        simulation_temporalmotif_by_time = self.temporalmotif_by_time(ALL_TIME_INDEXES, self.simulation_gd_directory, self.simulation_macrostate_file_indentifier)
+        # simulation_temporalmotif_by_time = self.temporalmotif_by_time(ALL_TIME_INDEXES, self.simulation_gd_directory, self.simulation_macrostate_file_indentifier)
 
         # error_x = self.compute_error_by_time(golden_temporalmotif_by_time, simulation_temporalmotif_by_time)
 
@@ -210,8 +257,13 @@ class Test(unittest.TestCase):
 
         # self.view_multiple_temporalmotif([golden_temporalmotif_by_time, simulation_temporalmotif_by_time], ["Temporal Motif by day(Bitcoin)", "Temporal Motif by day(Simulation)"])
 
-        self.pca(golden_temporalmotif_by_time)
+        # self.pca(golden_temporalmotif_by_time)
 
+
+        # self.view_multiple_bar([golden_temporalmotif_by_time[0], simulation_temporalmotif_by_time[0]], ["Bitcoin", "Simulation"])
+
+
+        self.view_patterns_by_time(golden_temporalmotif_by_time)
 if __name__ == '__main__':
     import sys;
 
