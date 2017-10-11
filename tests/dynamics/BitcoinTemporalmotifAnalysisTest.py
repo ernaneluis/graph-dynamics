@@ -17,9 +17,17 @@ from PIL import Image
 from matplotlib.lines import Line2D
 from matplotlib.pyplot import cm
 import seaborn as sns; sns.set()
+from matplotlib.backends.backend_pdf import PdfPages
 
 class Test(unittest.TestCase):
     # golden standard
+
+    motifslabels = ["$M_{1,1}$", "$M_{1,2}$","$M_{1,3}$","$M_{1,4}$","$M_{1,5}$","$M_{1,6}$",
+                 "$M_{2,1}$","$M_{2,2}$","$M_{2,3}$","$M_{2,4}$","$M_{2,5}$","$M_{2,6}$",
+                 "$M_{3,1}$","$M_{3,2}$","$M_{3,3}$","$M_{3,4}$","$M_{3,5}$","$M_{3,6}$",
+                 "$M_{4,1}$","$M_{4,2}$","$M_{4,3}$","$M_{4,4}$","$M_{4,5}$","$M_{4,6}$",
+                 "$M_{5,1}$","$M_{5,2}$","$M_{5,3}$","$M_{5,4}$","$M_{5,5}$","$M_{5,6}$",
+                 "$M_{6,1}$","$M_{6,2}$","$M_{6,3}$","$M_{6,4}$","$M_{6,5}$","$M_{6,6}$"]
 
     def normalize(self, data):
         if sum(data) > 0:
@@ -56,179 +64,179 @@ class Test(unittest.TestCase):
 
     def view_temporalmif_by_time_heatmap(self, d, labels_path, save_path):
 
-        fig = plt.figure(figsize=(31, 14))
-        ax = fig.add_subplot(111)
+        with PdfPages(save_path) as pdf:
 
-        # d is 222 rows 36 col  it normalize by row
-        # data_norm = self.normalize_series(d)
-        # df = pd.DataFrame(data_norm)
-        # data = df.transpose()
+            fig = plt.figure(figsize=(31, 14))
+            ax = fig.add_subplot(111)
+
+            # d is 222 rows 36 col  it normalize by row
+            # data_norm = self.normalize_series(d)
+            # df = pd.DataFrame(data_norm)
+            # data = df.transpose()
 
 
-        df = pd.DataFrame(d)
-        # d is 36 rows 222 col
-        data_t = df.transpose()
-        data_norm = self.normalize_series(data_t.values.tolist())
-        data = pd.DataFrame(data_norm)
-        # labels
-        print data
-        labels = pd.read_csv(labels_path)
-        x_labels = labels.values.flatten().tolist()
-        xlabels =[]
-        for idx, l in enumerate(x_labels):
-            if idx % 2 == 0:
-                xlabels.append(l)
-            else:
-                xlabels.append("")
-        xlabels[-1]=x_labels[-1]
+            df = pd.DataFrame(d)
+            # d is 36 rows 222 col
+            data_t = df.transpose()
+            data_norm = self.normalize_series(data_t.values.tolist())
+            data = pd.DataFrame(data_norm)
+            # labels
+            print data
+            labels = pd.read_csv(labels_path)
+            x_labels = labels.values.flatten().tolist()
+            xlabels =[]
+            for idx, l in enumerate(x_labels):
+                if idx % 2 == 0:
+                    xlabels.append(l)
+                else:
+                    xlabels.append("")
+            xlabels[-1]=x_labels[-1]
 
-        # y label
-        ylabels = ["$M_{1,1}$", "$M_{1,2}$","$M_{1,3}$","$M_{1,4}$","$M_{1,5}$","$M_{1,6}$",
-             "$M_{2,1}$","$M_{2,2}$","$M_{2,3}$","$M_{2,4}$","$M_{2,5}$","$M_{2,6}$",
-             "$M_{3,1}$","$M_{3,2}$","$M_{3,3}$","$M_{3,4}$","$M_{3,5}$","$M_{3,6}$",
-             "$M_{4,1}$","$M_{4,2}$","$M_{4,3}$","$M_{4,4}$","$M_{4,5}$","$M_{4,6}$",
-             "$M_{5,1}$","$M_{5,2}$","$M_{5,3}$","$M_{5,4}$","$M_{5,5}$","$M_{5,6}$",
-             "$M_{6,1}$","$M_{6,2}$","$M_{6,3}$","$M_{6,4}$","$M_{6,5}$","$M_{6,6}$"]
+            # y label
+            ylabels = self.motifslabels
 
-        ax = sns.heatmap(data,  cmap="tab20c_r", xticklabels=xlabels, yticklabels=ylabels, cbar=True, cbar_kws={"orientation": "horizontal", "shrink":0.6, "fraction": 0.10}, linewidths=0.01)
+            ax = sns.heatmap(data,  cmap="tab20c_r", xticklabels=xlabels, yticklabels=ylabels, cbar=True, cbar_kws={"orientation": "horizontal", "shrink":0.6, "fraction": 0.10}, linewidths=0.01)
 
-        ax.tick_params(axis='x', which='major', pad=25)
-        plt.xticks(fontsize=8   )
+            ax.tick_params(axis='x', which='major', pad=25)
+            plt.xticks(fontsize=8   )
 
-        plt.xlabel("Day")
-        plt.ylabel("2/3-nodes, 3-edges $\delta$-temporal Motifs")
-        plt.subplots_adjust(left=0.045, right=0.98, top=0.95, bottom=0.11, wspace=0, hspace=0)
-        fig.savefig(save_path)
-        plt.show()
+            plt.xlabel("Day")
+            plt.ylabel("2/3-nodes, 3-edges $\delta$-temporal Motifs")
+            plt.subplots_adjust(left=0.045, right=0.98, top=0.95, bottom=0.11, wspace=0, hspace=0)
+            pdf.savefig()
+            plt.show()
+            plt.close()
 
 
     def view_temporalmotifs_by_time(self, d, labels_path, save_path, selected=None):
 
-        fig = plt.figure(figsize=(31, 14))
-        ax = fig.add_subplot(111)
+        with PdfPages(save_path) as pdf:
+            fig = plt.figure(figsize=(31, 14))
+            ax = fig.add_subplot(111)
 
-        # d is 222 rows 36 col  it normalize by row
-        # data_norm = self.normalize_series(d)
-        # df = pd.DataFrame(data_norm)
-        # data = df.transpose()
+            # d is 222 rows 36 col  it normalize by row
+            # data_norm = self.normalize_series(d)
+            # df = pd.DataFrame(data_norm)
+            # data = df.transpose()
 
 
-        df = pd.DataFrame(d)
-        # d is 36 rows 222 col
-        data_t = df.transpose()
-        data_norm = self.normalize_series(data_t.values.tolist())
-        data = pd.DataFrame(data_norm)
-        # print data
+            df = pd.DataFrame(d)
+            # d is 36 rows 222 col
+            data_t = df.transpose()
+            data_norm = self.normalize_series(data_t.values.tolist())
+            data = pd.DataFrame(data_norm)
+            # print data
 
-        # labels
+            # labels
 
-        labels = pd.read_csv(labels_path)
-        x_labels = labels.values.flatten().tolist()
-        xlabels =[]
-        for idx, l in enumerate(x_labels):
-            if idx % 2 == 0:
-                xlabels.append(l)
-            else:
-                xlabels.append("")
-        xlabels[-1]=x_labels[-1]
+            labels = pd.read_csv(labels_path)
+            x_labels = labels.values.flatten().tolist()
+            xlabels =[]
+            for idx, l in enumerate(x_labels):
+                if idx % 2 == 0:
+                    xlabels.append(l)
+                else:
+                    xlabels.append("")
+            xlabels[-1]=x_labels[-1]
 
-        # y label
-        ylabels = ["$M_{1,1}$", "$M_{1,2}$","$M_{1,3}$","$M_{1,4}$","$M_{1,5}$","$M_{1,6}$",
-             "$M_{2,1}$","$M_{2,2}$","$M_{2,3}$","$M_{2,4}$","$M_{2,5}$","$M_{2,6}$",
-             "$M_{3,1}$","$M_{3,2}$","$M_{3,3}$","$M_{3,4}$","$M_{3,5}$","$M_{3,6}$",
-             "$M_{4,1}$","$M_{4,2}$","$M_{4,3}$","$M_{4,4}$","$M_{4,5}$","$M_{4,6}$",
-             "$M_{5,1}$","$M_{5,2}$","$M_{5,3}$","$M_{5,4}$","$M_{5,5}$","$M_{5,6}$",
-             "$M_{6,1}$","$M_{6,2}$","$M_{6,3}$","$M_{6,4}$","$M_{6,5}$","$M_{6,6}$"]
+            # y label
+            ylabels = self.motifslabels
 
-        color = cm.Vega20(np.linspace(0, 1, 36))
+            color = cm.Vega20(np.linspace(0, 1, 36))
 
-        markers = ['_', 'd', '^', 'X', 'o', '*', '+']
+            markers = ['_', 'd', '^', 'X', 'o', '*', '+']
 
-        # [[u'D', u's', u'|', u'P', u'x', u'X', u'_', u'^', u'd', u'h', u, u, u',', u, u'.', u'1', u'p', u'3', u'2', u'4', u'H', u'v', u'8', u'<', u'>']
+            # [[u'D', u's', u'|', u'P', u'x', u'X', u'_', u'^', u'd', u'h', u, u, u',', u, u'.', u'1', u'p', u'3', u'2', u'4', u'H', u'v', u'8', u'<', u'>']
 
-        x = range(0,222)
+            x = range(0,222)
 
-        dv = data.values
-        for idx, y in enumerate(dv):
-            print idx
-            if selected is not None:
-                if idx in selected:
+            dv = data.values
+            for idx, y in enumerate(dv):
+                print idx
+                if selected is not None:
+                    if idx in selected:
+                        if sum(y) > 0:
+                            if idx % 2 == 1:
+                                ax.plot(x, y, label=ylabels[idx], color=color[idx], marker=markers[idx % len(markers)])
+                            else:
+                                ax.plot(x, y, label=ylabels[idx], color=color[idx])
+                else:
                     if sum(y) > 0:
                         if idx % 2 == 1:
                             ax.plot(x, y, label=ylabels[idx], color=color[idx], marker=markers[idx % len(markers)])
                         else:
                             ax.plot(x, y, label=ylabels[idx], color=color[idx])
-            else:
-                if sum(y) > 0:
-                    if idx % 2 == 1:
-                        ax.plot(x, y, label=ylabels[idx], color=color[idx], marker=markers[idx % len(markers)])
-                    else:
-                        ax.plot(x, y, label=ylabels[idx], color=color[idx])
 
 
 
 
-        ax.set_xticks(x)
-        ax.set_xticklabels(xlabels, rotation='vertical')
-        ax.tick_params(axis='x', which='major', pad=25)
-        plt.xticks(fontsize=7)
-        plt.xlabel("Day")
+            ax.set_xticks(x)
+            ax.set_xticklabels(xlabels, rotation='vertical')
+            ax.tick_params(axis='x', which='major', pad=25)
+            plt.xticks(fontsize=7)
+            plt.xlabel("Day")
 
-        ax.set_yscale("log")
-        plt.ylabel("2/3-nodes, 3-edges $\delta$-temporal Motifs")
+            ax.set_yscale("log")
+            plt.ylabel("2/3-nodes, 3-edges $\delta$-temporal Motifs")
 
-        plt.legend()
-        plt.subplots_adjust(left=0.045, right=0.98, top=0.95, bottom=0.11, wspace=0, hspace=0)
-        fig.savefig(save_path)
-        plt.show()
+            plt.legend()
+            plt.subplots_adjust(left=0.045, right=0.98, top=0.95, bottom=0.11, wspace=0, hspace=0)
+            # fig.savefig(save_path)
+
+            pdf.savefig()  # saves the current figure into a pdf page
+            plt.close()
+
+            plt.show()
 
 
     def view_variance_by_pattern(self, d, save_path):
 
-        fig = plt.figure(figsize=(31, 14))
-        ax = fig.add_subplot(111)
+        with PdfPages(save_path) as pdf:
+            fig = plt.figure(figsize=(31, 14))
+            ax = fig.add_subplot(111)
 
 
-        df = pd.DataFrame(d)
-        # d is 36 rows 222 col
-        data_t = df.transpose()
-        data_norm = self.normalize_series(data_t.values.tolist())
-        data = pd.DataFrame(data_norm)
-        # print data
+            df = pd.DataFrame(d)
+            # d is 36 rows 222 col
+            data_t = df.transpose()
+            data_norm = self.normalize_series(data_t.values.tolist())
+            data = pd.DataFrame(data_norm)
+            # print data
 
-        # labels
+            # labels
 
-        xlabels = ["$M_{1,1}$", "$M_{1,2}$","$M_{1,3}$","$M_{1,4}$","$M_{1,5}$","$M_{1,6}$",
-             "$M_{2,1}$","$M_{2,2}$","$M_{2,3}$","$M_{2,4}$","$M_{2,5}$","$M_{2,6}$",
-             "$M_{3,1}$","$M_{3,2}$","$M_{3,3}$","$M_{3,4}$","$M_{3,5}$","$M_{3,6}$",
-             "$M_{4,1}$","$M_{4,2}$","$M_{4,3}$","$M_{4,4}$","$M_{4,5}$","$M_{4,6}$",
-             "$M_{5,1}$","$M_{5,2}$","$M_{5,3}$","$M_{5,4}$","$M_{5,5}$","$M_{5,6}$",
-             "$M_{6,1}$","$M_{6,2}$","$M_{6,3}$","$M_{6,4}$","$M_{6,5}$","$M_{6,6}$"]
+            xlabels = self.motifslabels
 
 
-        dv = data.values
-        x = np.array(range(0,len(dv)))
+            dv = data.values
+            x = np.array(range(0,len(dv)))
 
-        variances = []
-        for idx, y in enumerate(dv):
-            variance = np.var(np.array(y))
-            variances.append(variance)
-
-
-        sns.barplot(x, variances, palette="tab20")
+            variances = []
+            for idx, y in enumerate(dv):
+                variance = np.var(np.array(y))
+                variances.append(variance)
 
 
-        ax.set_xticks(x)
-        ax.set_xticklabels(xlabels)
-        plt.xticks(fontsize=10  )
-        plt.xlabel("2/3-nodes, 3-edges $\delta$-temporal Motifs" )
+            sns.barplot(x, variances, palette="tab20")
 
-        plt.ylabel("Variance of all days")
 
-        plt.subplots_adjust(left=0.045, right=0.98, top=0.95, bottom=0.11, wspace=0, hspace=0)
-        fig.savefig(save_path)
-        plt.show()
+            ax.set_xticks(x)
+            ax.set_xticklabels(xlabels)
+            plt.xticks(fontsize=10  )
+            plt.xlabel("2/3-nodes, 3-edges $\delta$-temporal Motifs" )
 
+            plt.ylabel("Variance of all days")
+
+            plt.subplots_adjust(left=0.045, right=0.98, top=0.95, bottom=0.11, wspace=0, hspace=0)
+            # fig.savefig(save_path)
+            pdf.savefig()
+            plt.show()
+
+             # saves the current figure into a pdf page
+            plt.close()
+
+    def save(self, d, save_path):
+         np.savetxt(save_path, d, delimiter=',', fmt='%d')
 
     def compute(self):
 
@@ -240,17 +248,17 @@ class Test(unittest.TestCase):
         golden_temporalmotif_by_time = self.temporalmotif_by_time(ALL_TIME_INDEXES, golden_gd_directory, golden_macrostate_file_indentifier)
 
 
-        # self.view_temporalmif_by_time_heatmap(golden_temporalmotif_by_time, "/Volumes/Ernane/222-days-label.csv", "/Volumes/Ernane/normbyrow_temporalmotif_by_time_heatmap.png")
+        # self.save(golden_temporalmotif_by_time, "/Volumes/Ernane/1h_temporalmotif/222days_by_36motifs-temporalmotif-matrix.csv" )
+
+        # self.view_temporalmif_by_time_heatmap(golden_temporalmotif_by_time, "/Volumes/Ernane/222-days-label.csv", "/Volumes/Ernane/1h_temporalmotif_by_time_heatmap.pdf")
         #
 
-        # self.view_temporalmotifs_by_time(golden_temporalmotif_by_time, "/Volumes/Ernane/222-days-label.csv",
-        #                                  "/Volumes/Ernane/temporalmotif_by_time_series_all.png")
+        # self.view_temporalmotifs_by_time(golden_temporalmotif_by_time, "/Volumes/Ernane/222-days-label.csv","/Volumes/Ernane/1h_temporalmotif_by_time_series_all.pdf")
 
 
-        self.view_temporalmotifs_by_time(golden_temporalmotif_by_time, "/Volumes/Ernane/222-days-label.csv",
-                                      "/Volumes/Ernane/1h_temporalmotif_by_time_series_selected.png", selected=[2,3,8,17,23])
+        # self.view_temporalmotifs_by_time(golden_temporalmotif_by_time, "/Volumes/Ernane/222-days-label.csv",  "/Volumes/Ernane/1h_temporalmotif_by_time_series_selected.pdf", selected=[2,3,8,17,22,23])
 
-        # self.view_variance_by_pattern(golden_temporalmotif_by_time, "/Volumes/Ernane/1h_temporalmotif_by_time_variance.png")
+        # self.view_variance_by_pattern(golden_temporalmotif_by_time, "/Volumes/Ernane/1h_temporalmotif_by_time_variance.pdf")
 if __name__ == '__main__':
     import sys;
 
