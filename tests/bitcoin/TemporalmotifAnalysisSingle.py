@@ -251,7 +251,7 @@ class Test(unittest.TestCase):
         # self.save(golden_temporalmotif_by_time, "/Volumes/Ernane/1h_temporalmotif/222days_by_36motifs-temporalmotif-matrix.csv" )
 
         # self.view_temporalmif_by_time_heatmap(golden_temporalmotif_by_time, "/Volumes/Ernane/222-days-label.csv", "/Volumes/Ernane/1h_temporalmotif_by_time_heatmap.pdf")
-        #
+
 
         # self.view_temporalmotifs_by_time(golden_temporalmotif_by_time, "/Volumes/Ernane/222-days-label.csv","/Volumes/Ernane/1h_temporalmotif_by_time_series_all.pdf")
 
