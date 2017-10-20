@@ -17,25 +17,39 @@ from PIL import Image
 from matplotlib.lines import Line2D
 from matplotlib.pyplot import cm
 
-class Test(unittest.TestCase):
+class TemporalmotifAnalysisMultiple(object):
+
+    def __init__(self, golden_gd_directory, golden_macrostate_file_indentifier, simulation_gd_directory, simulation_macrostate_file_indentifier, ALL_TIME_INDEXES):
     # golden standard
-    golden_gd_directory = "/Volumes/Ernane/simulations/daymodel122_gd/"
-    golden_macrostate_file_indentifier = "daymodel122"
+    # golden_gd_directory = "/Volumes/Ernane/simulations/daymodel122_gd/"
+    # golden_macrostate_file_indentifier = "daymodel122"
+    #
+    # # simulation_gd_directory  = "/Volumes/Ernane/simulations/nullmodel24h_gd/"
+    # # simulation_macrostate_file_indentifier = "nullmodel24h"
+    #
+    # simulation_gd_directory  = "/Volumes/Ernane/simulations/bitcoinmodel1_gd/"
+    # simulation_macrostate_file_indentifier = "bitcoinmodel1"
 
-    # simulation_gd_directory  = "/Volumes/Ernane/simulations/nullmodel24h_gd/"
-    # simulation_macrostate_file_indentifier = "nullmodel24h"
 
-    simulation_gd_directory  = "/Volumes/Ernane/simulations/perramodel_gd/"
-    simulation_macrostate_file_indentifier = "perramodel"
+        self.golden_gd_directory = golden_gd_directory
+        self.golden_macrostate_file_indentifier = golden_macrostate_file_indentifier
+        self.simulation_gd_directory = simulation_gd_directory
+        self.simulation_macrostate_file_indentifier = simulation_macrostate_file_indentifier
+        self.ALL_TIME_INDEXES = ALL_TIME_INDEXES
+
+        self.golden_temporalmotif_by_time = self.temporalmotif_by_time(ALL_TIME_INDEXES, golden_gd_directory,
+                                                              golden_macrostate_file_indentifier)
+
+        self.simulation_temporalmotif_by_time = self.temporalmotif_by_time(ALL_TIME_INDEXES, simulation_gd_directory,
+                                                                  simulation_macrostate_file_indentifier)
 
 
-
-    motifslabels = ["$M_{1,1}$", "$M_{1,2}$", "$M_{1,3}$", "$M_{1,4}$", "$M_{1,5}$", "$M_{1,6}$",
-                    "$M_{2,1}$", "$M_{2,2}$", "$M_{2,3}$", "$M_{2,4}$", "$M_{2,5}$", "$M_{2,6}$",
-                    "$M_{3,1}$", "$M_{3,2}$", "$M_{3,3}$", "$M_{3,4}$", "$M_{3,5}$", "$M_{3,6}$",
-                    "$M_{4,1}$", "$M_{4,2}$", "$M_{4,3}$", "$M_{4,4}$", "$M_{4,5}$", "$M_{4,6}$",
-                    "$M_{5,1}$", "$M_{5,2}$", "$M_{5,3}$", "$M_{5,4}$", "$M_{5,5}$", "$M_{5,6}$",
-                    "$M_{6,1}$", "$M_{6,2}$", "$M_{6,3}$", "$M_{6,4}$", "$M_{6,5}$", "$M_{6,6}$"]
+        self.motifslabels = ["$M_{1,1}$", "$M_{1,2}$", "$M_{1,3}$", "$M_{1,4}$", "$M_{1,5}$", "$M_{1,6}$",
+                        "$M_{2,1}$", "$M_{2,2}$", "$M_{2,3}$", "$M_{2,4}$", "$M_{2,5}$", "$M_{2,6}$",
+                        "$M_{3,1}$", "$M_{3,2}$", "$M_{3,3}$", "$M_{3,4}$", "$M_{3,5}$", "$M_{3,6}$",
+                        "$M_{4,1}$", "$M_{4,2}$", "$M_{4,3}$", "$M_{4,4}$", "$M_{4,5}$", "$M_{4,6}$",
+                        "$M_{5,1}$", "$M_{5,2}$", "$M_{5,3}$", "$M_{5,4}$", "$M_{5,5}$", "$M_{5,6}$",
+                        "$M_{6,1}$", "$M_{6,2}$", "$M_{6,3}$", "$M_{6,4}$", "$M_{6,5}$", "$M_{6,6}$"]
 
     def normalize(self, data):
         if sum(data) > 0:
@@ -67,19 +81,19 @@ class Test(unittest.TestCase):
         # array of vectors of 36 parameters
         return temporalmotif_by_time
 
-    def compute_error_by_time(self, golden_temporalmotif_by_time, simulation_temporalmotif_by_time):
+    def compute_error_by_time(self):
 
         timeline = []
-        for idx, row in enumerate(golden_temporalmotif_by_time):
-            golden_temporalmotif = golden_temporalmotif_by_time[idx]
-            simulation_temporalmotif = simulation_temporalmotif_by_time[idx]
+        for idx, row in enumerate(self.golden_temporalmotif_by_time):
+            golden_temporalmotif = self.golden_temporalmotif_by_time[idx]
+            simulation_temporalmotif = self.simulation_temporalmotif_by_time[idx]
 
             golden_temporalmotif_norm = self.normalize(golden_temporalmotif)
             simulation_temporalmotif_norm = self.normalize(simulation_temporalmotif)
             error_i = self.error1(simulation_temporalmotif_norm, golden_temporalmotif_norm)
             timeline.append(error_i)
 
-
+        np.savetxt(self.simulation_gd_directory + self.golden_macrostate_file_indentifier + '.error', timeline, delimiter=',', fmt='%f')
         return timeline
 
     def normalize_series(self, series):
@@ -163,32 +177,24 @@ class Test(unittest.TestCase):
         plt.legend()
         plt.grid(True)
         fig.savefig(self.simulation_gd_directory + "barplot_"+ self.golden_macrostate_file_indentifier + "_vs_"+self.simulation_macrostate_file_indentifier+".png")
-        plt.show()
+        # plt.show()
 
 
 
-    def compute(self):
+    # def compute(self):
 
         # ALL_TIME_INDEXES, DYNAMICS_PARAMETERS, macroNumbers = self.get_dynamics_golden()
-        ALL_TIME_INDEXES = range(0,1)
-        golden_temporalmotif_by_time = self.temporalmotif_by_time(ALL_TIME_INDEXES, self.golden_gd_directory, self.golden_macrostate_file_indentifier)
+        # ALL_TIME_INDEXES = range(0,1)
 
 
-        simulation_temporalmotif_by_time = self.temporalmotif_by_time(ALL_TIME_INDEXES, self.simulation_gd_directory, self.simulation_macrostate_file_indentifier)
+        # error_x = self.compute_error_by_time(golden_temporalmotif_by_time, simulation_temporalmotif_by_time)
 
-        error_x = self.compute_error_by_time(golden_temporalmotif_by_time, simulation_temporalmotif_by_time)
+        # print error_x
 
-        print error_x
-
-        np.savetxt(self.simulation_gd_directory + self.golden_macrostate_file_indentifier + '.error', error_x, delimiter=',', fmt='%f')
+        # np.savetxt(self.simulation_gd_directory + self.golden_macrostate_file_indentifier + '.error', error_x, delimiter=',', fmt='%f')
 
         # self.view_multiple_temporalmotif([golden_temporalmotif_by_time, simulation_temporalmotif_by_time], ["Temporal Motif by day(Bitcoin)", "Temporal Motif by day(Simulation)"])
 
-        self.view_multiple_bar([golden_temporalmotif_by_time[0], simulation_temporalmotif_by_time[0]], ["Bitcoin", "Simulation"])
+        # self.view_multiple_bar([golden_temporalmotif_by_time[0], simulation_temporalmotif_by_time[0]], ["Bitcoin", "Simulation"])
 
 
-if __name__ == '__main__':
-    import sys;
-
-    sys.argv = ['', 'Test.compute']
-    unittest.main()

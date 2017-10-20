@@ -493,15 +493,42 @@ class ActivityDrivenGraph(VanillaGraph):
 
         ######################### config variables #########################
         self.name_string = "ActivityDrivenGraph"
+        self.active_potential = []
         VanillaGraph.__init__(self,self.name_string,graph_state,networkx_graph)
 
 
 
     ######################### PUBLIC  METHODS  #########################
 
+    def set_activity(self, activity_potential, activity_rescaling_factor, activity_delta_t):
+        self.active_potential = activity_potential
+        self.activity_rescaling_factor = activity_rescaling_factor
+        self.activity_delta_t = activity_delta_t
+        # graph_state = self
+
+        # run over all nodes to set initial attributes
+        for n, node in enumerate(self.get_networkx().nodes()):
+            ## what is the purpose of rescaling factor?
+            # ai = xi*n => probability per unit time to create new interactions with other nodes
+            # activity_firing_rate is an probability number than [0,1]
+
+            # s = sum(activity_potential)
+            activity_firing_rate = activity_potential[n] * activity_rescaling_factor
+
+            activity_probability = activity_firing_rate * activity_delta_t
+
+            self.get_networkx().node[n]['activity_firing_rate'] = activity_firing_rate
+            # With probability ai*delta_t each vertex i becomes active and generates m links that are connected to m other randomly selected vertices
+            self.get_networkx().node[n]['activity_probability'] = activity_probability
+
+        # return self
+
     def get_active_nodes(self):
         # return the list of choosed active nodes
         return [n for n in self.networkx_graph.nodes() if self.networkx_graph.node[n]['type'] == 1]
+
+    def get_activity_probability(self, node):
+        return self.networkx_graph.node[node]['activity_probability']
 
     def get_activity_firing_rate(self, node):
         return self.networkx_graph.node[node]['activity_firing_rate']
@@ -509,15 +536,18 @@ class ActivityDrivenGraph(VanillaGraph):
     def get_node_type(self, node):
         return self.networkx_graph.node[node]['type']
 
-    def set_node_type(self, node):
+    def set_node_type(self, node, type):
         ## assign a node attribute nonactive or active
         # is sample the activity once and do the bernoully sample at each time step
-        activity_firing_rate = self.get_activity_firing_rate(node)
-        if (activity_firing_rate > 1):
-            activity_firing_rate = 1 / activity_firing_rate
+        # activity_probability = self.get_activity_probability(node)
+        # if (activity_probability > 1):
+        #     activity_probability = 1 / activity_probability
         # set if a node is active or not
-        self.networkx_graph.node[node]['type'] = bernoulli.rvs(activity_firing_rate)
-
+        # isActive = bernoulli.rvs(activity_probability)
+        # self.networkx_graph.node[node]['type'] = isActive
+        if type < 1:
+            type =0
+        self.networkx_graph.node[node]['type'] = type
 
 #==============================================================
 #                           PERRA GRAPH CLASS: HAS WALKERS
@@ -554,10 +584,43 @@ class PerraGraph(ActivityDrivenGraph):
         return out
 
 
+class BitcoinGraph(ActivityDrivenGraph):
+    def __init__(self, graph_state, networkx_graph):
+
+
+        ######################### config variables #########################
+        ActivityDrivenGraph.__init__(self, graph_state, networkx_graph)
+        # self, identifier_string, graph_state, networkx_graph, number_of_nodes, activity_gamma, rescaling_factor, threshold_min, delta_t)
+
+    def transfer_amount(self, _from, _to, amount_to_move):
+        # right now when a walker move, he moves all the money
+        # TODO: add a probability to move % of the amount
+        # amount_to_move = self.get_amount(_from)
+        self.remove_amount(_from, amount_to_move)
+        self.add_amount(_to, amount_to_move)
+        return amount_to_move
+
+    def get_amount(self, node):
+        return self.networkx_graph.node[node]['amount']
+
+
+    def add_amount(self, node, amount):
+        self.networkx_graph.node[node]['amount'] += amount
+
+
+    def remove_amount(self, node, amount):
+        self.networkx_graph.node[node]['amount'] -= amount
+
+
+    def get_nodes_amounts(self):
+        return [self.networkx_graph.node[node]['amount'] for node in self.networkx_graph.nodes()]
+
 
 graph_class_dictionary = {
     "CaronFox":CaronFoxGraphs,
     "VanillaGraph":VanillaGraph,
+    "ActivityDrivenGraph": ActivityDrivenGraph,
     "PerraGraph": PerraGraph,
-    "ActivityDrivenGraph": ActivityDrivenGraph
+    "BitcoinGraph": BitcoinGraph
+
 }

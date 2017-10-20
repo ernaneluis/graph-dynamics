@@ -23,6 +23,7 @@ import json
 import graph_dynamics.dynamics.GenerativeDynamics as dynamics
 import graph_dynamics.networks.datatypes  as graph_datatypes
 from graph_dynamics.dynamics import Macrostates
+import tests.bitcoin.TemporalmotifAnalysisMultiple as analysis_multiple
 
 from abc import ABCMeta, abstractmethod
 
@@ -160,15 +161,15 @@ class SimulationActivityDrivenDynamics(SimulationDynamics):
         self.apply_macro(gd_dir, gd_name, self.MACROSTATES_PARAMETERS )
 
 
-class SimulationPerraDynamics(SimulationDynamics):
+class SimulationBitcoinDynamics(SimulationDynamics):
 
 
     def __init__(self):
         DYNAMICS_PARAMETERS = {"number_of_steps": 24,
                                "number_of_steps_in_memory": 1,
                                "simulations_directory": "/Volumes/Ernane/simulations/",
-                               "dynamics_identifier": "perramodel",
-                               "graph_class": "PerraGraph",
+                               "dynamics_identifier": "bitcoinmodel12",
+                               "graph_class": "BitcoinGraph",
                                "datetime_timeseries": False,
                                "initial_date": 0,
                                "verbose": True,
@@ -189,19 +190,26 @@ class SimulationPerraDynamics(SimulationDynamics):
         ]
 
         model_dynamics_parameters = {
-            "name_string": "PerraGraph",
-            "number_of_nodes": 10000,
+            "name_string": "BitcoinGraph",
+            "number_of_nodes": 1000,
             "activity_gamma": 2,  # or 2.8
-            "rescaling_factor": 1,
-            "threshold_min": 0.0001,
-            "delta_t": 1,
+            "activity_rescaling_factor": 1, # avr number of active nodes per unit of time
+            "activity_threshold_min": 0.0001,
+            "activity_delta_t": 1,
             "graph_state": {"None": None},
             "networkx_graph": None,  # the initial graph: used for empiral data
-            "number_of_connections": 100,  # max number of connection a node can make
+            "number_of_connections": 10,  # max number of connection a node can make
             "delta_in_seconds": 3600,
-            "number_walkers": 100
+            "number_walkers": 100,
+            "amount_pareto_gama": 2.8,
+            "amount_threshold": 0.0001,
+            "activity_transfer_function": "x/math.sqrt(1+pow(x,2))",
+            "number_new_nodes": 10
         }
 
+        self.gd_dir = DYNAMICS_PARAMETERS["simulations_directory"] + DYNAMICS_PARAMETERS[
+            "dynamics_identifier"] + "_gd/"
+        self.gd_name = DYNAMICS_PARAMETERS["dynamics_identifier"]
 
         SimulationDynamics.__init__(self, DYNAMICS_PARAMETERS, temporalmotif_nargs, MACROSTATES_PARAMETERS, model_dynamics_parameters)
 
@@ -209,13 +217,13 @@ class SimulationPerraDynamics(SimulationDynamics):
         #Defines the graph ====================================================================
         initial_graph  = nx.Graph()
         initial_graph.add_nodes_from(list(xrange(self.model_dynamics_parameters["number_of_nodes"])))
-        return graph_datatypes.PerraGraph(graph_state={"None": None}, networkx_graph=initial_graph)
+        return graph_datatypes.BitcoinGraph(graph_state={"None": None}, networkx_graph=initial_graph)
 
 
     def run_dynamics(self, initial_graph):
 
         # defines Dynamics ====================================================================
-        dynamics_obj = dynamics.PerraDynamics(
+        dynamics_obj = dynamics.BitcoinDynamics(
             initial_graph=initial_graph,
             DYNAMICAL_PARAMETERS=self.DYNAMICS_PARAMETERS,
             extra_parameters= self.model_dynamics_parameters)
@@ -224,19 +232,36 @@ class SimulationPerraDynamics(SimulationDynamics):
 
     def compute(self):
 
-        gd_dir = self.DYNAMICS_PARAMETERS["simulations_directory"] + self.DYNAMICS_PARAMETERS["dynamics_identifier"] + "_gd/"
-        gd_name = self.DYNAMICS_PARAMETERS["dynamics_identifier"]
+
 
         self.run_dynamics(self.define_initial_graph())
 
-        self.compress_gd(gd_dir, gd_name)
+        self.compress_gd(self.gd_dir, self.gd_name)
 
-        self.apply_macro(gd_dir, gd_name, self.MACROSTATES_PARAMETERS )
+        self.apply_macro(self.gd_dir, self.gd_name, self.MACROSTATES_PARAMETERS)
 
 if __name__ == '__main__':
 
     # simulation      = SimulationActivityDrivenDynamics()
     # simulation.compute()
 
-    simulation2 = SimulationPerraDynamics()
+    simulation2 = SimulationBitcoinDynamics()
     simulation2.compute()
+
+
+    # comparing to golden model
+    golden_gd_directory =  "/Volumes/Ernane/simulations/daymodel122_gd/"
+    golden_macrostate_file_indentifier = "daymodel122"
+    simulation_gd_directory = simulation2.gd_dir
+    simulation_macrostate_file_indentifier = simulation2.gd_name
+    ALL_TIME_INDEXES = range(0,1)
+
+    analysis = analysis_multiple.TemporalmotifAnalysisMultiple(golden_gd_directory, golden_macrostate_file_indentifier, simulation_gd_directory, simulation_macrostate_file_indentifier, ALL_TIME_INDEXES)
+
+    error = analysis.compute_error_by_time()
+    print error
+
+    analysis.view_multiple_bar([analysis.golden_temporalmotif_by_time[0], analysis.simulation_temporalmotif_by_time[0]],
+                           ["Bitcoin", "Simulation"])
+
+
