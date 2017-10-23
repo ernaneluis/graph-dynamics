@@ -168,7 +168,7 @@ class SimulationBitcoinDynamics(SimulationDynamics):
         DYNAMICS_PARAMETERS = {"number_of_steps": 24,
                                "number_of_steps_in_memory": 1,
                                "simulations_directory": "/Volumes/Ernane/simulations/",
-                               "dynamics_identifier": "bitcoinmodel12",
+                               "dynamics_identifier": "bitcoinmodel14",
                                "graph_class": "BitcoinGraph",
                                "datetime_timeseries": False,
                                "initial_date": 0,

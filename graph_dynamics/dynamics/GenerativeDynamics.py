@@ -147,6 +147,7 @@ class ActivityDrivenDynamics(GraphsDynamics):
         self.extra_parameters = extra_parameters
         self.time_step = 0
         self.delta_in_seconds = extra_parameters["delta_in_seconds"]
+        self.number_of_steps = DYNAMICAL_PARAMETERS["number_of_steps"]
 
         # activity
         self.activity_gamma     = extra_parameters["activity_gamma"]
@@ -365,8 +366,8 @@ class BitcoinDynamics(GraphsDynamics):
         self.time_step              = 0
         self.delta_in_seconds       = extra_parameters["delta_in_seconds"]
         self.number_of_nodes        = extra_parameters["number_of_nodes"]
-
         self.number_new_nodes       = extra_parameters["number_new_nodes"]
+        self.number_of_steps = DYNAMICAL_PARAMETERS["number_of_steps"]
 
         # activity
         # self.activity_gamma         = extra_parameters["activity_gamma"]
@@ -378,22 +379,20 @@ class BitcoinDynamics(GraphsDynamics):
 
         # ==================  set up the initial graph  ====================================================
 
-        self.initial_graph = self.init_amount(initial_graph,
-                                              extra_parameters["amount_pareto_gama"],
-                                              extra_parameters["amount_threshold"])
+        self.max_number_of_nodes = self.number_of_nodes + ((self.number_of_steps - 1) * self.number_new_nodes)
 
-        self.initial_graph.get_networkx().add_edges_from(self.initial_graph.get_networkx().edges(), {"time": 0})
+        amount = self.init_amount(self.max_number_of_nodes ,extra_parameters["amount_pareto_gama"], extra_parameters["amount_threshold"])
+        initial_graph.set_amount(amount)
+
+        initial_graph.get_networkx().add_edges_from(initial_graph.get_networkx().edges(), {"time": 0})
         # ==================  set up the initial activity potential  =======================================
-        activity_potential = self.init_activity_potential(extra_parameters["activity_gamma"],
-                                                               extra_parameters["activity_threshold_min"],
-                                                               extra_parameters["number_of_nodes"])
-
-        self.initial_graph.set_activity(activity_potential, self.activity_rescaling_factor, self.activity_delta_t )
+        activity_potential = self.init_activity_potential(self.max_number_of_nodes, extra_parameters["activity_gamma"],extra_parameters["activity_threshold_min"])
+        initial_graph.set_activity(activity_potential, self.activity_rescaling_factor, self.activity_delta_t )
 
         # ==================  set up the initial connections  =======================================
         # if initial graph has no edges, do the first connection step
-        if self.initial_graph.get_number_of_edges() == 0:
-            before_connections      = self.set_nodes_active(self.initial_graph)
+        if initial_graph.get_number_of_edges() == 0:
+            before_connections      = self.set_nodes_active(initial_graph)
             graph_after_connections = self.set_connections(before_connections)
             self.initial_graph      = graph_after_connections
             # self.initial_graph.get_networkx().add_nodes_from(list(xrange(extra_parameters["number_of_nodes"])))
@@ -442,10 +441,10 @@ class BitcoinDynamics(GraphsDynamics):
         # 2 make conenctions from activacted nodes
         graph_after_connections = self.set_connections(before_connections)
         # 3 change the acitivity base on the money  f(money)  = activity
-        new_activity_potential = self.recalculateActivityPotential(graph_after_connections)
-        graph_state.set_activity(new_activity_potential, self.activity_rescaling_factor, self.activity_delta_t)
+        graph_new_activity_potential = self.recalculate_activity_potential(graph_after_connections)
+        # graph_state.set_activity(new_activity_potential, self.activity_rescaling_factor, self.activity_delta_t)
         # 4 change the number of nodes and number of connects by function f(T) = # of nodes
-        graph_new_nodes = self.add_new_nodes(graph_state)
+        graph_new_nodes = self.add_new_nodes(graph_new_activity_potential)
 
         return copy.deepcopy(graph_new_nodes)
 
@@ -460,42 +459,35 @@ class BitcoinDynamics(GraphsDynamics):
         s = sum(softmax)
         return softmax
 
-    def init_activity_potential(self, activity_gamma, threshold_min, number_of_nodes):
+    def init_activity_potential(self, size,  activity_gamma, threshold_min):
         ## calculating the activity potential following pareto distribution
-        X = pareto.rvs(activity_gamma, loc=threshold_min,size=number_of_nodes)  # get N samples from  pareto distribution
+        X = pareto.rvs(activity_gamma, loc=threshold_min,size=size)  # get N samples from  pareto distribution
         # X = X / max(X)  # every one smaller than one
         # return np.take(X, np.where(X > threshold_min)[0])  # using the thershold
 
-        X = self.softmax(X)
+        # X = self.softmax(X)
         return X
     # setting the node the initial amount of wealth
-    def init_amount(self, graph_state, amount_pareto_gama, amount_threshold):
+    def init_amount(self, size, amount_pareto_gama, amount_threshold):
 
         # calculate the wealth distribution following pareto law
-        A = pareto.rvs(amount_pareto_gama, loc=amount_threshold, scale=1, size=graph_state.get_number_of_nodes())
-        self.amount = A / max(A)
+        A = pareto.rvs(amount_pareto_gama, loc=amount_threshold, scale=1, size=size)
+        # A = A / max(A)
 
-        # run over all nodes to set initial attributes
-        for n in graph_state.get_networkx().nodes():
-            # setting the node the initial amount of wealth
-            graph_state.get_networkx().node[n]['amount'] = self.amount[n]
-
-        return graph_state
+        return A
 
 
     def add_new_nodes(self, graph_state):
         for i in range(self.number_new_nodes):
             max_node_id = max(graph_state.get_networkx().nodes())
-            new_node_id = max_node_id + 1
-            new_node_amount = random.choice(self.amount)
-            new_node_activity_firing_rate = 0.1
-            attributes = {'amount':new_node_amount,
-                          'activity_firing_rate': new_node_activity_firing_rate,
-                          'activity_probability':0.1,
-                          'type': 0}
 
-            graph_state.get_networkx().add_node(new_node_id, attr_dict=attributes)
-            graph_state.active_potential.append(new_node_activity_firing_rate)
+            new_node_id = max_node_id + 1
+            new_node_amount = graph_state.amount[new_node_id]
+            new_node_activity_firing_rate = graph_state.activity_potential[new_node_id]
+            new_node_type = 0  # not active
+
+            graph_state.add_new_node(new_node_id, new_node_amount, new_node_activity_firing_rate, new_node_type)
+
         return graph_state
 
     def transfer_function(self,x):
@@ -506,20 +498,19 @@ class BitcoinDynamics(GraphsDynamics):
 
         return x/math.sqrt(1+pow(x,2))
 
-    def recalculateActivityPotential(self, graph_state):
+    def recalculate_activity_potential(self, graph_state):
         # run over all nodes to set initial attributes
-        activity_potential = []
         for n, node in enumerate(graph_state.get_networkx().nodes()):
 
             money_i_t = graph_state.get_networkx().node[n]['amount']
             alpha = graph_state.get_activity_firing_rate(n)
             activity_i = self.transfer_function(alpha*money_i_t)
 
-            activity_potential.append(activity_i)
+            graph_state.activity_potential[n] = activity_i
 
         # activity_potential = activity_potential / max(activity_potential)
-        activity_potential = self.softmax(activity_potential)
-        return activity_potential
+        # activity_potential = self.softmax(activity_potential)
+        return graph_state
 
         # TODO a_i(t) = log(alpha * Money_i(t))
         # TODO 1/1-pow(e, (-a*Money_i(t)) )
@@ -528,17 +519,10 @@ class BitcoinDynamics(GraphsDynamics):
 
 
     def set_nodes_active(self, graph_state):
-        # self.random_pick(graph_state.get_networkx().nodes(), graph_state.active_potential)
-        nodes_prob =  np.array(graph_state.active_potential)
-        a = 1-nodes_prob
-        selected = bernoulli.rvs(a)
-
+        # self.random_pick(graph_state.get_networkx().nodes(), graph_state.activity_potential)
 
         for n in graph_state.get_networkx().nodes():
-            graph_state.set_node_type(n, selected[n])
-
-        # for n in graph_state.get_networkx().nodes():
-        #     graph_state.set_node_type(n)
+            graph_state.set_node_type(n)
         return graph_state
 
     def random_pick(self, some_list, probabilities):
@@ -548,6 +532,12 @@ class BitcoinDynamics(GraphsDynamics):
             cumulative_probability += item_probability
             if x < cumulative_probability: break
         return item
+
+    def calculate_amount(self, graph_state, from_node):
+
+        amount      = graph_state.get_amount(from_node)
+        amount      = amount/self.number_of_connections
+        return amount
 
     def set_connections(self, graph_state):
 
@@ -563,8 +553,7 @@ class BitcoinDynamics(GraphsDynamics):
                 from_node   = node
                 to_node     = random.randint(0, graph_state.get_number_of_nodes() - 1)
 
-                amount      = graph_state.get_amount(from_node)
-                amount      = amount/self.number_of_connections
+                amount = self.calculate_amount(graph_state, from_node)
 
                 graph_state.transfer_amount(from_node, to_node, amount)
 
