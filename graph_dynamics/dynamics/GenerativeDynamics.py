@@ -9,6 +9,8 @@ import snap
 import copy
 import random
 import numpy as np
+from numpy import cumsum, sort, sum, searchsorted
+from numpy.random import rand
 import networkx as nx
 import time
 import math
@@ -539,6 +541,17 @@ class BitcoinDynamics(GraphsDynamics):
         amount      = amount/self.number_of_connections
         return amount
 
+    def weighted_pick(self, weights, n_picks):
+        """
+         Weighted random selection
+         returns n_picks random indexes.
+         the chance to pick the index i
+         is give by the weight weights[i].
+        """
+        t = cumsum(weights)
+        s = sum(weights)
+        return searchsorted(t, rand(n_picks) * s)
+
     def set_connections(self, graph_state):
 
         # list of choosed active nodes
@@ -547,12 +560,21 @@ class BitcoinDynamics(GraphsDynamics):
         for node in active_nodes:
             # 3-tuples (u,v,d) for an edge attribute dict d, or
             # select random M nodes to make M connection
+            from_node = node
+            memory_nodes = graph_state.get_memory(from_node)
+
+            weights = np.array(graph_state.activity_potential[:self.number_of_nodes])
+            if len(memory_nodes) > 0:
+                w = weights[memory_nodes]
+                w = w *2
+                weights[memory_nodes] = w
+
+            to_list = self.weighted_pick(weights, self.number_of_connections)
+
             selected_nodes = []
-            for e in range(self.number_of_connections):
+            for idx, to_node in enumerate(to_list):
 
-                from_node   = node
-                to_node     = random.randint(0, graph_state.get_number_of_nodes() - 1)
-
+                # to_node     = random.randint(0, graph_state.get_number_of_nodes() - 1)
                 amount = self.calculate_amount(graph_state, from_node)
 
                 graph_state.transfer_amount(from_node, to_node, amount)
@@ -563,6 +585,8 @@ class BitcoinDynamics(GraphsDynamics):
                 }
                 edge = (from_node, to_node, data_node)
                 selected_nodes.append(edge)
+
+                graph_state.memory_append(from_node, to_node)
 
 
             # the connections are made as bucket and in our case each time connection step is a day in real life

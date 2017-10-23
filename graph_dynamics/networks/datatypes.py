@@ -602,6 +602,9 @@ class BitcoinGraph(ActivityDrivenGraph):
 
 
     def add_amount(self, node, amount):
+        a = self.networkx_graph.nodes()
+        b =self.networkx_graph.node[node]
+        am = self.networkx_graph.node[node]['amount']
         self.networkx_graph.node[node]['amount'] += amount
 
 
@@ -612,6 +615,28 @@ class BitcoinGraph(ActivityDrivenGraph):
     def get_nodes_amounts(self):
         return [self.networkx_graph.node[node]['amount'] for node in self.networkx_graph.nodes()]
 
+    def memory_append(self, from_node, to_node):
+        hasMemory = 'memory' in self.networkx_graph.node[from_node]
+
+        if(hasMemory==False):
+            self.networkx_graph.node[from_node]['memory'] = list()
+
+
+        memory = self.networkx_graph.node[from_node]['memory']
+        if(len(memory) == 5):
+            memory.pop(0)
+
+        memory.append(to_node)
+
+        self.networkx_graph.node[from_node]['memory'] = memory
+
+    def get_memory(self, node):
+        hasMemory = 'memory' in self.networkx_graph.node[node]
+
+        if (hasMemory == False):
+            self.networkx_graph.node[node]['memory'] = list()
+
+        return self.networkx_graph.node[node]['memory']
 
 
 #==============================================================
