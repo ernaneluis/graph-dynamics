@@ -11,6 +11,8 @@ import unittest
 from itertools import groupby
 # import matplotlib.pyplot as plt
 import networkx as nx
+from networkx.readwrite import json_graph
+
 import pymongo
 from pymongo import MongoClient
 import psycopg2
@@ -168,7 +170,7 @@ class SimulationBitcoinDynamics(SimulationDynamics):
         DYNAMICS_PARAMETERS = {"number_of_steps": 24,
                                "number_of_steps_in_memory": 1,
                                "simulations_directory": "/Volumes/Ernane/simulations/",
-                               "dynamics_identifier": "bitcoinmodelmemory1",
+                               "dynamics_identifier": "bitcoinmodelmemoryto8",
                                "graph_class": "BitcoinGraph",
                                "datetime_timeseries": False,
                                "initial_date": 0,
@@ -204,7 +206,7 @@ class SimulationBitcoinDynamics(SimulationDynamics):
             "amount_pareto_gama": 2.8,
             "amount_threshold": 0.0001,
             "activity_transfer_function": "x/math.sqrt(1+pow(x,2))",
-            "number_new_nodes": 10
+            "number_new_nodes": 5
         }
 
         self.gd_dir = DYNAMICS_PARAMETERS["simulations_directory"] + DYNAMICS_PARAMETERS[
@@ -217,7 +219,40 @@ class SimulationBitcoinDynamics(SimulationDynamics):
         #Defines the graph ====================================================================
         initial_graph  = nx.Graph()
         initial_graph.add_nodes_from(list(xrange(self.model_dynamics_parameters["number_of_nodes"])))
-        return graph_datatypes.BitcoinGraph(graph_state={"None": None}, networkx_graph=initial_graph)
+
+        max_number_of_nodes = self.model_dynamics_parameters["number_of_nodes"] \
+                              + ((self.DYNAMICS_PARAMETERS["number_of_steps"] - 1)
+                                 * self.model_dynamics_parameters["number_new_nodes"])
+
+        # memory = [list() for n in self.model_dynamics_parameters["number_of_nodes"]]
+        # graph_state = json.dumps(memory)
+        #
+        #
+
+        gstate = {"None": None}
+
+        btg = graph_datatypes.BitcoinGraph(graph_state=gstate,
+                                           networkx_graph=initial_graph)
+        # btg.number_of_connections =
+
+        btg.init_amount(max_number_of_nodes ,self.model_dynamics_parameters["amount_pareto_gama"], self.model_dynamics_parameters["amount_threshold"])
+
+        # ==================  set up the initial activity potential  =======================================
+        btg.init_activity_potential(max_number_of_nodes,
+                                    self.model_dynamics_parameters["activity_gamma"],
+                                    self.model_dynamics_parameters["activity_threshold_min"],
+                                    self.model_dynamics_parameters["activity_rescaling_factor"],
+                                    self.model_dynamics_parameters["activity_delta_t"])
+
+        btg.set_nodes_active()
+        btg.set_connections(number_of_connections=self.model_dynamics_parameters["number_of_connections"],
+                            delta_in_seconds=self.model_dynamics_parameters["delta_in_seconds"])
+        btg.update_graph_state()
+
+        # gstate = json_graph.node_link_data(btg)
+        # gstate = gstate["nodes"]
+
+        return btg
 
 
     def run_dynamics(self, initial_graph):

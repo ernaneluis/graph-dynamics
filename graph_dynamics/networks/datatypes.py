@@ -7,12 +7,17 @@ Created on May 3, 2017
 
 import copy
 import cPickle
-import matplotlib
 import numpy as np
 from networkx import nx
-from collections import namedtuple
-from matplotlib import pyplot as plt
-from scipy.integrate import quadrature
+from networkx.readwrite import json_graph
+from numpy import cumsum, sort, sum, searchsorted
+from numpy.random import rand
+from numpy.random import choice
+
+import time
+import random
+import math
+
 from scipy.stats import poisson, gamma
 from abc import ABCMeta, abstractmethod
 from scipy.stats import pareto, norm, bernoulli
@@ -535,6 +540,10 @@ class ActivityDrivenGraph(VanillaGraph):
 
         # return self
 
+    def set_nodes_active(self):
+        for n in self.networkx_graph.nodes():
+            self.set_node_type(n)
+
     def get_active_nodes(self):
         # return the list of choosed active nodes
         return [n for n in self.networkx_graph.nodes() if self.networkx_graph.node[n]['type'] == 1]
@@ -579,8 +588,63 @@ class BitcoinGraph(ActivityDrivenGraph):
 
         ######################### config variables #########################
         ActivityDrivenGraph.__init__(self, graph_state, networkx_graph)
-        # self, identifier_string, graph_state, networkx_graph, number_of_nodes, activity_gamma, rescaling_factor, threshold_min, delta_t)
 
+
+    # ==================================== INIT FUNCTIONS ====================================
+
+    def init_amount(self, size, amount_pareto_gama, amount_threshold):
+        # calculate the wealth distribution following pareto law
+        A = pareto.rvs(amount_pareto_gama, loc=amount_threshold, scale=1, size=size)
+        # A = A / max(A)
+        self.set_amount(A)
+
+    def init_activity_potential(self, size, activity_gamma, threshold_min, activity_rescaling_factor, activity_delta_t):
+        ## calculating the activity potential following pareto distribution
+        X = pareto.rvs(activity_gamma, loc=threshold_min, size=size)  # get N samples from  pareto distribution
+        # X = X / max(X)  # every one smaller than one
+        # return np.take(X, np.where(X > threshold_min)[0])  # using the thershold
+
+        # X = self.softmax(X)
+        self.set_activity(X, activity_rescaling_factor, activity_delta_t)
+        # set_activity(self, activity_potential, activity_rescaling_factor, activity_delta_t):
+        return X
+
+    # ==================================== ACTIVITY FUNCTIONS ====================================
+
+    def transfer_function(self, x):
+        # log sigmoid
+        # return  1/( 1 +pow(math.e,(-1*x)) ) : model 2
+        # return x/(1+abs(x)) model 5 0.32
+        return x / math.sqrt(1 + pow(x, 2))
+
+    def recalculate_activity_potential(self):
+        # run over all nodes to set initial attributes
+        for n, node in enumerate(self.networkx_graph.nodes()):
+            money_i_t   = self.networkx_graph.node[n]['amount']
+            alpha       = self.get_activity_firing_rate(n)
+            activity_i  = self.transfer_function(alpha * money_i_t)
+
+            self.activity_potential[n] = activity_i
+            self.set_activity_node(n, activity_i)
+
+        # activity_potential = activity_potential / max(activity_potential)
+        # activity_potential = self.softmax(activity_potential)
+        # return graph_state
+
+        # TODO a_i(t) = log(alpha * Money_i(t))
+        # TODO 1/1-pow(e, (-a*Money_i(t)) )
+
+
+        # def random_pick(self, some_list, probabilities):
+        #     x = random.uniform(0, 1)
+        #     cumulative_probability = 0.0
+        #     for item, item_probability in zip(some_list, probabilities):
+        #         cumulative_probability += item_probability
+        #         if x < cumulative_probability: break
+        #     return item
+        #
+
+    # ==================================== AMOUNT FUNCTIONS ====================================
 
     def set_amount(self, amount):
         self.amount = amount
@@ -588,6 +652,21 @@ class BitcoinGraph(ActivityDrivenGraph):
         for n in self.networkx_graph.nodes():
             # setting the node the initial amount of wealth
             self.networkx_graph.node[n]['amount'] = amount[n]
+
+    def get_amount(self, node):
+        return self.networkx_graph.node[node]['amount']
+
+    def add_amount(self, node, amount):
+        a = self.networkx_graph.nodes()
+        b =self.networkx_graph.node[node]
+        am = self.networkx_graph.node[node]['amount']
+        self.networkx_graph.node[node]['amount'] += amount
+
+    def remove_amount(self, node, amount):
+        self.networkx_graph.node[node]['amount'] -= amount
+
+    def get_nodes_amounts(self):
+        return [self.networkx_graph.node[node]['amount'] for node in self.networkx_graph.nodes()]
 
     def transfer_amount(self, _from, _to, amount_to_move):
         # right now when a walker move, he moves all the money
@@ -597,38 +676,23 @@ class BitcoinGraph(ActivityDrivenGraph):
         self.add_amount(_to, amount_to_move)
         return amount_to_move
 
-    def get_amount(self, node):
-        return self.networkx_graph.node[node]['amount']
-
-
-    def add_amount(self, node, amount):
-        a = self.networkx_graph.nodes()
-        b =self.networkx_graph.node[node]
-        am = self.networkx_graph.node[node]['amount']
-        self.networkx_graph.node[node]['amount'] += amount
-
-
-    def remove_amount(self, node, amount):
-        self.networkx_graph.node[node]['amount'] -= amount
-
-
-    def get_nodes_amounts(self):
-        return [self.networkx_graph.node[node]['amount'] for node in self.networkx_graph.nodes()]
+    # ==================================== MEMORY FUNCTIONS ====================================
 
     def memory_append(self, from_node, to_node):
-        hasMemory = 'memory' in self.networkx_graph.node[from_node]
+        # save on node 'to' who send the money
+        hasMemory = 'memory' in self.networkx_graph.node[to_node]
 
         if(hasMemory==False):
-            self.networkx_graph.node[from_node]['memory'] = list()
+            self.networkx_graph.node[to_node]['memory'] = list()
 
 
-        memory = self.networkx_graph.node[from_node]['memory']
+        memory = self.networkx_graph.node[to_node]['memory']
         if(len(memory) == 5):
             memory.pop(0)
 
-        memory.append(to_node)
+        memory.append(from_node)
 
-        self.networkx_graph.node[from_node]['memory'] = memory
+        self.networkx_graph.node[to_node]['memory'] = memory
 
     def get_memory(self, node):
         hasMemory = 'memory' in self.networkx_graph.node[node]
@@ -637,6 +701,84 @@ class BitcoinGraph(ActivityDrivenGraph):
             self.networkx_graph.node[node]['memory'] = list()
 
         return self.networkx_graph.node[node]['memory']
+
+    # ==================================== OTHER FUNCTIONS ====================================
+
+    def update_graph_state(self):
+        gstate = json_graph.node_link_data(self.networkx_graph)
+        gstate = gstate["nodes"]
+        self.graph_state = gstate
+
+    def calculate_amount(self, from_node, number_of_connections):
+        amount      = self.get_amount(from_node)
+        amount      = amount/number_of_connections
+        return amount
+
+    def set_connections(self, number_of_connections, delta_in_seconds):
+
+        # list of choosed active nodes
+        active_nodes = self.get_active_nodes()
+        # for each selected node make M connections
+        for node in active_nodes:
+            # 3-tuples (u,v,d) for an edge attribute dict d, or
+            # select random M nodes to make M connection
+            from_node    = node
+            memory_nodes = self.get_memory(from_node)
+            n_nodes      = self.get_number_of_nodes()
+            elements     = self.networkx_graph.nodes()
+            weights      = np.array(self.activity_potential[:n_nodes])
+
+            if len(memory_nodes) > 0:
+                w = weights[memory_nodes]
+                w = w * 20
+                weights[memory_nodes] = w
+
+            weights_p = self.softmax(weights)
+
+            to_list = choice(elements, p=weights_p, size=number_of_connections, replace=True)
+
+            selected_nodes = []
+            for idx, to_node in enumerate(to_list):
+                # to_node     = random.randint(0, graph_state.get_number_of_nodes() - 1)
+                amount = self.calculate_amount(from_node, number_of_connections)
+
+                self.transfer_amount(from_node, to_node, amount)
+
+                data_node = {
+                    'time': random.randint(int(time.time()), int(time.time()) + delta_in_seconds),
+                    'amount': amount
+                }
+                edge = (from_node, to_node, data_node)
+                selected_nodes.append(edge)
+
+                self.memory_append(from_node, to_node)
+
+            # the connections are made as bucket and in our case each time connection step is a day in real life
+            # we must simulate a day of connections by timestamp
+
+            self.networkx_graph.add_edges_from(selected_nodes)
+
+    def add_new_nodes(self, number_new_nodes):
+
+        for i in range(number_new_nodes):
+            max_node_id = max(self.networkx_graph.nodes())
+
+            new_node_id = max_node_id + 1
+            new_node_amount = self.amount[new_node_id]
+            new_node_activity_firing_rate = self.activity_potential[new_node_id]
+            new_node_type = 0  # not active
+
+            self.add_new_node(new_node_id, new_node_amount, new_node_activity_firing_rate, new_node_type)
+
+
+
+     # https://en.m.wikipedia.org/wiki/Softmax_function
+    def softmax(self, X):
+        z_exp = [math.exp(i) for i in X]
+        sum_z_exp = sum(z_exp)
+        softmax = [i / sum_z_exp for i in z_exp]
+        s = sum(softmax)
+        return softmax
 
 
 #==============================================================
