@@ -275,20 +275,150 @@ class SimulationBitcoinDynamics(SimulationDynamics):
 
         self.apply_macro(self.gd_dir, self.gd_name, self.MACROSTATES_PARAMETERS)
 
+
+class SimulationBitcoinMemoryDynamics(SimulationDynamics):
+
+
+    def __init__(self):
+        DYNAMICS_PARAMETERS = {"number_of_steps": 24,
+                               "number_of_steps_in_memory": 1,
+                               "simulations_directory": "/Volumes/Ernane/simulations/",
+                               "dynamics_identifier": "bitcoinactivitymemory3",
+                               "graph_class": "BitcoinGraph",
+                               "datetime_timeseries": False,
+                               "initial_date": 0,
+                               "verbose": True,
+                               "macrostates": []
+                               }
+
+        temporalmotif_nargs = {
+            "delta": 3600,  # deltas as 1h  in seconds
+        }
+
+        MACROSTATES_PARAMETERS = [
+            ("basic_stats", ()),
+            # ("basic_stats", ()),
+            # ("advanced_stats", ()),
+            # ("degree_centrality", ()),
+            # ("degree_nodes", ()),
+            ("temporalmotif", (temporalmotif_nargs,))
+        ]
+
+        model_dynamics_parameters = {
+            "name_string": "BitcoinMemoryGraph",
+            "number_of_nodes": 1000,
+            "activity_gamma": 2,  # or 2.8
+            "activity_rescaling_factor": 1, # avr number of active nodes per unit of time
+            "activity_threshold_min": 0.0001,
+            "activity_delta_t": 1,
+            "memory_activity_gamma": 2,  # or 2.8
+            "memory_activity_rescaling_factor": 1,  # avr number of active nodes per unit of time
+            "memory_activity_threshold_min": 0.0001,
+            "memory_activity_delta_t": 1,
+            "memory_number_of_connections": 1,
+            "graph_state": {"None": None},
+            "networkx_graph": None,  # the initial graph: used for empiral data
+            "number_of_connections": 10,  # max number of connection a node can make
+            "delta_in_seconds": 3600,
+            "number_walkers": 100,
+            "amount_pareto_gama": 2.8,
+            "amount_threshold": 0.0001,
+            "activity_transfer_function": "x/math.sqrt(1+pow(x,2))",
+            "number_new_nodes": 5
+        }
+
+        self.gd_dir = DYNAMICS_PARAMETERS["simulations_directory"] + DYNAMICS_PARAMETERS[
+            "dynamics_identifier"] + "_gd/"
+        self.gd_name = DYNAMICS_PARAMETERS["dynamics_identifier"]
+
+        SimulationDynamics.__init__(self, DYNAMICS_PARAMETERS, temporalmotif_nargs, MACROSTATES_PARAMETERS, model_dynamics_parameters)
+
+    def define_initial_graph(self):
+        #Defines the graph ====================================================================
+        initial_graph  = nx.Graph()
+        initial_graph.add_nodes_from(list(xrange(self.model_dynamics_parameters["number_of_nodes"])))
+
+        max_number_of_nodes = self.model_dynamics_parameters["number_of_nodes"] \
+                              + ((self.DYNAMICS_PARAMETERS["number_of_steps"] - 1)
+                                 * self.model_dynamics_parameters["number_new_nodes"])
+
+        # memory = [list() for n in self.model_dynamics_parameters["number_of_nodes"]]
+        # graph_state = json.dumps(memory)
+        #
+        #
+
+        gstate = {"None": None}
+
+        btg = graph_datatypes.BitcoinMemoryGraph(graph_state=gstate,
+                                           networkx_graph=initial_graph)
+        # btg.number_of_connections =
+
+        btg.init_amount(max_number_of_nodes ,self.model_dynamics_parameters["amount_pareto_gama"], self.model_dynamics_parameters["amount_threshold"])
+
+        # ==================  set up the initial activity potential  =======================================
+        btg.init_activity_potential(max_number_of_nodes,
+                                    self.model_dynamics_parameters["activity_gamma"],
+                                    self.model_dynamics_parameters["activity_threshold_min"],
+                                    self.model_dynamics_parameters["activity_rescaling_factor"],
+                                    self.model_dynamics_parameters["activity_delta_t"])
+
+        # ==================  set up the initial memory activity potential  =======================================
+        btg.init_memory_activity_potential(max_number_of_nodes,
+                                    self.model_dynamics_parameters["memory_activity_gamma"],
+                                    self.model_dynamics_parameters["memory_activity_threshold_min"],
+                                    self.model_dynamics_parameters["memory_activity_rescaling_factor"],
+                                    self.model_dynamics_parameters["memory_activity_delta_t"])
+
+        btg.set_nodes_active()
+        btg.set_nodes_memory_active()
+
+        btg.set_connections(number_of_connections=self.model_dynamics_parameters["number_of_connections"],
+                            delta_in_seconds=self.model_dynamics_parameters["delta_in_seconds"])
+
+
+
+        btg.update_graph_state()
+
+        return btg
+
+
+    def run_dynamics(self, initial_graph):
+
+        # defines Dynamics ====================================================================
+        dynamics_obj = dynamics.BitcoinMemoryDynamics(
+            initial_graph=initial_graph,
+            DYNAMICAL_PARAMETERS=self.DYNAMICS_PARAMETERS,
+            extra_parameters= self.model_dynamics_parameters)
+
+        self.evolve_dynamics(dynamics_obj, initial_graph)
+
+    def compute(self):
+
+        self.run_dynamics(self.define_initial_graph())
+
+        self.compress_gd(self.gd_dir, self.gd_name)
+
+        self.apply_macro(self.gd_dir, self.gd_name, self.MACROSTATES_PARAMETERS)
+
 if __name__ == '__main__':
 
     # simulation      = SimulationActivityDrivenDynamics()
     # simulation.compute()
 
-    simulation2 = SimulationBitcoinDynamics()
-    simulation2.compute()
+    # simulation = SimulationBitcoinDynamics()
+    # simulation.compute()
+
+    simulation = SimulationBitcoinMemoryDynamics()
+    simulation.compute()
+
+
 
 
     # comparing to golden model
     golden_gd_directory =  "/Volumes/Ernane/simulations/daymodel122_gd/"
     golden_macrostate_file_indentifier = "daymodel122"
-    simulation_gd_directory = simulation2.gd_dir
-    simulation_macrostate_file_indentifier = simulation2.gd_name
+    simulation_gd_directory = simulation.gd_dir
+    simulation_macrostate_file_indentifier = simulation.gd_name
     ALL_TIME_INDEXES = range(0,1)
 
     analysis = analysis_multiple.TemporalmotifAnalysisMultiple(golden_gd_directory, golden_macrostate_file_indentifier, simulation_gd_directory, simulation_macrostate_file_indentifier, ALL_TIME_INDEXES)
