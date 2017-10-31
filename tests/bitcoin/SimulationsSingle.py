@@ -451,11 +451,11 @@ if __name__ == '__main__':
     # simulation = SimulationBitcoinDynamics()
     # simulation.compute()
 
+
+
+
     simulation = SimulationBitcoinMemoryDynamics()
-    # simulation.compute()
-
-
-
+    simulation.compute()
 
     # comparing to golden model
     golden_gd_directory =  ["/Volumes/Ernane/simulations/daymodel122_gd/", "/Volumes/Ernane/simulations/daymodel165_gd/", "/Volumes/Ernane/simulations/daymodel210_gd/"]
@@ -472,7 +472,8 @@ if __name__ == '__main__':
     error = analysis.compute_error_by_time()
     print error
 
-    analysis.view_multiple_bar([analysis.golden_temporalmotif_by_time[0], analysis.golden_temporalmotif_by_time[1], analysis.golden_temporalmotif_by_time[2], analysis.simulation_temporalmotif_by_time  ],
-                                ["daymodel122", "daymodel165", "daymodel210", "Simulation"])
+    # TODO bar plot
+    # analysis.view_multiple_bar([analysis.golden_temporalmotif_by_time[0], analysis.golden_temporalmotif_by_time[1], analysis.golden_temporalmotif_by_time[2], analysis.simulation_temporalmotif_by_time  ],
+    #                             ["daymodel122", "daymodel165", "daymodel210", "Simulation"])
 
 

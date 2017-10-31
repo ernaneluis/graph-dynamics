@@ -178,9 +178,9 @@ class TemporalmotifAnalysisMultiple(object):
             data_norm = self.normalize(data)
             print labels[idx]
 
-            prettylist2g = lambda l: '[%s]' % ', '.join("%.2g" % x for x in l)
+            prettylist2g = lambda l: '[%s]' % ', '.join("%d" % x for x in l)
 
-            print prettylist2g(data_norm)
+            print prettylist2g(data)
             # data_norm2 = self.normalize(data[1])
 
 
