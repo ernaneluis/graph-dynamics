@@ -39,6 +39,10 @@ class SimulationDynamics(object):
         self.MACROSTATES_PARAMETERS = MACROSTATES_PARAMETERS
         self.model_dynamics_parameters = model_dynamics_parameters
 
+        self.gd_dir = DYNAMICS_PARAMETERS["simulations_directory"] + DYNAMICS_PARAMETERS[
+            "dynamics_identifier"] + "_gd/"
+        self.gd_name = DYNAMICS_PARAMETERS["dynamics_identifier"]
+
 
     def save_parameters(self):
 
@@ -63,18 +67,18 @@ class SimulationDynamics(object):
         dynamics_obj.evolve(N=self.DYNAMICS_PARAMETERS["number_of_steps"], initial_graph=initial_graph)
         self.save_parameters()
 
-    def apply_macro(self, gd_directory, gd_name, macro_params ):
+    def apply_macro(self):
         # compute macros
-        Macrostates.evaluate_vanilla_macrostates(gd_directory, macro_params, gd_name)
+        Macrostates.evaluate_vanilla_macrostates(self.gd_dir, self.MACROSTATES_PARAMETERS, self.gd_name)
 
-    def compress_gd(self, gd_directory, gd_name):
+    def compress_gd(self):
 
-        time_indexes = map(int, [filename.split("_")[2] for filename in os.listdir(gd_directory) if "_gGD_" in filename])
+        time_indexes = map(int, [filename.split("_")[2] for filename in os.listdir(self.gd_dir) if "_gGD_" in filename])
         time_indexes = sorted(time_indexes)
 
-        final_file = gd_directory + gd_name + "_gGD_0_.gd"
+        final_file = self.gd_dir + self.gd_name + "_gGD_0_.gd"
 
-        filenames = [gd_directory + gd_name + "_gGD_" + str(idx) + "_.gd" for idx in time_indexes]
+        filenames = [self.gd_dir + self.gd_name + "_gGD_" + str(idx) + "_.gd" for idx in time_indexes]
         with open(final_file, 'w') as outfile:
             for fname in filenames:
                 with open(fname) as infile:
@@ -327,9 +331,6 @@ class SimulationBitcoinMemoryDynamics(SimulationDynamics):
             "number_new_nodes": 5
         }
 
-        self.gd_dir = DYNAMICS_PARAMETERS["simulations_directory"] + DYNAMICS_PARAMETERS[
-            "dynamics_identifier"] + "_gd/"
-        self.gd_name = DYNAMICS_PARAMETERS["dynamics_identifier"]
 
         SimulationDynamics.__init__(self, DYNAMICS_PARAMETERS, temporalmotif_nargs, MACROSTATES_PARAMETERS, model_dynamics_parameters)
 
@@ -381,7 +382,6 @@ class SimulationBitcoinMemoryDynamics(SimulationDynamics):
 
         return btg
 
-
     def run_dynamics(self, initial_graph):
 
         # defines Dynamics ====================================================================
@@ -396,11 +396,54 @@ class SimulationBitcoinMemoryDynamics(SimulationDynamics):
 
         self.run_dynamics(self.define_initial_graph())
 
-        self.compress_gd(self.gd_dir, self.gd_name)
+        self.compress_gd()
 
-        self.apply_macro(self.gd_dir, self.gd_name, self.MACROSTATES_PARAMETERS)
+        self.apply_macro()
+
+
+class MarcoFromGD(SimulationDynamics):
+
+
+    def __init__(self, dir, name):
+        DYNAMICS_PARAMETERS = {"number_of_steps": 24,
+                               "number_of_steps_in_memory": 1,
+                               "simulations_directory": dir,
+                               "dynamics_identifier": name,
+                               "graph_class": "BitcoinGraph",
+                               "datetime_timeseries": False,
+                               "initial_date": 0,
+                               "verbose": True,
+                               "macrostates": []
+                               }
+
+        temporalmotif_nargs = {
+            "delta": 3600,  # deltas as 1h  in seconds
+        }
+
+        MACROSTATES_PARAMETERS = [
+            ("basic_stats", ()),
+            # ("basic_stats", ()),
+            # ("advanced_stats", ()),
+            # ("degree_centrality", ()),
+            # ("degree_nodes", ()),
+            ("temporalmotif", (temporalmotif_nargs,))
+        ]
+
+        SimulationDynamics.__init__(self, DYNAMICS_PARAMETERS, temporalmotif_nargs, MACROSTATES_PARAMETERS, {})
+
+        # self.apply_macro()
+
+    def define_initial_graph(self):
+        a = 1
+
+    def run_dynamics(self, initial_graph):
+        a = 1
+
 
 if __name__ == '__main__':
+
+    # macro = MarcoFromGD("/Volumes/Ernane/simulations/", "daymodel165")
+    # macro.apply_macro()
 
     # simulation      = SimulationActivityDrivenDynamics()
     # simulation.compute()
@@ -409,16 +452,19 @@ if __name__ == '__main__':
     # simulation.compute()
 
     simulation = SimulationBitcoinMemoryDynamics()
-    simulation.compute()
+    # simulation.compute()
 
 
 
 
     # comparing to golden model
-    golden_gd_directory =  "/Volumes/Ernane/simulations/daymodel122_gd/"
-    golden_macrostate_file_indentifier = "daymodel122"
+    golden_gd_directory =  ["/Volumes/Ernane/simulations/daymodel122_gd/", "/Volumes/Ernane/simulations/daymodel165_gd/", "/Volumes/Ernane/simulations/daymodel210_gd/"]
+
+    golden_macrostate_file_indentifier = ["daymodel122", "daymodel165", "daymodel210"]
+
     simulation_gd_directory = simulation.gd_dir
     simulation_macrostate_file_indentifier = simulation.gd_name
+
     ALL_TIME_INDEXES = range(0,1)
 
     analysis = analysis_multiple.TemporalmotifAnalysisMultiple(golden_gd_directory, golden_macrostate_file_indentifier, simulation_gd_directory, simulation_macrostate_file_indentifier, ALL_TIME_INDEXES)
@@ -426,7 +472,7 @@ if __name__ == '__main__':
     error = analysis.compute_error_by_time()
     print error
 
-    analysis.view_multiple_bar([analysis.golden_temporalmotif_by_time[0], analysis.simulation_temporalmotif_by_time[0]],
-                           ["Bitcoin", "Simulation"])
+    analysis.view_multiple_bar([analysis.golden_temporalmotif_by_time[0], analysis.golden_temporalmotif_by_time[1], analysis.golden_temporalmotif_by_time[2], analysis.simulation_temporalmotif_by_time  ],
+                                ["daymodel122", "daymodel165", "daymodel210", "Simulation"])
 
 

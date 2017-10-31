@@ -106,8 +106,8 @@ class Test(unittest.TestCase):
 
     def compute(self):
 
-        path            = "/Users/ernaneluis/Developer/master_thesis/bigclam/bitcoin/"
-        name            = "bitcoin"
+        path            = "/Volumes/Ernane/simulations/"
+        name            = "daymodel165"
 
         # # 1.
         time_indexes, series_graph = self.load_graph_dynamics(path, name)
@@ -116,7 +116,7 @@ class Test(unittest.TestCase):
         # # 3.
         temporal_count  = self.temporal_motif(file_path, path)
         # # 4Z.
-        self.view(temporal_count, path)
+        # self.view(temporal_count, path)
 
         print "done"
 

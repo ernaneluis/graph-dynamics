@@ -1,0 +1,1 @@
+{"number_of_steps_in_memory": 1, "simulations_directory": "/Volumes/Ernane/simulations/", "number_of_steps": 24, "dynamics_identifier": "bitcoinactivitymemory3", "initial_date": 0, "verbose": true, "macrostates": [], "datetime_timeseries": false, "graph_class": "BitcoinGraph", "DynamicsClassParameters": {"ActivityDrivenDynamics": null}}

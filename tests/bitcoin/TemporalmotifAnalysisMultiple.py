@@ -31,17 +31,25 @@ class TemporalmotifAnalysisMultiple(object):
     # simulation_macrostate_file_indentifier = "bitcoinmodel1"
 
 
-        self.golden_gd_directory = golden_gd_directory
-        self.golden_macrostate_file_indentifier = golden_macrostate_file_indentifier
+        self.golden_gd_directory = golden_gd_directory # array
+        self.golden_macrostate_file_indentifier = golden_macrostate_file_indentifier # array
+
         self.simulation_gd_directory = simulation_gd_directory
         self.simulation_macrostate_file_indentifier = simulation_macrostate_file_indentifier
+
         self.ALL_TIME_INDEXES = ALL_TIME_INDEXES
 
-        self.golden_temporalmotif_by_time = self.temporalmotif_by_time(ALL_TIME_INDEXES, golden_gd_directory,
-                                                              golden_macrostate_file_indentifier)
+        self.golden_temporalmotif_by_time = [] # array of temporal motifs by time = array of array
+        for idx, golden_gd_dir in enumerate(golden_gd_directory):
+
+            golden_gd_name = golden_macrostate_file_indentifier[idx]
+            temporal_by_time_i = self.temporalmotif_by_time(ALL_TIME_INDEXES, golden_gd_dir, golden_gd_name)
+
+            self.golden_temporalmotif_by_time.append(temporal_by_time_i)
+
 
         self.simulation_temporalmotif_by_time = self.temporalmotif_by_time(ALL_TIME_INDEXES, simulation_gd_directory,
-                                                                  simulation_macrostate_file_indentifier)
+                                                                  simulation_macrostate_file_indentifier) # array
 
 
         self.motifslabels = ["$M_{1,1}$", "$M_{1,2}$", "$M_{1,3}$", "$M_{1,4}$", "$M_{1,5}$", "$M_{1,6}$",
@@ -83,18 +91,27 @@ class TemporalmotifAnalysisMultiple(object):
 
     def compute_error_by_time(self):
 
-        timeline = []
-        for idx, row in enumerate(self.golden_temporalmotif_by_time):
-            golden_temporalmotif = self.golden_temporalmotif_by_time[idx]
-            simulation_temporalmotif = self.simulation_temporalmotif_by_time[idx]
+        errors = []
+        for idy, item_golden_temporalmotif in enumerate(self.golden_temporalmotif_by_time):
+            golden_i_errors_timeline = []
+            name_error = self.golden_macrostate_file_indentifier[idy]
 
-            golden_temporalmotif_norm = self.normalize(golden_temporalmotif)
-            simulation_temporalmotif_norm = self.normalize(simulation_temporalmotif)
-            error_i = self.error1(simulation_temporalmotif_norm, golden_temporalmotif_norm)
-            timeline.append(error_i)
+            for idx, golden_temporalmotif in enumerate(item_golden_temporalmotif):
 
-        np.savetxt(self.simulation_gd_directory + self.golden_macrostate_file_indentifier + '.error', timeline, delimiter=',', fmt='%f')
-        return timeline
+                simulation_temporalmotif = self.simulation_temporalmotif_by_time[idx]
+
+                golden_temporalmotif_norm = self.normalize(golden_temporalmotif)
+                simulation_temporalmotif_norm = self.normalize(simulation_temporalmotif)
+
+                error_i = self.error1(simulation_temporalmotif_norm, golden_temporalmotif_norm)
+                golden_i_errors_timeline.append(error_i)
+
+
+            np.savetxt(self.simulation_gd_directory + name_error + '.error', golden_i_errors_timeline, delimiter=',', fmt='%f')
+            errors.append(golden_i_errors_timeline)
+
+
+        return errors
 
     def normalize_series(self, series):
         norm_series = []
@@ -144,29 +161,49 @@ class TemporalmotifAnalysisMultiple(object):
         plt.grid(True)
         plt.show()
 
-    def view_multiple_bar(self, data, labels):
+
+    def view_multiple_bar(self, datas, labels):
 
         fig = plt.figure(figsize=(31, 14))
         ax = fig.add_subplot(111)
 
-        data_norm1 = self.normalize(data[0])
-        data_norm2 = self.normalize(data[1])
+        w = 0.8
+        x = np.array(range(1, 37))
+        count = len(datas)
 
-        w = 0.4
-        x1 = np.array(range(1,37))
-        x2 = x1 + w
+        ind = np.arange(36)
 
-        plt.bar(x1, data_norm1, w, label=labels[0])
-        plt.bar(x2, data_norm2, w, label=labels[1])
+        for idx, data in enumerate(datas):
+            data = data[0]
+            data_norm = self.normalize(data)
+            print labels[idx]
+
+            prettylist2g = lambda l: '[%s]' % ', '.join("%.2g" % x for x in l)
+
+            print prettylist2g(data_norm)
+            # data_norm2 = self.normalize(data[1])
 
 
+            # x = x + w
+
+            # plt.bar(ind, data_norm, w, label=labels[idx])
+            # id = idx+1
+            a = ind+(w*idx)
+            rects = ax.bar(a,data_norm, w, label=labels[idx])
+
+
+        ax.set_xticks(ind + w/2)
+
+        # ax.set_xlim(-w, len(ind) + w)
+        # ax.set_xticks(ind + w)
+        # ax.autoscale(tight=True)
         # ax.set_xlim(36)
-        xlabels = self.motifslabels
-        ax.set_xticks(range(1, 37))
-        # ax.set_xticks(x)
-        ax.set_xticklabels(xlabels)
 
+        # ax.set_xticks(range(1, 37))
+        xlabels = self.motifslabels
+        ax.set_xticklabels(xlabels)
         plt.xlabel("Patterns")
+
 
         ax.set_yticks(pylab.frange(0,1,0.1))
         ax.set_ylim(0, 1)
@@ -175,8 +212,8 @@ class TemporalmotifAnalysisMultiple(object):
 
         plt.subplots_adjust(left=0.035, right=0.98, top=0.95, bottom=0.11, wspace=0, hspace=0)
         plt.legend()
-        plt.grid(True)
-        fig.savefig(self.simulation_gd_directory + "barplot_"+ self.golden_macrostate_file_indentifier + "_vs_"+self.simulation_macrostate_file_indentifier+".png")
+        # plt.grid(True)
+        fig.savefig(self.simulation_gd_directory + "barplot_vs_"+self.simulation_macrostate_file_indentifier+".png")
         # plt.show()
 
 
@@ -196,5 +233,54 @@ class TemporalmotifAnalysisMultiple(object):
         # self.view_multiple_temporalmotif([golden_temporalmotif_by_time, simulation_temporalmotif_by_time], ["Temporal Motif by day(Bitcoin)", "Temporal Motif by day(Simulation)"])
 
         # self.view_multiple_bar([golden_temporalmotif_by_time[0], simulation_temporalmotif_by_time[0]], ["Bitcoin", "Simulation"])
+
+    def barplot(self, ax, dpoints):
+        '''
+        Create a barchart for data across different categories with
+        multiple conditions for each category.
+
+        @param ax: The plotting axes from matplotlib.
+        @param dpoints: The data set as an (n, 3) numpy array
+        '''
+
+        # Aggregate the conditions and the categories according to their
+        # mean values
+        conditions = [(c, np.mean(dpoints[dpoints[:, 0] == c][:, 2].astype(float)))
+                      for c in np.unique(dpoints[:, 0])]
+        categories = [(c, np.mean(dpoints[dpoints[:, 1] == c][:, 2].astype(float)))
+                      for c in np.unique(dpoints[:, 1])]
+
+        # sort the conditions, categories and data so that the bars in
+        # the plot will be ordered by category and condition
+        conditions = [c[0] for c in sorted(conditions, key=o.itemgetter(1))]
+        categories = [c[0] for c in sorted(categories, key=o.itemgetter(1))]
+
+        dpoints = np.array(sorted(dpoints, key=lambda x: categories.index(x[1])))
+
+        # the space between each set of bars
+        space = 0.3
+        n = len(conditions)
+        width = (1 - space) / (len(conditions))
+
+        # Create a set of bars at each position
+        for i, cond in enumerate(conditions):
+            indeces = range(1, len(categories) + 1)
+            vals = dpoints[dpoints[:, 0] == cond][:, 2].astype(np.float)
+            pos = [j - (1 - space) / 2. + i * width for j in indeces]
+            ax.bar(pos, vals, width=width, label=cond,
+                   color=cm.Accent(float(i) / n))
+
+        # Set the x-axis tick labels to be equal to the categories
+        ax.set_xticks(indeces)
+        ax.set_xticklabels(categories)
+        plt.setp(plt.xticks()[1], rotation=90)
+
+        # Add the axis labels
+        ax.set_ylabel("RMSD")
+        ax.set_xlabel("Structure")
+
+        # Add a legend
+        handles, labels = ax.get_legend_handles_labels()
+        ax.legend(handles[::-1], labels[::-1], loc='upper left')
 
 
