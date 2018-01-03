@@ -32,14 +32,14 @@ class TemporalMotif():
         return data.flatten().tolist()
 
     def getKey(self,item):
-        return item[2]
+        return item[2]["time"]
 
     def graphdynamics_to_temporalmotif(self, graph, input):
         # creating temporal graph file input
 
-        print "Converting to temporal #: " + input
-
         output_path = input.replace(".gd", "") + ".temporalmotif"
+
+        print "Converting graph dynamics to temporalmoitf output_path: " + output_path
 
         #if file dont exist convert it
         if os.path.isfile(output_path) == False:

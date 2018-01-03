@@ -484,12 +484,11 @@ class BitcoinMemoryDynamics(BitcoinDynamics):
         # 2 make conenctions from activacted nodes
         graph.set_connections(number_of_connections=self.number_of_connections, delta_in_seconds=self.delta_in_seconds)
 
-        graph.set_memory_connections(memory_number_of_connections=self.memory_number_of_connections, delta_in_seconds=self.delta_in_seconds)
+        if (graph.memory_size > 0):
+            graph.set_memory_connections(memory_number_of_connections=self.memory_number_of_connections, delta_in_seconds=self.delta_in_seconds)
 
         # 3 change the acitivity base on the money  f(money)  = activity
         graph.recalculate_activity_potential()
-
-        # TODO implement recalculate_memory_activity_potential
         graph.recalculate_memory_activity_potential()
 
         # 4 change the number of nodes and number of connects by function f(T) = # of nodes

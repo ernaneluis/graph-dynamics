@@ -584,6 +584,7 @@ class ActivityDrivenGraph(VanillaGraph):
 
 class BitcoinGraph(ActivityDrivenGraph):
     def __init__(self, graph_state, networkx_graph):
+        self.memory_size = 0
 
 
         ######################### config variables #########################
@@ -677,7 +678,7 @@ class BitcoinGraph(ActivityDrivenGraph):
 
 
         memory = self.networkx_graph.node[to_node]['memory']
-        if(len(memory) == 5):
+        if(len(memory) == self.memory_size):
             memory.pop(0)
 
         memory.append(from_node)
@@ -704,6 +705,7 @@ class BitcoinGraph(ActivityDrivenGraph):
         amount      = amount/number_of_connections
         return amount
 
+    # active nodes connection
     def set_connections(self, number_of_connections, delta_in_seconds):
 
         # list of choosed active nodes
@@ -713,19 +715,19 @@ class BitcoinGraph(ActivityDrivenGraph):
             # 3-tuples (u,v,d) for an edge attribute dict d, or
             # select random M nodes to make M connection
             from_node    = node
-            memory_nodes = self.get_memory(from_node)
+            # memory_nodes = self.get_memory(from_node)
             n_nodes      = self.get_number_of_nodes()
             elements     = self.networkx_graph.nodes()
-            weights      = np.array(self.activity_potential[:n_nodes])
+            # weights      = np.array(self.activity_potential[:n_nodes])
 
-            if len(memory_nodes) > 0:
-                w = weights[memory_nodes]
-                w = w * 20
-                weights[memory_nodes] = w
+            # if len(memory_nodes) > 0:
+            #     w = weights[memory_nodes]
+            #     w = w * 20
+            #     weights[memory_nodes] = w
+            #
+            # weights_p = self.softmax(weights)
 
-            weights_p = self.softmax(weights)
-
-            to_list = choice(elements, p=weights_p, size=number_of_connections, replace=True)
+            to_list = choice(elements, size=number_of_connections, replace=True)
 
             selected_nodes = []
             for idx, to_node in enumerate(to_list):
@@ -735,13 +737,15 @@ class BitcoinGraph(ActivityDrivenGraph):
                 self.transfer_amount(from_node, to_node, amount)
 
                 data_node = {
-                    'time': random.randint(int(time.time()), int(time.time()) + delta_in_seconds),
+                    # 'time': random.randint(int(time.time()), int(time.time()) + delta_in_seconds),
+                    'time': int(time.time()),
                     'amount': amount
                 }
                 edge = (from_node, to_node, data_node)
                 selected_nodes.append(edge)
 
-                self.memory_append(from_node, to_node)
+                if (self.memory_size > 0):
+                    self.memory_append(from_node, to_node)
 
             # the connections are made as bucket and in our case each time connection step is a day in real life
             # we must simulate a day of connections by timestamp
@@ -778,6 +782,7 @@ class BitcoinMemoryGraph(BitcoinGraph):
 
     def __init__(self, graph_state, networkx_graph):
         ######################### config variables #########################
+
         BitcoinGraph.__init__(self, graph_state, networkx_graph)
 
     def init_memory_activity_potential(self, size, activity_gamma, threshold_min, activity_rescaling_factor, activity_delta_t):
@@ -819,6 +824,7 @@ class BitcoinMemoryGraph(BitcoinGraph):
         isActive = bernoulli.rvs(activity_probability)
         self.networkx_graph.node[node]['memory_type'] = isActive
 
+    # memory active nodes
     def set_memory_connections(self, memory_number_of_connections, delta_in_seconds):
 
         # list of choosed active nodes
@@ -831,8 +837,10 @@ class BitcoinMemoryGraph(BitcoinGraph):
             memory_nodes    = self.get_memory(from_node)
 
             if len(memory_nodes) > 0:
+                #if replace is = true then the to_list is the size of memory_number_of_connections
+                # if is false then get error  Cannot take a larger sample than population when 'replace=False'
 
-                to_list = choice(memory_nodes, size=memory_number_of_connections)
+                to_list = choice(memory_nodes, size=memory_number_of_connections, replace=True)
 
                 selected_nodes = []
                 for idx, to_node in enumerate(to_list):
@@ -842,16 +850,16 @@ class BitcoinMemoryGraph(BitcoinGraph):
                     self.transfer_amount(from_node, to_node, amount)
 
                     data_node = {
-                        'time': random.randint(int(time.time()), int(time.time()) + delta_in_seconds),
-                        'amount': amount
+                        # 'time': random.randint(int(time.time()), int(time.time()) + delta_in_seconds),
+                        'time': int(time.time()),
+                        'amount': amount,
+                        'type:':'memory'
                     }
                     edge = (from_node, to_node, data_node)
                     selected_nodes.append(edge)
 
-                    # self.memory_append(from_node, to_node)
-
-                # the connections are made as bucket and in our case each time connection step is a day in real life
-                # we must simulate a day of connections by timestamp
+                # the connections are made as bucket and in our case each time connection step is a hour in real life
+                # we must simulate a hour of connections by timestamp
 
                 self.networkx_graph.add_edges_from(selected_nodes)
 
@@ -869,15 +877,21 @@ class BitcoinMemoryGraph(BitcoinGraph):
 
 
     def recalculate_memory_activity_potential(self):
-        a = 1
+
         # run over all nodes to set initial attributes
-        # for n, node in enumerate(self.networkx_graph.nodes()):
-        #     money_i_t   = self.networkx_graph.node[n]['amount']
-        #     alpha       = self.get_activity_firing_rate(n)
-        #     activity_i  = self.transfer_function(alpha * money_i_t)
-        #
-        #     self.activity_potential[n] = activity_i
-        #     self.set_activity_node(n, activity_i)
+        for n, node in enumerate(self.networkx_graph.nodes()):
+            money_i_t = self.networkx_graph.node[n]['amount']
+            alpha = self.get_memory_activity_firing_rate(n)
+            activity_i = self.transfer_function(alpha * money_i_t)
+
+            self.memory_activity_potential[n] = activity_i
+            self.set_activity_node(n, activity_i)
+            self.set_memory_activity_node(n, activity_i)
+
+
+            # TODO a_i(t) = log(alpha * Money_i(t))
+            # TODO 1/1-pow(e, (-a*Money_i(t)) )
+
 
 
     def get_memory_active_nodes(self):

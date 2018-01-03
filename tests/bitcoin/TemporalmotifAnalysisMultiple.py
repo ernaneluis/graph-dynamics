@@ -16,6 +16,11 @@ import pylab
 from PIL import Image
 from matplotlib.lines import Line2D
 from matplotlib.pyplot import cm
+from operator import itemgetter
+import csv
+import plotly
+import plotly.plotly as py
+import plotly.graph_objs as go
 
 class TemporalmotifAnalysisMultiple(object):
 
@@ -100,8 +105,9 @@ class TemporalmotifAnalysisMultiple(object):
 
                 simulation_temporalmotif = self.simulation_temporalmotif_by_time[idx]
 
-                golden_temporalmotif_norm = self.normalize(golden_temporalmotif)
-                simulation_temporalmotif_norm = self.normalize(simulation_temporalmotif)
+                # normalize it
+                golden_temporalmotif_norm       = self.normalize(self.trim_data(golden_temporalmotif))
+                simulation_temporalmotif_norm   = self.normalize(self.trim_data(simulation_temporalmotif))
 
                 error_i = self.error1(simulation_temporalmotif_norm, golden_temporalmotif_norm)
                 golden_i_errors_timeline.append(error_i)
@@ -173,48 +179,57 @@ class TemporalmotifAnalysisMultiple(object):
 
         ind = np.arange(36)
 
-        for idx, data in enumerate(datas):
-            data = data[0]
-            data_norm = self.normalize(data)
-            print labels[idx]
+        with open(self.simulation_gd_directory + 'results_all_cycle.csv', 'wb') as csvfile:
+            csv_file = csv.writer(csvfile, delimiter=',', quoting=csv.QUOTE_NONNUMERIC)
+            data_all_cycle_headers = ['Model', 'M12','M15', 'M26', 'M32', 'M33', 'M42', 'M44', 'M53', 'M54', 'M55', 'M56']
+            csv_file.writerow(data_all_cycle_headers)
 
-            prettylist2g = lambda l: '[%s]' % ', '.join("%d" % x for x in l)
+            for idx, data in enumerate(datas):
+                data = data[0]
+                data_norm = self.normalize(data)
+                data_all_relevant = itemgetter(*[1,2,3,4,7,8, 11,12,13, 14, 17, 19, 21,22,23, 26, 27, 28, 29])(data_norm) # 19 motifs
 
-            print prettylist2g(data)
-            # data_norm2 = self.normalize(data[1])
-
-
-            # x = x + w
-
-            # plt.bar(ind, data_norm, w, label=labels[idx])
-            # id = idx+1
-            a = ind+(w*idx)
-            rects = ax.bar(a,data_norm, w, label=labels[idx])
+                data_all_cycle = itemgetter(*[1,4, 11, 13,14,19, 21, 26, 27, 28, 29])(data_norm) # 11 cycles
 
 
-        ax.set_xticks(ind + w/2)
 
-        # ax.set_xlim(-w, len(ind) + w)
-        # ax.set_xticks(ind + w)
-        # ax.autoscale(tight=True)
-        # ax.set_xlim(36)
+                csv_row = [labels[idx]] + map(lambda x:format(x, '.8f'), list(data_all_cycle))
 
-        # ax.set_xticks(range(1, 37))
-        xlabels = self.motifslabels
-        ax.set_xticklabels(xlabels)
-        plt.xlabel("Patterns")
+                csv_file.writerow(csv_row)
 
 
-        ax.set_yticks(pylab.frange(0,1,0.1))
-        ax.set_ylim(0, 1)
-        plt.ylabel("Value")
+
+                # x = x + w
+
+                # plt.bar(ind, data_norm, w, label=labels[idx])
+                # id = idx+1
+                a = ind+(w*idx)
+                rects = ax.bar(a,data_norm, w, label=labels[idx])
 
 
-        plt.subplots_adjust(left=0.035, right=0.98, top=0.95, bottom=0.11, wspace=0, hspace=0)
-        plt.legend()
-        # plt.grid(True)
-        fig.savefig(self.simulation_gd_directory + "barplot_vs_"+self.simulation_macrostate_file_indentifier+".png")
-        # plt.show()
+            ax.set_xticks(ind + w/2)
+
+            # ax.set_xlim(-w, len(ind) + w)
+            # ax.set_xticks(ind + w)
+            # ax.autoscale(tight=True)
+            # ax.set_xlim(36)
+
+            # ax.set_xticks(range(1, 37))
+            xlabels = self.motifslabels
+            ax.set_xticklabels(xlabels)
+            plt.xlabel("Patterns")
+
+
+            ax.set_yticks(pylab.frange(0,1,0.1))
+            ax.set_ylim(0, 1)
+            plt.ylabel("Value")
+
+
+            plt.subplots_adjust(left=0.035, right=0.98, top=0.95, bottom=0.11, wspace=0, hspace=0)
+            plt.legend()
+            # plt.grid(True)
+            fig.savefig(self.simulation_gd_directory + "barplot_vs_"+self.simulation_macrostate_file_indentifier+".png")
+            # plt.show()
 
 
 
@@ -234,53 +249,74 @@ class TemporalmotifAnalysisMultiple(object):
 
         # self.view_multiple_bar([golden_temporalmotif_by_time[0], simulation_temporalmotif_by_time[0]], ["Bitcoin", "Simulation"])
 
-    def barplot(self, ax, dpoints):
-        '''
-        Create a barchart for data across different categories with
-        multiple conditions for each category.
+    def trim_data(self, data, type):
+        data_return = []
+        # all most relevants 19 motifs: triangles and cycles
+        if (type == 'all'):
+            # all non-zero motifs
+            return itemgetter(*[1, 2, 3, 4, 7, 8, 11, 12, 13, 14, 17, 19, 21, 22, 23, 26, 27, 28, 29])(data)
+        else:
+            # data_all_cycle_relevant
+            return itemgetter(*[4, 11, 14, 21, 26, 27, 28, 29])(data)
 
-        @param ax: The plotting axes from matplotlib.
-        @param dpoints: The data set as an (n, 3) numpy array
-        '''
+    # name results_all_cycle
+    # data_all_cycle_headers = ['Model', 'M15', 'M26', 'M33', 'M44', 'M53', 'M54', 'M55', 'M56', 'error']
 
-        # Aggregate the conditions and the categories according to their
-        # mean values
-        conditions = [(c, np.mean(dpoints[dpoints[:, 0] == c][:, 2].astype(float)))
-                      for c in np.unique(dpoints[:, 0])]
-        categories = [(c, np.mean(dpoints[dpoints[:, 1] == c][:, 2].astype(float)))
-                      for c in np.unique(dpoints[:, 1])]
+    def results_csv(self, datas, labels, trim_type, headers, name):
+        return_rows = []
+        with open(self.simulation_gd_directory + name + '.csv', 'wb') as csvfile:
+            csv_file = csv.writer(csvfile, delimiter=',', quoting=csv.QUOTE_NONNUMERIC)
+            csv_file.writerow(headers)
+            return_rows.append(headers)
 
-        # sort the conditions, categories and data so that the bars in
-        # the plot will be ordered by category and condition
-        conditions = [c[0] for c in sorted(conditions, key=o.itemgetter(1))]
-        categories = [c[0] for c in sorted(categories, key=o.itemgetter(1))]
+            data_simulation = datas[len(datas)-1][0]
+            data_simulation_norm = self.normalize(self.trim_data(data_simulation, trim_type))
 
-        dpoints = np.array(sorted(dpoints, key=lambda x: categories.index(x[1])))
+            for idx, data in enumerate(datas):
+                data = data[0]
+                data_norm = self.normalize(self.trim_data(data, trim_type))
 
-        # the space between each set of bars
-        space = 0.3
-        n = len(conditions)
-        width = (1 - space) / (len(conditions))
+                error = self.error1(data_simulation_norm, data_norm)
 
-        # Create a set of bars at each position
-        for i, cond in enumerate(conditions):
-            indeces = range(1, len(categories) + 1)
-            vals = dpoints[dpoints[:, 0] == cond][:, 2].astype(np.float)
-            pos = [j - (1 - space) / 2. + i * width for j in indeces]
-            ax.bar(pos, vals, width=width, label=cond,
-                   color=cm.Accent(float(i) / n))
+                prettylist2g = lambda l: '[%s]' % ', '.join("%f" % x for x in l)
 
-        # Set the x-axis tick labels to be equal to the categories
-        ax.set_xticks(indeces)
-        ax.set_xticklabels(categories)
-        plt.setp(plt.xticks()[1], rotation=90)
+                print labels[idx]
+                print prettylist2g(data)
+                print prettylist2g(data_norm)
 
-        # Add the axis labels
-        ax.set_ylabel("RMSD")
-        ax.set_xlabel("Structure")
-
-        # Add a legend
-        handles, labels = ax.get_legend_handles_labels()
-        ax.legend(handles[::-1], labels[::-1], loc='upper left')
+                csv_row = [labels[idx]] + map(lambda x: format(x, '.8f'), list(data_norm)) + [error]
+                csv_file.writerow(csv_row)
+                return_rows.append(csv_row)
+        return return_rows
 
 
+    def plot_bar(self, data, filename):
+        plotly.tools.set_credentials_file(username='ernaneluis', api_key='SS9lJwtw6tqLKvkDNKcO')
+        bars = []
+        x = data[0]
+        del x[-1] # removing error heder
+        del x[0] # removing model header now x has just motifs labels
+
+        for idx, row in enumerate(data[1:]):
+            label = row[0]
+            error = row[-1]
+            del row[-1]
+            del row[0]
+
+            trace = go.Bar(
+                x=x,
+                y=row,
+                name=label+" :e="+str(round(error,6))
+            )
+            bars.append(trace)
+
+
+        layout = go.Layout(
+            barmode='group',
+            width = 1800,
+            height = 840
+        )
+
+        fig = go.Figure(data=bars, layout=layout)
+        py.iplot(fig, filename=filename)
+        py.image.save_as(fig, filename=self.simulation_gd_directory + filename + '.png')
