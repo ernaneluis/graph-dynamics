@@ -28,7 +28,7 @@ from graph_dynamics.dynamics import Macrostates
 import tests.bitcoin.TemporalmotifAnalysisMultiple as analysis_multiple
 import time
 import sys
-
+from shutil import copyfile
 from abc import ABCMeta, abstractmethod
 
 class SimulationDynamics(object):
@@ -285,11 +285,14 @@ class SimulationBitcoinDynamics(SimulationDynamics):
 class SimulationBitcoinMemoryDynamics(SimulationDynamics):
 
 
-    def __init__(self):
+    def __init__(self, index=None):
+        if(index == None):
+            index = str(int(time.time()))
+
         DYNAMICS_PARAMETERS = {"number_of_steps": 24,
                                "number_of_steps_in_memory": 1,
                                "simulations_directory": "/Volumes/Ernane/simulations/",
-                               "dynamics_identifier": "simpleymemory"+str(int(time.time())),
+                               "dynamics_identifier": "memory"+index,
                                "graph_class": "BitcoinGraph",
                                "datetime_timeseries": False,
                                "initial_date": 0,
@@ -317,12 +320,12 @@ class SimulationBitcoinMemoryDynamics(SimulationDynamics):
             "activity_rescaling_factor": 1, # avr number of active nodes per unit of time
             "activity_threshold_min": 0.0001,
             "activity_delta_t": 1,
-                                "number_of_connections": 10,  # max number of connection a node can make
+                                "number_of_connections": 1,  # max number of connection a node can make
             "memory_activity_gamma": 2,  # or 2.8
             "memory_activity_rescaling_factor": 1,  # avr number of active nodes per unit of time
             "memory_activity_threshold_min": 0.0001,
             "memory_activity_delta_t": 1,
-                                "memory_number_of_connections": 1000,
+                                "memory_number_of_connections": 100,
                                 "memory_queue_size": 10,
             "graph_state": {"None": None},
             "networkx_graph": None,  # the initial graph: used for empiral data
@@ -330,7 +333,7 @@ class SimulationBitcoinMemoryDynamics(SimulationDynamics):
             "amount_pareto_gama": 2.8,
             "amount_threshold": 0.0001,
             "activity_transfer_function": "x/math.sqrt(1+pow(x,2))",
-            "number_new_nodes": 1
+            "number_new_nodes": 100
         }
 
 
@@ -453,66 +456,83 @@ if __name__ == '__main__':
 
     # simulation = SimulationBitcoinDynamics()
     # simulation.compute()
+    time = str(int(time.time())) + "00"
+    last_path = ""
+    all_paths_all_cycle = []
+    all_paths_all_non_zero = []
+    all_paths_all_relevant = []
+    for idx in range(1,11,1):
+        print "running: " + str(idx)
+        ## production
+        simulation = SimulationBitcoinMemoryDynamics(time+str(idx))
+        simulation.compute()
+        simulation_gd_directory = simulation.gd_dir
+        simulation_macrostate_file_indentifier = simulation.gd_name
+
+        ## test
+        # simulation_gd_directory = "/Volumes/Ernane/simulations/simpleymemory1514937263_gd/"
+        # simulation_macrostate_file_indentifier = "simpleymemory1514937263"
+
+        # comparing to golden model
+        golden_gd_directory = ["/Volumes/Ernane/simulations/daymodel122_gd/",
+                               "/Volumes/Ernane/simulations/daymodel165_gd/",
+                               "/Volumes/Ernane/simulations/daymodel210_gd/",
+                               "/Volumes/Ernane/simulations/activitydriven1514928471_gd/"]
+
+        golden_macrostate_file_indentifier = ["daymodel122", "daymodel165", "daymodel210", "activitydriven1514928471"]
+
+        ALL_TIME_INDEXES = range(0,1)
 
 
-    # simulation = SimulationBitcoinMemoryDynamics()
-    # simulation.compute()
-
-    # comparing to golden model
-    golden_gd_directory =  ["/Volumes/Ernane/simulations/daymodel122_gd/", "/Volumes/Ernane/simulations/daymodel165_gd/", "/Volumes/Ernane/simulations/daymodel210_gd/", "/Volumes/Ernane/simulations/activitydriven1514928471_gd/"]
-
-    golden_macrostate_file_indentifier = ["daymodel122", "daymodel165", "daymodel210", "activitydriven1514928471"]
-
-    # simulation_gd_directory = simulation.gd_dir
-    # simulation_macrostate_file_indentifier = simulation.gd_name
-
-    # test
-    simulation_gd_directory = "/Volumes/Ernane/simulations/simpleymemory1514937263_gd/"
-    simulation_macrostate_file_indentifier = "simpleymemory1514937263"
-
-    ALL_TIME_INDEXES = range(0,1)
-
-    # analysis = analysis_multiple.TemporalmotifAnalysisMultiple(golden_gd_directory, golden_macrostate_file_indentifier, simulation_gd_directory, simulation_macrostate_file_indentifier, ALL_TIME_INDEXES)
-
-    sys.stdout = open(simulation_gd_directory+"result.txt", "w")
+        # sys.stdout = open(simulation_gd_directory+"result.txt", "w")
 
 
-    analysis = analysis_multiple.TemporalmotifAnalysisMultiple(golden_gd_directory, golden_macrostate_file_indentifier,
-                                                               simulation_gd_directory,
-                                                               simulation_macrostate_file_indentifier, ALL_TIME_INDEXES)
+        analysis = analysis_multiple.TemporalmotifAnalysisMultiple(golden_gd_directory, golden_macrostate_file_indentifier,
+                                                                   simulation_gd_directory,
+                                                                   simulation_macrostate_file_indentifier, ALL_TIME_INDEXES)
 
 
-    # TODO bar plot
-    # analysis.view_multiple_bar(
-    #     [analysis.golden_temporalmotif_by_time[0],
-    #      analysis.golden_temporalmotif_by_time[1],
-    #      analysis.golden_temporalmotif_by_time[2],
-    #      analysis.golden_temporalmotif_by_time[3],
-    #      analysis.simulation_temporalmotif_by_time  ],
-    #      ["daymodel122", "daymodel165", "daymodel210", "activitydriven1514928471", "Simulation"])
+        datas = [analysis.golden_temporalmotif_by_time[0],
+             analysis.golden_temporalmotif_by_time[1],
+             analysis.golden_temporalmotif_by_time[2],
+             analysis.golden_temporalmotif_by_time[3],
+             analysis.simulation_temporalmotif_by_time  ]
+        labels = ["Day A", "Day B", "Day C", "Activity Driven", "Simulation"]
 
-    datas = [analysis.golden_temporalmotif_by_time[0],
-         analysis.golden_temporalmotif_by_time[1],
-         analysis.golden_temporalmotif_by_time[2],
-         analysis.golden_temporalmotif_by_time[3],
-         analysis.simulation_temporalmotif_by_time  ]
-    labels = ["daymodel122", "daymodel165", "daymodel210", "activitydriven1514928471", "Simulation"]
+        headers_cycle = ['Model', 'M15', 'M26', 'M33', 'M44', 'M53', 'M54', 'M55', 'M56', 'error']
 
-    headers_cycle = ['Model', 'M15', 'M26', 'M33', 'M44', 'M53', 'M54', 'M55', 'M56', 'error']
+        # [1, 2, 3, 4, 7, 8, 11, 12, 13, 14, 17, 19, 21, 22, 23, 26, 27, 28, 29]
+        headers_all_non_zero = ['Model','M12','M13', 'M14','M15','M22', 'M23','M26','M31','M32',
+                                'M33','M36','M42',
+                                'M44','M45', 'M46',
+                                'M53', 'M54', 'M55', 'M56', 'error']
 
-    # [1, 2, 3, 4, 7, 8, 11, 12, 13, 14, 17, 19, 21, 22, 23, 26, 27, 28, 29]
-    headers_all_relevant = ['Model','M12','M13', 'M14','M15','M22', 'M23',
-                            'M26','M31','M32',
-                            'M33','M36','M42',
-                            'M44','M45', 'M46',
-                            'M53', 'M54', 'M55', 'M56', 'error']
+        headers_all_relevant = ['Model','M13', 'M14','M15', 'M23','M26',
+                                'M33','M36',
+                                'M44','M45', 'M46',
+                                'M53', 'M54', 'M55', 'M56', 'error']
 
-    results_all_cycle       = analysis.results_csv(datas, labels, 'cycle', headers_cycle, 'results_all_cycle')
-    results_all_relevant    = analysis.results_csv(datas, labels, 'all', headers_all_relevant, 'results_all_relevant')
+        results_all_cycle       = analysis.results_csv(datas, labels, 'cycle', headers_cycle, simulation_macrostate_file_indentifier + '_results_all_cycle')
+        results_all_non_zero    = analysis.results_csv(datas, labels, 'all', headers_all_non_zero, simulation_macrostate_file_indentifier + '_results_all_non_zero')
+        results_all_relevant    = analysis.results_csv(datas, labels, 'relevant', headers_all_relevant, simulation_macrostate_file_indentifier + '_results_all_relevant')
 
-    sys.stdout.close()
+        #
 
-    analysis.plot_bar(results_all_cycle, simulation_macrostate_file_indentifier + "_results_all_cycle")
-    analysis.plot_bar(results_all_relevant, simulation_macrostate_file_indentifier + "_results_all_relevant")
+        analysis.plot_bar(results_all_cycle, simulation_macrostate_file_indentifier    + "_results_all_cycle")
+        analysis.plot_bar(results_all_non_zero, simulation_macrostate_file_indentifier + "_results_all_non_zero")
+        analysis.plot_bar(results_all_relevant, simulation_macrostate_file_indentifier + "_results_all_relevant")
+
+        last_path = simulation_gd_directory
+
+        all_paths_all_cycle.append(simulation_gd_directory + simulation_macrostate_file_indentifier    + "_results_all_cycle.csv")
+
+        all_paths_all_non_zero.append(simulation_gd_directory + simulation_macrostate_file_indentifier + "_results_all_non_zero.csv")
+
+        all_paths_all_relevant.append(simulation_gd_directory + simulation_macrostate_file_indentifier + "_results_all_relevant.csv")
 
 
+        # sys.stdout.close()
+
+    analysis.merge_csv(all_paths_all_cycle,last_path + "merge_all_cycles.csv")
+    analysis.merge_csv(all_paths_all_non_zero, last_path + "merge_all_non_zero.csv")
+    analysis.merge_csv(all_paths_all_relevant, last_path + "merge_all_relevant.csv")

@@ -21,6 +21,11 @@ import csv
 import plotly
 import plotly.plotly as py
 import plotly.graph_objs as go
+import matplotlib
+import matplotlib.pyplot as plt
+# matplotlib.rcParams['axes.grid'] = True
+# matplotlib.rcParams['axes.grid.which'] = 'major'
+# matplotlib.rcParams['xtick.minor.visible'] = True
 
 class TemporalmotifAnalysisMultiple(object):
 
@@ -255,12 +260,13 @@ class TemporalmotifAnalysisMultiple(object):
         if (type == 'all'):
             # all non-zero motifs
             return itemgetter(*[1, 2, 3, 4, 7, 8, 11, 12, 13, 14, 17, 19, 21, 22, 23, 26, 27, 28, 29])(data)
-        else:
+        elif (type == 'cycle'):
             # data_all_cycle_relevant
             return itemgetter(*[4, 11, 14, 21, 26, 27, 28, 29])(data)
+        else:
+            # all relevants
+            return itemgetter(*[2, 3, 4, 8, 11, 14, 17, 21, 22, 23, 26, 27, 28, 29])(data)
 
-    # name results_all_cycle
-    # data_all_cycle_headers = ['Model', 'M15', 'M26', 'M33', 'M44', 'M53', 'M54', 'M55', 'M56', 'error']
 
     def results_csv(self, datas, labels, trim_type, headers, name):
         return_rows = []
@@ -290,7 +296,7 @@ class TemporalmotifAnalysisMultiple(object):
         return return_rows
 
 
-    def plot_bar(self, data, filename):
+    def plot_bar_plotly(self, data, filename):
         plotly.tools.set_credentials_file(username='ernaneluis', api_key='SS9lJwtw6tqLKvkDNKcO')
         bars = []
         x = data[0]
@@ -318,5 +324,39 @@ class TemporalmotifAnalysisMultiple(object):
         )
 
         fig = go.Figure(data=bars, layout=layout)
-        py.iplot(fig, filename=filename)
+        # py.iplot(fig, filename=filename)
         py.image.save_as(fig, filename=self.simulation_gd_directory + filename + '.png')
+
+    def plot_bar(self, data, filename):
+
+        x = data[0]
+        del x[-1]  # removing error heder
+        del x[0]  # removing model header now x has just motifs labels
+        labels = []
+        data_frame = np.zeros((5,len(x)))
+        for idx, row in enumerate(data[1:]):
+            label = row[0]
+            error = row[-1]
+            labels.append(label + " e=" + str(round(error,6)))
+            y = row
+            del y[-1]
+            del y[0]
+            data_frame[idx] = y
+
+
+        df = pd.DataFrame(data_frame,columns=x, index=labels)
+        ax = df.T.plot.bar(rot=1, figsize=(24,8), grid=True, label='a', zorder=3)
+        ax.grid(linestyle='dashed', linewidth=1, alpha=0.4, zorder=0)
+        # plt.show()
+        plt.savefig(self.simulation_gd_directory + filename + '.png')
+
+    def merge_csv(self, filepaths, outputpath):
+        fout = open(outputpath, "a")
+        for idx, filepath in enumerate(filepaths):
+            f = open(filepath)
+            if(idx > 0):
+                f.next()  # skip the header
+            for line in f:
+                fout.write(line)
+            f.close()  # not really needed
+        fout.close()
