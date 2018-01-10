@@ -2,6 +2,7 @@ import networkx as nx
 import subprocess
 import numpy as np
 import os
+
 class TemporalMotif():
 
 

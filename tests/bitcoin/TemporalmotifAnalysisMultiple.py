@@ -78,7 +78,9 @@ class TemporalmotifAnalysisMultiple(object):
 
     # Root mean square error
     def error1(self, predictions, targets):
+        # return np.sqrt((np.diff([predictions,targets]) ** 2).mean())
         return np.sqrt(((predictions - targets) ** 2).mean())
+        # return np.sqrt(((np.array(predictions) - np.array(targets)) ** 2).mean())
 
     def get_dynamics_golden(self):
         return gd_files_handler.gd_folder_stats(self.golden_gd_directory, True)
@@ -259,13 +261,13 @@ class TemporalmotifAnalysisMultiple(object):
         # all most relevants 19 motifs: triangles and cycles
         if (type == 'all'):
             # all non-zero motifs
-            return itemgetter(*[1, 2, 3, 4, 7, 8, 11, 12, 13, 14, 17, 19, 21, 22, 23, 26, 27, 28, 29])(data)
+            return np.array(itemgetter(*[1, 2, 3, 4, 7, 8, 11, 12, 13, 14, 17, 19, 21, 22, 23, 26, 27, 28, 29])(data))
         elif (type == 'cycle'):
             # data_all_cycle_relevant
-            return itemgetter(*[4, 11, 14, 21, 26, 27, 28, 29])(data)
+            return np.array(itemgetter(*[4, 11, 14, 21, 26, 27, 28, 29])(data))
         else:
             # all relevants
-            return itemgetter(*[2, 3, 4, 8, 11, 14, 17, 21, 22, 23, 26, 27, 28, 29])(data)
+            return np.array(itemgetter(*[2, 3, 4, 8, 11, 14, 17, 21, 22, 23, 26, 27, 28, 29])(data))
 
 
     def results_csv(self, datas, labels, trim_type, headers, name):
@@ -276,11 +278,14 @@ class TemporalmotifAnalysisMultiple(object):
             return_rows.append(headers)
 
             data_simulation = datas[len(datas)-1][0]
-            data_simulation_norm = self.normalize(self.trim_data(data_simulation, trim_type))
+            # data_simulation_norm = self.normalize(self.trim_data(data_simulation, trim_type))
+            data_simulation_norm = self.trim_data(self.normalize(data_simulation), trim_type)
 
             for idx, data in enumerate(datas):
                 data = data[0]
-                data_norm = self.normalize(self.trim_data(data, trim_type))
+                # data_norm = self.normalize(self.trim_data(data, trim_type))
+
+                data_norm = self.trim_data(self.normalize(data), trim_type)
 
                 error = self.error1(data_simulation_norm, data_norm)
 

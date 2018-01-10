@@ -18,8 +18,8 @@ from matplotlib.lines import Line2D
 from matplotlib.pyplot import cm
 import seaborn as sns; sns.set()
 from matplotlib.backends.backend_pdf import PdfPages
-
-class Test(unittest.TestCase):
+import json
+class TemporalmotifAnalysisPlot(object):
     # golden standard
 
     motifslabels = ["$M_{1,1}$", "$M_{1,2}$","$M_{1,3}$","$M_{1,4}$","$M_{1,5}$","$M_{1,6}$",
@@ -125,6 +125,7 @@ class Test(unittest.TestCase):
             data_t = df.transpose()
             data_norm = self.normalize_series(data_t.values.tolist())
             data = pd.DataFrame(data_norm)
+            data.to_csv("/Volumes/Ernane/36by222-days-temporal-matrix_norm.csv", sep=',')
             # print data
 
             # labels
@@ -173,7 +174,7 @@ class Test(unittest.TestCase):
             ax.set_xticks(x)
             ax.set_xticklabels(xlabels, rotation='vertical')
             ax.tick_params(axis='x', which='major', pad=25)
-            plt.xticks(fontsize=7)
+            plt.xticks(fontsize=9)
             plt.xlabel("Day")
 
             ax.set_yscale("log")
@@ -238,6 +239,27 @@ class Test(unittest.TestCase):
     def save(self, d, save_path):
          np.savetxt(save_path, d, delimiter=',', fmt='%d')
 
+    def get_data_by_time(self):
+
+        data = []
+        data.append(["Number of Nodes", "Number of Edges", "Total Triangles"])
+        for i in range(0,222,1):
+            path = "/Volumes/Ernane/day_gd/"
+            file = "day_mGD_day_" + str(i) + "_.gd"
+            filepath = path+file
+            jsond = json.load(open(filepath))
+
+            number_of_nodes = jsond["basic_stats"]["number_of_nodes"]
+            number_of_edges = jsond["basic_stats"]["number_of_edges"]
+            total_triangles = jsond["advanced_stats"]["total_triangles"]
+            data.append([number_of_nodes,number_of_edges,total_triangles])
+
+        df = pd.DataFrame(data)
+        df.to_csv("/Volumes/Ernane/day_gd/nodes_triangles_edges_timeseries.csv", sep=',')
+
+
+
+
     def compute(self):
 
         golden_gd_directory = "/Volumes/Ernane/day_gd/"
@@ -256,11 +278,15 @@ class Test(unittest.TestCase):
         # self.view_temporalmotifs_by_time(golden_temporalmotif_by_time, "/Volumes/Ernane/222-days-label.csv","/Volumes/Ernane/1h_temporalmotif_by_time_series_all.pdf")
 
 
-        # self.view_temporalmotifs_by_time(golden_temporalmotif_by_time, "/Volumes/Ernane/222-days-label.csv",  "/Volumes/Ernane/1h_temporalmotif_by_time_series_selected.pdf", selected=[2,3,8,17,22,23])
+        self.view_temporalmotifs_by_time(golden_temporalmotif_by_time, "/Volumes/Ernane/222-days-label.csv",  "/Volumes/Ernane/1h_temporalmotif_by_time_series_selected.pdf", selected=[2,3,8,17,22,23])
 
         # self.view_variance_by_pattern(golden_temporalmotif_by_time, "/Volumes/Ernane/1h_temporalmotif_by_time_variance.pdf")
 if __name__ == '__main__':
     import sys;
 
-    sys.argv = ['', 'Test.compute']
-    unittest.main()
+    # sys.argv = ['', 'Test.compute']
+    # unittest.main()
+
+    instace = TemporalmotifAnalysisPlot()
+    # instace.compute()
+    instace.get_data_by_time()

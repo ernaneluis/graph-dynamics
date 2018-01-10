@@ -669,7 +669,7 @@ class BitcoinGraph(ActivityDrivenGraph):
 
     # ==================================== MEMORY FUNCTIONS ====================================
 
-    def memory_append(self, from_node, to_node):
+    def memory_append(self, from_node, to_node, time_step):
         # save on node 'to' who send the money
         hasMemory = 'memory' in self.networkx_graph.node[to_node]
 
@@ -681,7 +681,7 @@ class BitcoinGraph(ActivityDrivenGraph):
         if(len(memory) == self.memory_size):
             memory.pop(0)
 
-        memory.append(from_node)
+        memory.append({"from_node":from_node,"time_step":time_step})
 
         self.networkx_graph.node[to_node]['memory'] = memory
 
@@ -706,7 +706,7 @@ class BitcoinGraph(ActivityDrivenGraph):
         return amount
 
     # active nodes connection
-    def set_connections(self, number_of_connections, delta_in_seconds):
+    def set_connections(self, number_of_connections, delta_in_seconds, time_step):
 
         # list of choosed active nodes
         active_nodes = self.get_active_nodes()
@@ -738,14 +738,14 @@ class BitcoinGraph(ActivityDrivenGraph):
 
                 data_node = {
                     # 'time': random.randint(int(time.time()), int(time.time()) + delta_in_seconds),
-                    'time': int(time.time()),
-                    'amount': amount
+                    'time': int(time.time()) + time_step,
+                    # 'amount': amount
                 }
                 edge = (from_node, to_node, data_node)
                 selected_nodes.append(edge)
 
                 if (self.memory_size > 0):
-                    self.memory_append(from_node, to_node)
+                    self.memory_append(from_node, to_node, time_step)
 
             # the connections are made as bucket and in our case each time connection step is a day in real life
             # we must simulate a day of connections by timestamp
@@ -825,22 +825,38 @@ class BitcoinMemoryGraph(BitcoinGraph):
         self.networkx_graph.node[node]['memory_type'] = isActive
 
     # memory active nodes
-    def set_memory_connections(self, memory_number_of_connections, delta_in_seconds):
+    def set_memory_connections(self, memory_number_of_connections, delta_in_seconds, time_step):
 
         # list of choosed active nodes
-        active_nodes = self.get_memory_active_nodes()
+        # active_nodes = self.get_memory_active_nodes()
+
+        # removing the activity memory - this will make every node with memory do connections
+        # because it was too much lower probability a node do memory conecations he had to firs have a connection and second be memory active selected.
+        active_nodes = self.networkx_graph.nodes()
+
         # for each selected node make M connections
-        for node in active_nodes:
+        for idx,node in enumerate(active_nodes):
             # 3-tuples (u,v,d) for an edge attribute dict d, or
             # select random M nodes to make M connection
             from_node       = node
             memory_nodes    = self.get_memory(from_node)
-
-            if len(memory_nodes) > 0:
+            memory_nodes_len = len(memory_nodes)
+            if memory_nodes_len > 0:
                 #if replace is = true then the to_list is the size of memory_number_of_connections
                 # if is false then get error  Cannot take a larger sample than population when 'replace=False'
 
-                to_list = choice(memory_nodes, size=memory_number_of_connections, replace=True)
+                # MEMORY TYPE 1
+                # try to mamke memory conections with all my memory buffer
+                # to_list = memory_nodes
+                to_list = [m["from_node"] for m in memory_nodes]
+
+                # MEMORY TYPE 2 with memory_number_of_connections where
+                # memory_number_of_connections < memory size
+                # to_list = choice(memory_nodes, size=memory_number_of_connections, replace=False)
+
+                # MEMORY TYPE B
+                # to_list = [m["from_node"] for m in memory_nodes if (m["time_step"] != time_step)]
+
 
                 selected_nodes = []
                 for idx, to_node in enumerate(to_list):
@@ -851,8 +867,9 @@ class BitcoinMemoryGraph(BitcoinGraph):
 
                     data_node = {
                         # 'time': random.randint(int(time.time()), int(time.time()) + delta_in_seconds),
-                        'time': int(time.time()),
-                        'amount': amount,
+                        # 'time': int(time.time()),
+                        'time': int(time.time()) + time_step,
+                        'memory_len': memory_nodes_len,
                         'type:':'memory'
                     }
                     edge = (from_node, to_node, data_node)

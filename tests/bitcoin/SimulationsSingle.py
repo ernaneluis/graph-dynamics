@@ -12,7 +12,7 @@ from itertools import groupby
 # import matplotlib.pyplot as plt
 import networkx as nx
 from networkx.readwrite import json_graph
-
+import re
 import pymongo
 from pymongo import MongoClient
 import psycopg2
@@ -30,6 +30,8 @@ import time
 import sys
 from shutil import copyfile
 from abc import ABCMeta, abstractmethod
+import subprocess
+from graph_dynamics.networks.temporalmotif import TemporalMotif
 
 class SimulationDynamics(object):
 
@@ -91,16 +93,17 @@ class SimulationDynamics(object):
             os.remove(fname)
 
         print final_file
+        return final_file
 
 class SimulationActivityDrivenDynamics(SimulationDynamics):
 
 
-    def __init__(self):
+    def __init__(self, index=None):
 
         DYNAMICS_PARAMETERS = {"number_of_steps": 24,
                                "number_of_steps_in_memory": 1,
                                "simulations_directory": "/Volumes/Ernane/simulations/",
-                               "dynamics_identifier": "activitydriven"+str(int(time.time())),
+                               "dynamics_identifier": "activitydriven"+index,
                                "graph_class": "ActivityDrivenGraph",
                                "datetime_timeseries": False,
                                "initial_date": 0,
@@ -129,7 +132,7 @@ class SimulationActivityDrivenDynamics(SimulationDynamics):
                                   "delta_t": 1,
                                   "graph_state": {"None": None},
                                   "networkx_graph": None,  # the initial graph: used for empiral data
-                                  "number_of_connections": 100,  # max number of connection a node can make
+                                  "number_of_connections": 1,  # max number of connection a node can make
                                   "delta_in_seconds": 3600
                                   }
 
@@ -289,10 +292,10 @@ class SimulationBitcoinMemoryDynamics(SimulationDynamics):
         if(index == None):
             index = str(int(time.time()))
 
-        DYNAMICS_PARAMETERS = {"number_of_steps": 24,
+        DYNAMICS_PARAMETERS = {"number_of_steps": 100,
                                "number_of_steps_in_memory": 1,
                                "simulations_directory": "/Volumes/Ernane/simulations/",
-                               "dynamics_identifier": "memory"+index,
+                               "dynamics_identifier": "newmemorymodel"+index,
                                "graph_class": "BitcoinGraph",
                                "datetime_timeseries": False,
                                "initial_date": 0,
@@ -300,7 +303,7 @@ class SimulationBitcoinMemoryDynamics(SimulationDynamics):
                                "macrostates": []
                                }
 
-        temporalmotif_nargs = {
+        self.temporalmotif_nargs = {
             "delta": 3600,  # deltas as 1h  in seconds
         }
 
@@ -310,12 +313,12 @@ class SimulationBitcoinMemoryDynamics(SimulationDynamics):
             # ("advanced_stats", ()),
             # ("degree_centrality", ()),
             # ("degree_nodes", ()),
-            ("temporalmotif", (temporalmotif_nargs,))
+            # ("temporalmotif", (temporalmotif_nargs,))
         ]
 
         model_dynamics_parameters = {
             "name_string": "BitcoinMemoryGraph",
-                                "number_of_nodes": 1000,
+                                "number_of_nodes": 100,
             "activity_gamma": 2,  # or 2.8
             "activity_rescaling_factor": 1, # avr number of active nodes per unit of time
             "activity_threshold_min": 0.0001,
@@ -325,19 +328,19 @@ class SimulationBitcoinMemoryDynamics(SimulationDynamics):
             "memory_activity_rescaling_factor": 1,  # avr number of active nodes per unit of time
             "memory_activity_threshold_min": 0.0001,
             "memory_activity_delta_t": 1,
-                                "memory_number_of_connections": 100,
-                                "memory_queue_size": 10,
+            "memory_number_of_connections": 2,
+                                "memory_queue_size": 5,
             "graph_state": {"None": None},
             "networkx_graph": None,  # the initial graph: used for empiral data
             "delta_in_seconds": 3600,
             "amount_pareto_gama": 2.8,
             "amount_threshold": 0.0001,
             "activity_transfer_function": "x/math.sqrt(1+pow(x,2))",
-            "number_new_nodes": 100
+            "number_new_nodes": 2
         }
 
 
-        SimulationDynamics.__init__(self, DYNAMICS_PARAMETERS, temporalmotif_nargs, MACROSTATES_PARAMETERS, model_dynamics_parameters)
+        SimulationDynamics.__init__(self, DYNAMICS_PARAMETERS, self.temporalmotif_nargs, MACROSTATES_PARAMETERS, model_dynamics_parameters)
 
     def define_initial_graph(self):
         #Defines the graph ====================================================================
@@ -380,7 +383,7 @@ class SimulationBitcoinMemoryDynamics(SimulationDynamics):
         btg.set_nodes_memory_active()
 
         btg.set_connections(number_of_connections=self.model_dynamics_parameters["number_of_connections"],
-                            delta_in_seconds=self.model_dynamics_parameters["delta_in_seconds"])
+                            delta_in_seconds=self.model_dynamics_parameters["delta_in_seconds"], time_step=0)
 
 
 
@@ -398,13 +401,69 @@ class SimulationBitcoinMemoryDynamics(SimulationDynamics):
 
         self.evolve_dynamics(dynamics_obj, initial_graph)
 
+    def getKey(self,item):
+        time = item[2]
+        return time
+
+    def gd_to_temporalmotif(self, input):
+        # creating temporal graph file input
+
+        output_path = input.replace(".gd", "") + ".temporalmotif"
+
+        print "Converting graph dynamics to temporalmoitf output_path: " + output_path
+
+        set_nodes = set()
+        edges = []
+        with open(input, "r") as f:
+            for line in f:
+                a = line.split(" ")
+                from_node = int(a[0])+1
+                to_node = int(a[1])+1
+                set_nodes.add(from_node)
+                set_nodes.add(to_node)
+                a.pop(0)
+                a.pop(0)
+                c = r"".join(a).strip().replace("{","").replace("}","")
+                b = c.split(":")
+                time = int(b[-1])
+                edges.append([from_node,to_node,time])
+
+
+        if os.path.isfile(output_path) == False:
+            output_file = open(output_path, "w")
+            edges_sorted = sorted(edges, key=self.getKey)
+            for idy, edge in enumerate(edges_sorted):
+                output_file.write(str(edge[0]) + " " + str(edge[1]) + " " + str(edge[2]) + "\n")
+            output_file.close()
+        print "Temporal File: " + output_path
+        return output_path
+
+    def temporal_motif(self, input, delta):
+
+        exe_directory = "../../snap-cpp/examples/temporalmotifs/temporalmotifsmain"  # path of excecutable
+
+        output_motif = input.replace(".temporalmotif","") + ".temporalmotifcount"
+
+        if os.path.isfile(output_motif ) == False:
+
+            args1 = "-i:" + input
+            args2 = "-o:" + output_motif
+            args3 = "-delta:" + str(delta)
+
+            # calling command of snap in c++
+            subprocess.call([exe_directory, args1, args2, args3])
+
     def compute(self):
 
         self.run_dynamics(self.define_initial_graph())
 
-        self.compress_gd()
+        gd_file = self.compress_gd()
 
-        self.apply_macro()
+        temporalmotif_file = self.gd_to_temporalmotif(gd_file)
+
+        self.temporal_motif(temporalmotif_file, self.temporalmotif_nargs["delta"])
+
+        # self.apply_macro()
 
 
 class MarcoFromGD(SimulationDynamics):
@@ -451,21 +510,27 @@ if __name__ == '__main__':
     # macro = MarcoFromGD("/Volumes/Ernane/simulations/", "daymodel165")
     # macro.apply_macro()
 
-    # simulation      = SimulationActivityDrivenDynamics()
+
+
+    # simulation = SimulationBitcoinDynamics(time + str(idx))
     # simulation.compute()
 
-    # simulation = SimulationBitcoinDynamics()
-    # simulation.compute()
+
     time = str(int(time.time())) + "00"
     last_path = ""
     all_paths_all_cycle = []
     all_paths_all_non_zero = []
     all_paths_all_relevant = []
-    for idx in range(1,11,1):
+    for idx in range(1,2,1):
         print "running: " + str(idx)
+        #
+        # simulation      = SimulationActivityDrivenDynamics(time + str(idx))
+        # simulation.compute()
+
         ## production
         simulation = SimulationBitcoinMemoryDynamics(time+str(idx))
         simulation.compute()
+
         simulation_gd_directory = simulation.gd_dir
         simulation_macrostate_file_indentifier = simulation.gd_name
 
@@ -477,9 +542,9 @@ if __name__ == '__main__':
         golden_gd_directory = ["/Volumes/Ernane/simulations/daymodel122_gd/",
                                "/Volumes/Ernane/simulations/daymodel165_gd/",
                                "/Volumes/Ernane/simulations/daymodel210_gd/",
-                               "/Volumes/Ernane/simulations/activitydriven1514928471_gd/"]
+                               "/Volumes/Ernane/simulations/activitydriven1515247743001_gd/"]
 
-        golden_macrostate_file_indentifier = ["daymodel122", "daymodel165", "daymodel210", "activitydriven1514928471"]
+        golden_macrostate_file_indentifier = ["daymodel122", "daymodel165", "daymodel210", "activitydriven1515247743001"]
 
         ALL_TIME_INDEXES = range(0,1)
 
