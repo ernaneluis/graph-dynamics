@@ -847,7 +847,6 @@ class BitcoinMemoryGraph(BitcoinGraph):
 
                 # MEMORY TYPE 1
                 # try to mamke memory conections with all my memory buffer
-                # to_list = memory_nodes
                 to_list = [m["from_node"] for m in memory_nodes]
 
                 # MEMORY TYPE 2 with memory_number_of_connections where
@@ -857,6 +856,13 @@ class BitcoinMemoryGraph(BitcoinGraph):
                 # MEMORY TYPE B
                 # to_list = [m["from_node"] for m in memory_nodes if (m["time_step"] != time_step)]
 
+                # MEMORY TYPE C
+                # aux_to_list = [m["from_node"] for m in memory_nodes if (m["time_step"] != time_step)]
+                # if len(aux_to_list) > memory_number_of_connections:
+                #     # memory_number_of_connections < memory size
+                #     to_list = choice(aux_to_list, size=memory_number_of_connections, replace=False)
+                # else:
+                #     to_list = aux_to_list
 
                 selected_nodes = []
                 for idx, to_node in enumerate(to_list):

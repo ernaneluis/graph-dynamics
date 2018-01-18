@@ -313,7 +313,7 @@ class SimulationBitcoinMemoryDynamics(SimulationDynamics):
             # ("advanced_stats", ()),
             # ("degree_centrality", ()),
             # ("degree_nodes", ()),
-            # ("temporalmotif", (temporalmotif_nargs,))
+            ("temporalmotif", (self.temporalmotif_nargs,))
         ]
 
         model_dynamics_parameters = {
@@ -459,11 +459,11 @@ class SimulationBitcoinMemoryDynamics(SimulationDynamics):
 
         gd_file = self.compress_gd()
 
-        temporalmotif_file = self.gd_to_temporalmotif(gd_file)
+        # temporalmotif_file = self.gd_to_temporalmotif(gd_file)
 
-        self.temporal_motif(temporalmotif_file, self.temporalmotif_nargs["delta"])
+        # self.temporal_motif(temporalmotif_file, self.temporalmotif_nargs["delta"])
 
-        # self.apply_macro()
+        self.apply_macro()
 
 
 class MarcoFromGD(SimulationDynamics):

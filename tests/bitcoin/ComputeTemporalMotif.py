@@ -37,6 +37,7 @@ from graph_dynamics.networks.temporalmotif import TemporalMotif
 class ComputeTemporalMotif(object):
 
 
+
     def getKey(self,item):
         time = item[2]
         return time
@@ -60,8 +61,10 @@ class ComputeTemporalMotif(object):
                 a.pop(0)
                 a.pop(0)
                 c = r"".join(a).strip().replace("{","").replace("}","")
-                b = c.split(":")
-                time = int(b[-1])
+                b = c.split(",")
+                time = filter(lambda x: 'time' in x,     b)
+                time = time[0].split(":")
+                time = int(time[-1])
                 edges.append([from_node,to_node,time])
 
 
@@ -129,13 +132,15 @@ class ComputeTemporalMotif(object):
             # calling command of snap in c++
             subprocess.call([exe_directory, args1, args2, args3])
 
+            return output_motif
+
     def compute_temporalmotif_from_simulation_gd(self, input, delta):
 
         gd_file = input
 
         temporalmotif_file = self.simulation_gd_to_temporalmotif(gd_file)
 
-        self.temporal_motif(temporalmotif_file, delta)
+        return self.temporal_motif(temporalmotif_file, delta)
 
     def compute_temporalmotif_from_realdata_gd(self, input, delta):
 
@@ -146,13 +151,13 @@ class ComputeTemporalMotif(object):
         self.temporal_motif(temporalmotif_file, delta)
 
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
+#
+#     input = "/Volumes/Ernane/simulations/newmemorymodel1515189079001_gd/newmemorymodel1515189079001_gGD_0_.gd"
+#     comp = ComputeTemporalMotif()
+#     # comp.compute_temporalmotif_from_realdata_gd(input, 3600)
+#     comp.compute_temporalmotif_from_simulation_gd(input, 3600)
 
-    # input = "/Volumes/Ernane/simulations/activitydriven1515247743001_gd/activitydriven1515247743001_gGD_0_.gd"
-    comp = ComputeTemporalMotif()
-    # comp.compute_temporalmotif_from_realdata_gd(realdata, 3600)
-    # comp.compute_temporalmotif_from_simulation_gd(realdata, 3600)
-
-    for idx in range(0,222):
-        input = "/Volumes/Ernane/day_gd/day_gGD_"+str(idx)+"_.gd"
-        comp.compute_temporalmotif_from_realdata_gd(input, 3600)
+    # for idx in range(0,222):
+    #     input = "/Volumes/Ernane/day_gd/day_gGD_"+str(idx)+"_.gd"
+    #     comp.compute_temporalmotif_from_realdata_gd(input, 3600)

@@ -10,7 +10,8 @@ import numpy as np
 import subprocess
 import matplotlib.pyplot as plt
 import math
-
+import pandas as pd
+from joblib import Parallel, delayed
 
 def convert_egdelist2bigclam(gd_directory, name):
 
@@ -34,22 +35,36 @@ def convert_egdelist2bigclam(gd_directory, name):
 
     print "done convert"
 
+def getKey(item):
+    time = item[0]
+    return time
 
-def computeBigClam(exe_directory, gd_directory, name):
+def computeBigClam(exe_directory, input):
     # http://snap.stanford.edu/temporal-motifs/code.html
 
-    time_indexes = map(int, [filename.split("_")[3].replace(".txt", "") for filename in os.listdir(gd_directory) if "_bigclam_" in filename])
+    # time_indexes = map(int, [filename.split("_")[3].replace(".txt", "") for filename in os.listdir(gd_directory) if "_bigclam_" in filename])
 
-    for idx in time_indexes:
-        input = gd_directory + name  + "_bigclam_" + str(idx) + ".txt"
-        output = gd_directory + name + "_bigclam_" + str(idx) + "_"
+    # for idx in time_indexes:
 
-        args1 = "-i:" + input
-        args2 = "-o:" + output
-        args3 = "-c:1"
+    output = input.replace(".txt","")
 
-        # calling command of snap in c++
-        subprocess.call([exe_directory, args1, args2, args3])
+    args1 = "-i:" + input
+
+    #  -c:The number of communities to detect (-1: detect automatically) (default:-1)
+    args3 = "-c:1000"
+    # -mc:Minimum number of communities to try (default:5)
+    args4 = "-mc:1"
+    # -xc:Maximum number of communities to try (default:100)
+    args5 = "-xc:10"
+    # -nc:How many trials for the number of communities (default:10)
+    args6 = "-nc:1"
+    # -nt:Number of threads for parallelization (default:1) -nt:1 means no parallelization.
+    args7 = "-nt:2"
+
+    args2 = "-o:" + output + args3.replace(":","-")
+
+    # calling command of snap in c++ args4,
+    subprocess.call([exe_directory, args1, args2, args3, args7])
 
 
 def load_graph_dynamics(path, name):
@@ -119,23 +134,84 @@ def visualization_histogram(series, path):
         fig.savefig(path+"histogram_" + str(idx) + ".png")
     # plt.show()
 
+def convert_bigclam_sorted(input):
+    df = pd.read_csv(input, delimiter="\n")
+    print df
+    a = df.values
+    correct = [item[0].split("\t") for item in a]
+    edges_sorted = sorted(correct, key=getKey)
+
+    file = open(input.replace(".txt", ".bigclam"), "w")
+
+    print "convert_egdelist2bigclam: "
+
+    for idy, edge in enumerate(edges_sorted):
+        to_n = int(edge[0]) + 1
+        from_n = int(edge[1])+1
+        file.write(str(to_n) + "\t" + str(from_n) + "\n")
+    file.close()
+
+
+def convert_temporal_to_bigclam(input):
+    df = pd.read_csv(input, delimiter="\n")
+    # print df
+    values = df.values
+    edges = []
+    for item in values:
+        sp = item[0].split("\t")[0]
+        spau = sp.split(" ")
+        edges.append([spau[0],spau[1]])
+
+    # edges_sorted = sorted(correct, key=getKey)
+    output = input.replace(".temporalmotif", ".bigclam")
+    file = open(output, "w")
+
+    print "convert_egdelist2bigclam: "
+
+    for idy, edge in enumerate(edges):
+        to_n = int(edge[0])
+        from_n = int(edge[1])
+        file.write(str(to_n) + "\t" + str(from_n) + "\n")
+    file.close()
+    return output
+
+def compute(i):
+    exe_path = "../../snap-cpp/examples/bigclam/bigclam"
+    input = "/Volumes/Ernane/bigclam/tocompute/day_bigclam_" + str(i) + ".txt"
+    computeBigClam(exe_path, input)
 
 if __name__ == '__main__':
 
-    exe_path   = "../../snap-cpp/examples/bigclam/bigclam"#path of excecutable
-    path            = "/Users/ernaneluis/Developer/master_thesis/bigclam/bitcoin_graphs/"
-    name            = "graph_bigclam"
+    #path of excecutable
+    exe_path = "/Volumes/Ernane/bigclam/snap-master/examples/bigclam/bigclam"
+
+    # name            = "graph_bigclam"
     # 1.
     # reads gd files and covnert to biglcam input format
     # convert_egdelist2bigclam(path, name)
     # 2.
-    # computeBigClam(exe_path, path, name)
-    
+
+
+
     # 3.
-    time_indexes, series = load_bigclam(path, name)
+    # time_indexes, series = load_bigclam(path, name)
     # 4.    # Save Figure
-    visualization_histogram(series, path)
+    # visualization_histogram(series, path)
 
+    # convert_bigclam_sorted("/Volumes/Ernane/bigclam/daymodel122_gGD_0_.bigclam")
 
+    # n_jobs
+    # The maximum number of concurrently running jobs, such as the number of Python worker processes when backend=multiprocessing
+    # or the size of the thread-pool when backend=threading. If -1 all CPUs are used. If 1 is given, no parallel computing code is used at all,
+    # which is useful for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one are used.
+    # https://pythonhosted.org/joblib/generated/joblib.Parallel.html
+
+    # Parallel(n_jobs=6)(delayed(compute)(i) for i in range(3,101))
+
+    input = "/Volumes/Ernane/bigclam/memoryallBigclam151575059300_gGD_0_.temporalmotif"
+    input_converted = convert_temporal_to_bigclam(input)
+
+    exe_path = "../../snap-cpp/examples/bigclam/bigclam"
+    computeBigClam(exe_path, input_converted)
 
     print "Done"

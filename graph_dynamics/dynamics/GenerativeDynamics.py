@@ -483,7 +483,7 @@ class BitcoinMemoryDynamics(BitcoinDynamics):
         # graph.set_nodes_memory_active()
 
         # 2 make conenctions from activacted nodes
-        # graph.set_connections(number_of_connections=self.number_of_connections, delta_in_seconds=self.delta_in_seconds, time_step=self.time_step)
+        graph.set_connections(number_of_connections=self.number_of_connections, delta_in_seconds=self.delta_in_seconds, time_step=self.time_step)
 
         # if (self.time_step % 2 == 0):
         graph.set_memory_connections(memory_number_of_connections=self.memory_number_of_connections,
